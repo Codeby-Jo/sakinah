@@ -34,7 +34,11 @@ class NISMatchmakingService:
 
         shown_candidates = []
 
-        max_considered = pool_context.max_considered_candidates if pool_context else 5
+        max_considered = 3
+        if pool_context and getattr(pool_context, "max_considered_candidates", None) is not None:
+            max_considered = pool_context.max_considered_candidates
+            
+        max_considered = max(1, min(5, max_considered))
         excluded_ids = set()
         if pool_context:
             excluded_ids.update(pool_context.shown_candidate_ids)
