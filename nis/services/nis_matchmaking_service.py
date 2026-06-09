@@ -14,6 +14,13 @@ class NISMatchmakingService:
     ) -> dict:
         
         # 1. Validate current_user
+        if pool_context and pool_context.active_conversations_count >= pool_context.max_active_conversations:
+            return {
+                "status": "ACTIVE_CONVERSATION_LIMIT_REACHED",
+                "candidates": [],
+                "message": "You already have active conversations. Continue them before receiving new candidates."
+            }
+
         if not current_user.gender or current_user.gender not in ["MALE", "FEMALE"]:
             return NISMatchmakingService._no_match_response()
         if not current_user.has_required_data:

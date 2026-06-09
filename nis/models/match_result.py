@@ -8,6 +8,7 @@ class MatchResult:
     BLOCKED
     REVIEW_REQUIRED
     NO_MATCH
+    ACTIVE_CONVERSATION_LIMIT_REACHED
 
     Privacy rules for safe_summary:
     `safe_summary` must never include private notes, raw identity data, 
