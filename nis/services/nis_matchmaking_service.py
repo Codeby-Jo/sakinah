@@ -18,19 +18,20 @@ class NISMatchmakingService:
         if pool_context and pool_context.active_conversations_count >= pool_context.max_active_conversations:
             return NISMatchmakingService._no_match_response(
                 reason_category="ACTIVE_CONVERSATION_LIMIT_REACHED",
-                custom_message="Continue your current conversation before receiving new candidates."
+                custom_message="Continue your current conversation before receiving new candidates.",
+                max_candidates=pool_context.max_considered_candidates if pool_context else 3
             )
 
         if not current_user.gender or current_user.gender not in ["MALE", "FEMALE"]:
-            return NISMatchmakingService._no_match_response()
+            return NISMatchmakingService._no_match_response(max_candidates=pool_context.max_considered_candidates if pool_context else 3)
         if not current_user.has_required_data:
-            return NISMatchmakingService._no_match_response()
+            return NISMatchmakingService._no_match_response(max_candidates=pool_context.max_considered_candidates if pool_context else 3)
         if current_user.is_banned:
-            return NISMatchmakingService._no_match_response()
+            return NISMatchmakingService._no_match_response(max_candidates=pool_context.max_considered_candidates if pool_context else 3)
         if not current_user.is_verified:
-            return NISMatchmakingService._no_match_response()
+            return NISMatchmakingService._no_match_response(max_candidates=pool_context.max_considered_candidates if pool_context else 3)
         if current_user.safety_status in ("BLOCKED", "UNDER_REVIEW"):
-            return NISMatchmakingService._no_match_response()
+            return NISMatchmakingService._no_match_response(max_candidates=pool_context.max_considered_candidates if pool_context else 3)
 
         shown_candidates = []
 
@@ -124,7 +125,7 @@ class NISMatchmakingService:
             else:
                 reason = "STRICT_PREFERENCES_TOO_NARROW"
                 
-            return NISMatchmakingService._no_match_response(reason_category=reason)
+            return NISMatchmakingService._no_match_response(reason_category=reason, max_candidates=max_considered)
             
         # Rank and limit
         shown_candidates = rank_candidates(shown_candidates)
@@ -137,16 +138,26 @@ class NISMatchmakingService:
         # 8. If candidates pass
         return {
             "status": "HAS_CONSIDERED_CANDIDATES",
-            "candidates": shown_candidates
+            "candidates": shown_candidates,
+            "meta": {
+                "max_candidates": max_considered,
+                "source": "NIS",
+                "privacy_safe": True
+            }
         }
         
     @staticmethod
-    def _no_match_response(reason_category: str = "NO_ELIGIBLE_CANDIDATES", custom_message: str = None) -> dict:
+    def _no_match_response(reason_category: str = "NO_ELIGIBLE_CANDIDATES", custom_message: str = None, max_candidates: int = 3) -> dict:
         msg = custom_message if custom_message else "No suitable matches right now. NIS prefers no match over a wrong match."
         status = reason_category if reason_category == "ACTIVE_CONVERSATION_LIMIT_REACHED" else "NO_SUITABLE_MATCHES_RIGHT_NOW"
         return {
             "status": status,
             "candidates": [],
             "reason_category": reason_category,
-            "message": msg
+            "message": msg,
+            "meta": {
+                "max_candidates": max_candidates,
+                "source": "NIS",
+                "privacy_safe": True
+            }
         }

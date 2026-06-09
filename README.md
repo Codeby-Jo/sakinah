@@ -135,7 +135,7 @@ python -m pytest tests -ra
 - No FastAPI dependencies.
 - No Firebase integrations.
 
-## 13. Joshua Integration Contract (Backend)
+## 13. Backend-Safe NIS Response Contract
 
 Joshua should import and call the service as follows:
 
@@ -143,32 +143,20 @@ Joshua should import and call the service as follows:
 from nis.services.nis_matchmaking_service import NISMatchmakingService
 
 result = NISMatchmakingService.generate_considered_few(
-    current_user=current_user_profile_from_backend_or_db,
-    match_preference=match_preference_from_backend_or_db,
-    candidates=candidate_profiles_from_backend_or_db,
+    current_user=current_user_profile,
+    match_preference=match_preference,
+    candidates=candidate_pool,
+    pool_context=pool_context  # Optional but recommended
 )
 ```
 
-**Required Inputs**:
-- `current_user`: A validated `UserProfile` instance.
-- `match_preference`: A validated `MatchPreference` instance containing the seeker's preferred candidate criteria.
-- `candidates`: A list of `CandidateProfile` instances.
-
-**Expected Return Statuses**:
-- `HAS_CONSIDERED_CANDIDATES`
-- `NO_SUITABLE_MATCHES_RIGHT_NOW`
-
-## 14. Afreen Output Contract (Frontend)
-
-The frontend must process the output exactly as structured. It must **not** show blocked candidates.
-
-**Successful Match Response:**
+**Success Response:**
 ```json
 {
   "status": "HAS_CONSIDERED_CANDIDATES",
   "candidates": [
     {
-      "candidate_id": "candidate_strong",
+      "candidate_id": "candidate_123",
       "status": "SHOWN",
       "safe_summary": {
         "location": "Chennai",
@@ -177,7 +165,12 @@ The frontend must process the output exactly as structured. It must **not** show
         "communication_note": "Communication style is calm"
       }
     }
-  ]
+  ],
+  "meta": {
+    "max_candidates": 3,
+    "source": "NIS",
+    "privacy_safe": true
+  }
 }
 ```
 
@@ -186,9 +179,37 @@ The frontend must process the output exactly as structured. It must **not** show
 {
   "status": "NO_SUITABLE_MATCHES_RIGHT_NOW",
   "candidates": [],
-  "message": "No suitable matches right now. NIS prefers no match over a wrong match."
+  "reason_category": "STRICT_PREFERENCES_TOO_NARROW",
+  "message": "No suitable matches right now. NIS prefers no match over a wrong match.",
+  "meta": {
+    "max_candidates": 3,
+    "source": "NIS",
+    "privacy_safe": true
+  }
 }
 ```
+
+**Active Limit Response:**
+```json
+{
+  "status": "ACTIVE_CONVERSATION_LIMIT_REACHED",
+  "candidates": [],
+  "reason_category": "ACTIVE_CONVERSATION_LIMIT_REACHED",
+  "message": "Continue your current conversation before receiving new candidates.",
+  "meta": {
+    "max_candidates": 3,
+    "source": "NIS",
+    "privacy_safe": true
+  }
+}
+```
+
+* backend sends seeker, MatchPreference, candidate pool, and optional CandidatePoolContext
+* NIS returns safe standardized response
+* backend stores response
+* frontend displays only safe data
+* no frontend/backend should invent match decisions outside NIS
+* no scores/percentages/perfect-match wording should be shown
 
 ## 15. Mock Data Explanation
 For testing, `mock_users.py` acts like a mock database without external dependencies.

@@ -13,6 +13,8 @@ class MatchResult:
     Privacy rules for safe_summary:
     `safe_summary` must never include private notes, raw identity data, 
     raw KYC data, spiritual/worship data, or compatibility percentage.
+    
+    All responses must include a `meta` dictionary with `source="NIS"` and `privacy_safe=True`.
     """
     candidate_id: str | None
     status: str
