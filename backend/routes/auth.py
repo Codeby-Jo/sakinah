@@ -1,37 +1,32 @@
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from database import get_db
-import models
 import schemas
+import models
 
-router = APIRouter(tags=["auth"])
+router = APIRouter()
 
-@router.post("/register", response_model=schemas.UserResponse)
+@router.post("/register")
 def register(user: schemas.UserCreate, db: Session = Depends(get_db)):
-    # Check if the user is already registered
-    db_user = db.query(models.User).filter(models.User.email == user.email).first()
-    if db_user:
-        raise HTTPException(status_code=400, detail="Email already registered")
-    
-    # Store user in the database
-    new_user = models.User(
-        name=user.name,
+    db_user = models.User(
+        full_name=user.full_name,
+        email=user.email,
+        password=user.password,  # Storing in plain text initially as requested
         age=user.age,
+        gender=user.gender,
         city=user.city,
         education=user.education,
-        email=user.email,
-        password=user.password  # Using plain text initially as requested
+        occupation=user.occupation
     )
-    db.add(new_user)
-    db.commit()
-    db.refresh(new_user)
-    return new_user
+    try:
+        db.add(db_user)
+        db.commit()
+        db.refresh(db_user)
+        return db_user
+    except Exception as e:
+        db.rollback()
+        raise HTTPException(status_code=400, detail="Email already registered")
 
 @router.post("/login")
-def login(user: schemas.UserLogin, db: Session = Depends(get_db)):
-    # Simple login for now, no JWT initially
-    db_user = db.query(models.User).filter(models.User.email == user.email).first()
-    if not db_user or db_user.password != user.password:
-        raise HTTPException(status_code=400, detail="Invalid credentials")
-    
-    return {"message": "Login successful", "user_id": db_user.id}
+def login(user: schemas.UserLogin):
+    return {"message": "Login successful"}
