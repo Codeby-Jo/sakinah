@@ -3,6 +3,7 @@ from nis.models.match_preference import MatchPreference
 from nis.models.candidate_profile import CandidateProfile
 from nis.models.candidate_pool_context import CandidatePoolContext
 from nis.engines import safety_engine, hard_filter_engine, preference_engine, psychology_engine, confidence_engine
+from nis.engines.ranking_engine import calculate_internal_score, rank_candidates
 
 class NISMatchmakingService:
     @staticmethod
@@ -51,10 +52,6 @@ class NISMatchmakingService:
             if candidate.candidate_id in excluded_ids:
                 continue
 
-            # 6. Limit final considered candidates to maximum
-            if len(shown_candidates) >= max_considered:
-                break
-                
             # 3. Run engines
             s_res = safety_engine.evaluate_safety(candidate)
             h_res = hard_filter_engine.evaluate_hard_filters(current_user, candidate, match_preference)
@@ -70,6 +67,9 @@ class NISMatchmakingService:
             
             # 4. Add only candidates where final decision status is SHOWN
             if c_res.get("status") == "SHOWN":
+                # Calculate internal ranking score
+                score = calculate_internal_score(p_res, psy_res)
+
                 # Privacy-safe output: no private notes, no identity data, no scores
                 safe_summary = {
                     "location": candidate.profile.location,
@@ -82,12 +82,21 @@ class NISMatchmakingService:
                     "candidate_id": candidate.candidate_id,
                     "status": "SHOWN",
                     "reasons": c_res.get("reasons", []),
-                    "safe_summary": safe_summary
+                    "safe_summary": safe_summary,
+                    "_private_score": score
                 })
 
         # 7. If no candidates pass
         if not shown_candidates:
             return NISMatchmakingService._no_match_response()
+            
+        # Rank and limit
+        shown_candidates = rank_candidates(shown_candidates)
+        shown_candidates = shown_candidates[:max_considered]
+        
+        # Remove private score
+        for c in shown_candidates:
+            c.pop("_private_score", None)
             
         # 8. If candidates pass
         return {
