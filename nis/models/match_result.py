@@ -9,6 +9,7 @@ class MatchResult:
     REVIEW_REQUIRED
     NO_MATCH
     ACTIVE_CONVERSATION_LIMIT_REACHED
+    SEEKER_NOT_KYC_VERIFIED
 
     Privacy rules for safe_summary:
     `safe_summary` must never include private notes, raw identity data, 

@@ -235,3 +235,12 @@ For testing, `mock_users.py` acts like a mock database without external dependen
 - No database.
 - No FastAPI.
 - No Firebase.
+
+## 17. KYC Verification Gate
+
+Before NIS starts matchmaking, it checks whether the seeker is KYC verified.
+- Backend verifies KYC.
+- Backend passes only safe `is_verified` status to NIS.
+- NIS checks this before matchmaking.
+- If seeker is not verified, NIS refuses matchmaking safely with a `SEEKER_NOT_KYC_VERIFIED` status.
+- NIS never handles raw KYC identity data (no selfies, no Aadhaar, no government IDs).

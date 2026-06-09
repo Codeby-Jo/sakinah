@@ -28,8 +28,17 @@ class NISMatchmakingService:
             return NISMatchmakingService._no_match_response(max_candidates=pool_context.max_considered_candidates if pool_context else 3)
         if current_user.is_banned:
             return NISMatchmakingService._no_match_response(max_candidates=pool_context.max_considered_candidates if pool_context else 3)
-        if not current_user.is_verified:
-            return NISMatchmakingService._no_match_response(max_candidates=pool_context.max_considered_candidates if pool_context else 3)
+        if current_user.is_verified is not True:
+            return {
+                "status": "SEEKER_NOT_KYC_VERIFIED",
+                "candidates": [],
+                "reason_category": "SEEKER_NOT_KYC_VERIFIED",
+                "message": "KYC verification is required before matchmaking can begin.",
+                "meta": {
+                    "source": "NIS",
+                    "privacy_safe": True
+                }
+            }
         if current_user.safety_status in ("BLOCKED", "UNDER_REVIEW"):
             return NISMatchmakingService._no_match_response(max_candidates=pool_context.max_considered_candidates if pool_context else 3)
 
