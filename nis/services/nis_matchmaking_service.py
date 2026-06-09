@@ -1,6 +1,7 @@
 from nis.models.user_profile import UserProfile
 from nis.models.match_preference import MatchPreference
 from nis.models.candidate_profile import CandidateProfile
+from nis.models.candidate_pool_context import CandidatePoolContext
 from nis.engines import safety_engine, hard_filter_engine, preference_engine, psychology_engine, confidence_engine
 
 class NISMatchmakingService:
@@ -9,6 +10,7 @@ class NISMatchmakingService:
         current_user: UserProfile,
         match_preference: MatchPreference,
         candidates: list[CandidateProfile],
+        pool_context: CandidatePoolContext | None = None
     ) -> dict:
         
         # 1. Validate current_user
@@ -25,10 +27,21 @@ class NISMatchmakingService:
 
         shown_candidates = []
 
+        max_considered = pool_context.max_considered_candidates if pool_context else 5
+        excluded_ids = set()
+        if pool_context:
+            excluded_ids.update(pool_context.shown_candidate_ids)
+            excluded_ids.update(pool_context.passed_candidate_ids)
+            excluded_ids.update(pool_context.blocked_candidate_ids)
+            excluded_ids.update(pool_context.active_conversation_candidate_ids)
+
         # 2. Loop through candidates
         for candidate in candidates:
-            # 6. Limit final considered candidates to maximum 5
-            if len(shown_candidates) >= 5:
+            if candidate.candidate_id in excluded_ids:
+                continue
+
+            # 6. Limit final considered candidates to maximum
+            if len(shown_candidates) >= max_considered:
                 break
                 
             # 3. Run engines
