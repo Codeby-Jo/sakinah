@@ -36,3 +36,23 @@ class UserProfile:
     lifestyle_pattern: str
     safety_status: str
     private_notes: str | None = None
+
+    # Psychology v2 Fields
+    control_tendency: str = "UNKNOWN"
+    empathy_level: str = "UNKNOWN"
+    accountability_level: str = "UNKNOWN"
+    humility_level: str = "UNKNOWN"
+    boundary_respect: str = "UNKNOWN"
+    manipulation_risk: str = "UNKNOWN"
+    silent_treatment_pattern: str = "UNKNOWN"
+    gaslighting_risk: str = "UNKNOWN"
+    financial_control_tendency: str = "UNKNOWN"
+    family_pressure_misuse_risk: str = "UNKNOWN"
+    religious_control_risk: str = "UNKNOWN"
+    possessiveness_level: str = "UNKNOWN"
+    isolation_tendency: str = "UNKNOWN"
+    decision_fairness: str = "UNKNOWN"
+    softness_level: str = "UNKNOWN"
+    assertiveness_level: str = "UNKNOWN"
+    conflict_aggression_level: str = "UNKNOWN"
+    emotional_maturity: str = "UNKNOWN"

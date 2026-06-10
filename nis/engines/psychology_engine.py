@@ -1,5 +1,7 @@
 from nis.models.user_profile import UserProfile
 from nis.models.candidate_profile import CandidateProfile
+from nis.engines.psychology_risk_matrix import evaluate_risk_matrix
+from nis.engines.vulnerability_protection_engine import evaluate_vulnerability_protection
 
 def evaluate_psychology(current_user: UserProfile, candidate: CandidateProfile) -> dict:
     status = "PASSED"
@@ -13,6 +15,31 @@ def evaluate_psychology(current_user: UserProfile, candidate: CandidateProfile) 
     weak_repair_styles = ["DEFENSIVE", "BLAME_SHIFTING", "AVOIDANT"]
     defensive_styles = ["DEFENSIVE", "BLAME_SHIFTING"]
 
+    # ---------------------------------------------------------
+    # PSYCHOLOGY V2 EVALUATION
+    # ---------------------------------------------------------
+    risk_status = evaluate_risk_matrix(u, c)
+    if risk_status == "DANGEROUS_PAIRING_BLOCKED":
+        status = "BLOCKED"
+        # We do NOT expose dangerous labels, we use a generic internal reason
+        reasons.append("Psychological traits indicate a potentially harmful dynamic.")
+        dangerous_dynamics.append("High risk pairing blocked internally.")
+    
+    vuln_status = evaluate_vulnerability_protection(u, c)
+    if vuln_status == "DANGEROUS_PAIRING_BLOCKED":
+        status = "BLOCKED"
+        reasons.append("Mismatch in boundary strength and control tendency.")
+        dangerous_dynamics.append("Vulnerability mismatch blocked internally.")
+
+    # If WEAK_COMPATIBILITY but not blocked, lower ranking status
+    if status != "BLOCKED" and (risk_status == "WEAK_COMPATIBILITY" or vuln_status == "WEAK_COMPATIBILITY"):
+        status = "WEAK"
+        reasons.append("Psychological traits indicate weak compatibility.")
+    
+    # ---------------------------------------------------------
+    # EXISTING PSYCHOLOGY V1 EVALUATION
+    # ---------------------------------------------------------
+    
     # Block or flag:
     
     # 7. Either user not ready

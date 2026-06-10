@@ -4,6 +4,7 @@ from nis.models.candidate_profile import CandidateProfile
 from nis.models.candidate_pool_context import CandidatePoolContext
 from nis.engines import safety_engine, hard_filter_engine, preference_engine, psychology_engine, confidence_engine
 from nis.engines.ranking_engine import calculate_internal_score, rank_candidates
+from nis.engines.human_review_trigger_engine import evaluate_human_review_trigger
 
 class NISMatchmakingService:
     @staticmethod
@@ -105,7 +106,6 @@ class NISMatchmakingService:
 
                 continue
 
-            # Privacy-safe output: no private notes, no identity data, no scores
             safe_summary = {
                 "location": candidate.profile.location,
                 "tradition": candidate.profile.tradition,
@@ -113,13 +113,21 @@ class NISMatchmakingService:
                 "communication_note": f"Communication style is {candidate.profile.communication_style.lower()}"
             }
             
-            shown_candidates.append({
+            review_status = evaluate_human_review_trigger(candidate.profile)
+            
+            cand_dict = {
                 "candidate_id": candidate.candidate_id,
                 "status": "SHOWN",
                 "reasons": c_res.get("reasons", []),
                 "safe_summary": safe_summary,
                 "_private_score": score
-            })
+            }
+            
+            if review_status.get("requires_human_review"):
+                cand_dict["_requires_human_review"] = True
+                cand_dict["_review_category"] = review_status.get("review_category")
+                
+            shown_candidates.append(cand_dict)
 
         # 7. If no candidates pass
         if not shown_candidates:

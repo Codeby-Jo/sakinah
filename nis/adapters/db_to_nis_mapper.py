@@ -36,7 +36,25 @@ def map_db_user_to_user_profile(db_user: dict) -> UserProfile:
         financial_responsibility=db_user.get("financial_responsibility"),
         lifestyle_pattern=db_user.get("lifestyle_pattern"),
         safety_status=db_user.get("safety_status"),
-        private_notes=db_user.get("private_notes")
+        private_notes=db_user.get("private_notes"),
+        control_tendency=db_user.get("control_tendency", "UNKNOWN"),
+        empathy_level=db_user.get("empathy_level", "UNKNOWN"),
+        accountability_level=db_user.get("accountability_level", "UNKNOWN"),
+        humility_level=db_user.get("humility_level", "UNKNOWN"),
+        boundary_respect=db_user.get("boundary_respect", "UNKNOWN"),
+        manipulation_risk=db_user.get("manipulation_risk", "UNKNOWN"),
+        silent_treatment_pattern=db_user.get("silent_treatment_pattern", "UNKNOWN"),
+        gaslighting_risk=db_user.get("gaslighting_risk", "UNKNOWN"),
+        financial_control_tendency=db_user.get("financial_control_tendency", "UNKNOWN"),
+        family_pressure_misuse_risk=db_user.get("family_pressure_misuse_risk", "UNKNOWN"),
+        religious_control_risk=db_user.get("religious_control_risk", "UNKNOWN"),
+        possessiveness_level=db_user.get("possessiveness_level", "UNKNOWN"),
+        isolation_tendency=db_user.get("isolation_tendency", "UNKNOWN"),
+        decision_fairness=db_user.get("decision_fairness", "UNKNOWN"),
+        softness_level=db_user.get("softness_level", "UNKNOWN"),
+        assertiveness_level=db_user.get("assertiveness_level", "UNKNOWN"),
+        conflict_aggression_level=db_user.get("conflict_aggression_level", "UNKNOWN"),
+        emotional_maturity=db_user.get("emotional_maturity", "UNKNOWN")
     )
 
 def map_db_candidate_to_candidate_profile(db_candidate: dict) -> CandidateProfile:

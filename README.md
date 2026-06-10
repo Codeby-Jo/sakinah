@@ -244,3 +244,12 @@ Before NIS starts matchmaking, it checks whether the seeker is KYC verified.
 - NIS checks this before matchmaking.
 - If seeker is not verified, NIS refuses matchmaking safely with a `SEEKER_NOT_KYC_VERIFIED` status.
 - NIS never handles raw KYC identity data (no selfies, no Aadhaar, no government IDs).
+
+## 18. Phase 22 - Psychology v2
+- Scenario answer mapper added
+- Risk matrix added
+- Vulnerability protection layer added
+- Dangerous pairing blocks implemented
+- Human review triggers added
+- Privacy-safe response tests implemented
+- Total tests passing: 153

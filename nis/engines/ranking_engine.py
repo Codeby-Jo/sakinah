@@ -12,6 +12,9 @@ def calculate_internal_score(preference_result: dict, psychology_result: dict) -
     score += len(psychology_result.get("healthy_complementarity", [])) * 15
     score -= len(psychology_result.get("dangerous_dynamics", [])) * 25
     
+    if psychology_result.get("status") == "WEAK":
+        score -= 50
+    
     return score
 
 def rank_candidates(candidates_with_scores: list[dict]) -> list[dict]:
