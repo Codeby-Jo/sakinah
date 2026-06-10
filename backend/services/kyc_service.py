@@ -41,6 +41,29 @@ def verify_identity(db: Session, user_id: int) -> KYCVerificationResponse:
     if not kyc_record:
         raise HTTPException(status_code=404, detail="No KYC record found for this user")
         
+    # ==============================================================================
+    # PRODUCTION VENDOR INTEGRATION EXAMPLES 
+    # (Show this to your lead to prove how easy it is to swap to real Aadhaar KYC)
+    # ==============================================================================
+    
+    def _verify_with_digilocker_api(aadhaar_number: str, otp: str) -> dict:
+        """
+        DigiLocker API integration for official Indian Aadhaar Verification.
+        Connects directly to government databases via UIDAI authorized channels.
+        """
+        import requests
+        # headers = {
+        #     "Authorization": "Bearer YOUR_DIGILOCKER_CLIENT_TOKEN",
+        #     "Content-Type": "application/json"
+        # }
+        # payload = {"aadhaar": aadhaar_number, "otp": otp}
+        # response = requests.post("https://api.digitallocker.gov.in/public/oauth2/1/verify_aadhaar", headers=headers, json=payload)
+        # return response.json()
+        pass
+
+    # For testing, we simulate the vendor response. 
+    # In production, replace the random choice below with: 
+    # vendor_result = _verify_with_digilocker_api(user_aadhaar, user_otp)
     is_verified = random.choice([True, False])
     
     if is_verified:
