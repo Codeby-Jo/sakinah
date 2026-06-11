@@ -142,11 +142,11 @@ export default function ProfileSetup() {
   const [showSuccess, setShowSuccess] = useState(false);
 
   const [form, setForm] = useState({
-    firstName: '', lastName: '', gender: '', dob: '', location: '',
-    religion: '', maritalStatus: '',
+    firstName: '', lastName: '', gender: '', dob: '', location: '', height_cm: '',
+    religion: '', tradition: '', islamic_environment_preference: '', maritalStatus: '',
     fatherOccupation: '', siblings: '', familyDescription: '',
-    education: '', occupation: '',
-    bio: '',
+    education: '', occupation: '', work_outlook: '',
+    bio: '', marriage_readiness: '',
   });
   const [errors, setErrors] = useState<Record<string, string>>({});
   const set = (f: string) => (v: string) => setForm(p => ({ ...p, [f]: v }));
@@ -162,14 +162,19 @@ export default function ProfileSetup() {
       if (!form.gender)           e.gender    = 'Gender is required';
       if (!form.dob)              e.dob       = 'Date of birth is required';
       if (!form.location)         e.location  = 'Location is required';
+      if (!form.height_cm)        e.height_cm = 'Height is required';
+      if (!form.marriage_readiness) e.marriage_readiness = 'Required';
     }
     if (section === 'Religious') {
       if (!form.religion)      e.religion      = 'Required';
+      if (!form.tradition)     e.tradition     = 'Required';
+      if (!form.islamic_environment_preference) e.islamic_environment_preference = 'Required';
       if (!form.maritalStatus) e.maritalStatus = 'Required';
     }
     if (section === 'Career') {
       if (!form.education)  e.education  = 'Required';
       if (!form.occupation) e.occupation = 'Required';
+      if (!form.work_outlook) e.work_outlook = 'Required';
     }
     if (section === 'About Me' && !form.bio.trim())  e.bio   = 'Please write a short introduction';
     if (section === 'Photo'   && !photo)              e.photo = 'A profile photo is required';
@@ -241,18 +246,50 @@ export default function ProfileSetup() {
             </Select>
             <Input label="Date of Birth" value={form.dob} onChange={set('dob')} type="date" error={errors.dob} />
           </div>
-          <Combo label="Location" value={form.location} onChange={set('location')} options={locations} placeholder="Type your city…" error={errors.location} />
+          <div className="grid sm:grid-cols-2 gap-5">
+            <Input label="Height (cm)" value={form.height_cm} onChange={set('height_cm')} type="number" placeholder="e.g. 175" error={errors.height_cm} />
+            <Combo label="Location" value={form.location} onChange={set('location')} options={locations} placeholder="Type your city…" error={errors.location} />
+          </div>
+          <Select label="Marriage Readiness" value={form.marriage_readiness} onChange={set('marriage_readiness')} error={errors.marriage_readiness}>
+            <option value="">Select Option</option>
+            <option value="READY_NOW">Ready to marry right now</option>
+            <option value="WITHIN_6_MONTHS">Within 6 months</option>
+            <option value="WITHIN_1_YEAR">Within 1 year</option>
+            <option value="EXPLORING">Just exploring right now</option>
+          </Select>
         </>}
 
         {activeSection === 'Religious' && <>
           <SectionCard icon="🕌" title="Religious Background" subtitle="Faith and values form the foundation of marriage." />
           <Select label="Level of Practice" value={form.religion} onChange={set('religion')} error={errors.religion}>
             <option value="">Select…</option>
-            <option>Highly Practicing</option><option>Moderately Practicing</option><option>Culturally Muslim</option>
+            <option value="HIGHLY_PRACTICING">Highly Practicing</option>
+            <option value="MODERATELY_PRACTICING">Moderately Practicing</option>
+            <option value="CULTURALLY_MUSLIM">Culturally Muslim</option>
+          </Select>
+          <Select label="Islamic Tradition / Madhhab" value={form.tradition} onChange={set('tradition')} error={errors.tradition}>
+            <option value="">Select Option</option>
+            <option value="SUNNI_HANAFI">Sunni (Hanafi)</option>
+            <option value="SUNNI_SHAFI">Sunni (Shafi'i)</option>
+            <option value="SUNNI_MALIKI">Sunni (Maliki)</option>
+            <option value="SUNNI_HANBALI">Sunni (Hanbali)</option>
+            <option value="SUNNI_AHL_AL_HADITH">Sunni (Ahl al-Hadith / Salafi)</option>
+            <option value="SHIA_TWELVER">Shia (Twelver)</option>
+            <option value="JUST_MUSLIM">Just Muslim / No specific Madhhab</option>
+            <option value="OTHER">Other</option>
+          </Select>
+          <Select label="Preferred Islamic Home Environment" value={form.islamic_environment_preference} onChange={set('islamic_environment_preference')} error={errors.islamic_environment_preference}>
+            <option value="">Select Option</option>
+            <option value="HIGHLY_TRADITIONAL">Highly Traditional / Strict</option>
+            <option value="BALANCED_ISLAMIC_HOME">Balanced Islamic Home</option>
+            <option value="MODERN_PRACTICING">Modern but Practicing</option>
+            <option value="FLEXIBLE">Flexible / Relaxed</option>
           </Select>
           <Select label="Marital Status" value={form.maritalStatus} onChange={set('maritalStatus')} error={errors.maritalStatus}>
             <option value="">Select…</option>
-            <option>Single – Never Married</option><option>Divorced</option><option>Widowed</option>
+            <option value="NEVER_MARRIED">Single – Never Married</option>
+            <option value="DIVORCED">Divorced</option>
+            <option value="WIDOWED">Widowed</option>
           </Select>
         </>}
 
@@ -270,8 +307,17 @@ export default function ProfileSetup() {
 
         {activeSection === 'Career' && <>
           <SectionCard icon="🎓" title="Education & Career" subtitle="Your academic and professional background." />
-          <Combo label="Education Level" value={form.education} onChange={set('education')} options={educations} placeholder="e.g. Bachelor's Degree…" error={errors.education} />
-          <Combo label="Occupation"      value={form.occupation} onChange={set('occupation')} options={occupations} placeholder="e.g. Engineer…" error={errors.occupation} />
+          <div className="grid sm:grid-cols-2 gap-5">
+            <Combo label="Education Level" value={form.education} onChange={set('education')} options={educations} placeholder="e.g. Bachelor's Degree…" error={errors.education} />
+            <Select label="Work Outlook" value={form.work_outlook} onChange={set('work_outlook')} error={errors.work_outlook}>
+              <option value="">Select Option</option>
+              <option value="CAREER_FOCUSED">Highly Career Focused</option>
+              <option value="BALANCED">Balanced Work/Life</option>
+              <option value="FAMILY_FIRST">Family First (Work is secondary)</option>
+              <option value="PREFER_NOT_TO_WORK">Prefer not to work / Homemaker</option>
+            </Select>
+          </div>
+          <Combo label="Occupation" value={form.occupation} onChange={set('occupation')} options={occupations} placeholder="e.g. Engineer…" error={errors.occupation} />
         </>}
 
         {activeSection === 'About Me' && <>

@@ -25,8 +25,8 @@ export default function MatchResults() {
     return (
       <div className="max-w-lg mx-auto px-6 py-24 text-center">
         <div className="text-5xl mb-5">🕌</div>
-        <h2 className="text-2xl font-bold text-gray-900 mb-3">No More Profiles</h2>
-        <p className="text-gray-500 text-sm mb-8">You have reviewed all available profiles. New matches are added as more members complete their verification.</p>
+        <h2 className="text-2xl font-bold text-gray-900 mb-3">No Matches Curated Yet</h2>
+        <p className="text-gray-500 text-sm mb-8">No suitable matches right now. Sakinah would rather wait than show the wrong person.</p>
         <Link to="/dashboard" className="text-[#7B1C2E] font-semibold hover:underline text-sm">← Return to Dashboard</Link>
       </div>
     );
