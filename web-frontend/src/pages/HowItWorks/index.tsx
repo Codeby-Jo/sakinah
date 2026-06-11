@@ -17,7 +17,7 @@ export default function HowItWorks() {
     <div className="bg-white">
       {/* Hero */}
       <div className="bg-gray-50 border-b border-gray-100 py-14 text-center px-6">
-        <span className="inline-block bg-red-50 text-[#7B1C2E] text-xs font-semibold px-3 py-1.5 rounded-full mb-4 uppercase tracking-wide">
+        <span className="inline-block bg-red-50 text-[#0A192F] text-xs font-semibold px-3 py-1.5 rounded-full mb-4 uppercase tracking-wide">
           The Process
         </span>
         <h1 className="text-3xl md:text-4xl font-extrabold text-gray-900 mb-3">How Sakinah Works</h1>
@@ -28,8 +28,8 @@ export default function HowItWorks() {
       <div className="max-w-5xl mx-auto px-6 py-14">
         <div className="grid md:grid-cols-3 gap-5">
           {steps.map(step => (
-            <div key={step.num} className="bg-white border border-gray-200 rounded-xl p-6 hover:border-[#7B1C2E]/40 hover:shadow-sm transition-all">
-              <div className="w-9 h-9 rounded-lg bg-[#7B1C2E] text-white text-sm font-bold flex items-center justify-center mb-4">
+            <div key={step.num} className="bg-white border border-gray-200 rounded-xl p-6 hover:border-[#0A192F]/40 hover:shadow-sm transition-all">
+              <div className="w-9 h-9 rounded-lg bg-[#0A192F] text-white text-sm font-bold flex items-center justify-center mb-4">
                 {step.num}
               </div>
               <h3 className="font-bold text-gray-900 text-base mb-2">{step.title}</h3>
@@ -40,7 +40,7 @@ export default function HowItWorks() {
 
         <div className="text-center mt-12">
           <Link to="/choose-role"
-            className="inline-block bg-[#7B1C2E] text-white px-10 py-3.5 rounded-lg font-semibold text-sm hover:bg-[#5e1522] transition-colors shadow-sm"
+            className="inline-block bg-[#0A192F] text-white px-10 py-3.5 rounded-lg font-semibold text-sm hover:bg-[#040d1a] transition-colors shadow-sm"
           >
             Start Your Journey — Free
           </Link>

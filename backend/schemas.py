@@ -72,6 +72,9 @@ class MatchPreferenceRequest(BaseModel):
     repairStyle: str
     angerLevel: str
     boundaryStrength: str
+    emotionalSteadiness: str
+    financialResp: str
+    lifestyle: str
     disagreementResponse: str
     familyPressureResponse: str
     accountabilityResponse: str

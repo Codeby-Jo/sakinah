@@ -3,6 +3,7 @@ import { createBrowserRouter, Navigate } from 'react-router-dom';
 // Layouts
 import PublicLayout     from '../layouts/PublicLayout';
 import OnboardingLayout from '../layouts/OnboardingLayout';
+import AppLayout        from '../layouts/AppLayout';
 
 // ── Public / Marketing ──────────────────────────────────────────────────────
 import Landing      from '../pages/Landing';
@@ -17,12 +18,14 @@ import Terms        from '../pages/Terms';
 import ChooseRole   from '../pages/ChooseRole';
 import Register     from '../pages/Register';
 import Login        from '../pages/Login';
+import ForgotPassword from '../pages/ForgotPassword';
+import EmailVerification from '../pages/EmailVerification';
 import ProfileSetup from '../pages/ProfileSetup';
 import ProfileReview from '../pages/ProfileReview';
 import KYC          from '../pages/KYC';
 import Preferences  from '../pages/Preferences';
 
-// ── App Core (logo + stepper) ────────────────────────────────────────────────
+// ── App Core (Private Header) ───────────────────────────────────────────────
 import Dashboard      from '../pages/Dashboard';
 import MatchGeneration from '../pages/MatchGeneration';
 import MatchResults   from '../pages/MatchResults';
@@ -56,10 +59,20 @@ export const router = createBrowserRouter([
       { path: 'choose-role',   element: <ChooseRole /> },
       { path: 'register',      element: <Register /> },
       { path: 'login',         element: <Login /> },
+      { path: 'forgot-password', element: <ForgotPassword /> },
+      { path: 'verify-email',  element: <EmailVerification /> },
       { path: 'profile-setup', element: <ProfileSetup /> },
       { path: 'profile-review', element: <ProfileReview /> },
       { path: 'kyc',           element: <KYC /> },
       { path: 'preferences',   element: <Preferences /> },
+    ],
+  },
+
+  // ── App Core routes (Private Dashboard Header) ──────────
+  {
+    path: '/',
+    element: <AppLayout />,
+    children: [
       { path: 'dashboard',     element: <Dashboard /> },
       { path: 'match-generation', element: <MatchGeneration /> },
       { path: 'matches',       element: <MatchResults /> },

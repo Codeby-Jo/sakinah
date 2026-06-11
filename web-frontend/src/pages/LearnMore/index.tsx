@@ -56,7 +56,7 @@ export default function LearnMore() {
 
         <div className="text-center pt-4">
           <Link to="/choose-role"
-            className="inline-block bg-[#7B1C2E] text-white px-8 py-3 rounded-lg font-semibold text-sm hover:bg-[#5e1522] transition-colors"
+            className="inline-block bg-[#0A192F] text-white px-8 py-3 rounded-lg font-semibold text-sm hover:bg-[#040d1a] transition-colors"
           >
             Get Started — It's Free
           </Link>

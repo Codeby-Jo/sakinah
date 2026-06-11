@@ -33,10 +33,13 @@ def register(user: schemas.UserCreate, db: Session = Depends(get_db)):
         db.rollback()
         raise HTTPException(status_code=400, detail="Email already registered")
 
+from sqlalchemy import func
+
 @router.post("/login")
 def login(form_data: OAuth2PasswordRequestForm = Depends(), db: Session = Depends(get_db)):
-    # 1. Fetch user by email (OAuth2 username field acts as email)
-    user = db.query(models.User).filter(models.User.email == form_data.username).first()
+    # 1. Fetch user by email (case-insensitive and trimmed)
+    email_lower = form_data.username.strip().lower()
+    user = db.query(models.User).filter(func.lower(models.User.email) == email_lower).first()
     
     # 2. Prevent hackers by verifying the hashed password
     if not user or not verify_password(form_data.password, user.password):

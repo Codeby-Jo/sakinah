@@ -62,7 +62,7 @@ function Input({ label, value, onChange, error, placeholder = '', type = 'text',
       </label>
       <input type={type} value={value} placeholder={placeholder}
         onChange={e => onChange(e.target.value)}
-        className={`w-full px-4 py-2.5 border ${error ? 'border-red-400 bg-red-50' : 'border-gray-300'} rounded-lg text-gray-800 text-sm placeholder-gray-400 focus:ring-2 focus:ring-[#7B1C2E]/30 focus:border-[#7B1C2E] outline-none transition-all`}
+        className={`w-full px-4 py-2.5 border ${error ? 'border-red-400 bg-red-50' : 'border-gray-300'} rounded-lg text-gray-800 text-sm placeholder-gray-400 focus:ring-2 focus:ring-[#0A192F]/30 focus:border-[#0A192F] outline-none transition-all`}
       />
       {error && <p className="text-red-500 text-xs mt-1">{error}</p>}
     </div>
@@ -79,7 +79,7 @@ function Select({ label, value, onChange, children, error, required = true }: {
         {label} {required && <span className="text-red-500">*</span>}
       </label>
       <select value={value} onChange={e => onChange(e.target.value)}
-        className={`w-full px-4 py-2.5 border ${error ? 'border-red-400 bg-red-50' : 'border-gray-300'} rounded-lg text-gray-800 text-sm focus:ring-2 focus:ring-[#7B1C2E]/30 focus:border-[#7B1C2E] outline-none appearance-none bg-white transition-all`}
+        className={`w-full px-4 py-2.5 border ${error ? 'border-red-400 bg-red-50' : 'border-gray-300'} rounded-lg text-gray-800 text-sm focus:ring-2 focus:ring-[#0A192F]/30 focus:border-[#0A192F] outline-none appearance-none bg-white transition-all`}
       >
         {children}
       </select>
@@ -103,7 +103,7 @@ function Combo({ label, value, onChange, options, placeholder, error, required =
         onChange={e => { onChange(e.target.value); setOpen(true); }}
         onFocus={() => setOpen(true)}
         onBlur={() => setOpen(false)}
-        className={`w-full px-4 py-2.5 border ${error ? 'border-red-400 bg-red-50' : 'border-gray-300'} rounded-lg text-gray-800 text-sm placeholder-gray-400 focus:ring-2 focus:ring-[#7B1C2E]/30 focus:border-[#7B1C2E] outline-none transition-all`}
+        className={`w-full px-4 py-2.5 border ${error ? 'border-red-400 bg-red-50' : 'border-gray-300'} rounded-lg text-gray-800 text-sm placeholder-gray-400 focus:ring-2 focus:ring-[#0A192F]/30 focus:border-[#0A192F] outline-none transition-all`}
       />
       {open && filtered.length > 0 && (
         <div className="absolute z-20 w-full mt-1 bg-white border border-gray-200 rounded-lg shadow-lg max-h-52 overflow-y-auto">
@@ -233,7 +233,7 @@ export default function ProfileSetup() {
             <button key={s} onClick={() => setActiveSection(s)}
               className={[
                 'flex-shrink-0 px-4 py-2 rounded-full text-xs font-semibold transition-all border',
-                isActive ? 'bg-[#7B1C2E] text-white border-[#7B1C2E]' :
+                isActive ? 'bg-[#0A192F] text-white border-[#0A192F]' :
                 isDone   ? 'bg-green-50 text-green-700 border-green-200' :
                            'bg-white text-gray-500 border-gray-200 hover:border-gray-300',
               ].join(' ')}
@@ -314,7 +314,7 @@ export default function ProfileSetup() {
             <label className="block text-sm font-medium text-gray-700 mb-1.5">Family Description</label>
             <textarea rows={4} value={form.familyDescription} onChange={e => setForm(f => ({ ...f, familyDescription: e.target.value }))}
               placeholder="Describe your family background and home environment…"
-              className="w-full px-4 py-2.5 border border-gray-300 rounded-lg text-gray-800 text-sm placeholder-gray-400 focus:ring-2 focus:ring-[#7B1C2E]/30 focus:border-[#7B1C2E] outline-none" />
+              className="w-full px-4 py-2.5 border border-gray-300 rounded-lg text-gray-800 text-sm placeholder-gray-400 focus:ring-2 focus:ring-[#0A192F]/30 focus:border-[#0A192F] outline-none" />
           </div>
         </>}
 
@@ -339,7 +339,7 @@ export default function ProfileSetup() {
             <label className="block text-sm font-medium text-gray-700 mb-1.5">About Me <span className="text-red-500">*</span></label>
             <textarea rows={6} value={form.bio} onChange={e => setForm(f => ({ ...f, bio: e.target.value }))}
               placeholder="Describe your values, what you seek in a spouse, and your vision for married life…"
-              className={`w-full px-4 py-2.5 border ${errors.bio ? 'border-red-400 bg-red-50' : 'border-gray-300'} rounded-lg text-gray-800 text-sm placeholder-gray-400 focus:ring-2 focus:ring-[#7B1C2E]/30 focus:border-[#7B1C2E] outline-none`} />
+              className={`w-full px-4 py-2.5 border ${errors.bio ? 'border-red-400 bg-red-50' : 'border-gray-300'} rounded-lg text-gray-800 text-sm placeholder-gray-400 focus:ring-2 focus:ring-[#0A192F]/30 focus:border-[#0A192F] outline-none`} />
             {errors.bio && <p className="text-red-500 text-xs mt-1">{errors.bio}</p>}
           </div>
         </>}
@@ -349,14 +349,14 @@ export default function ProfileSetup() {
           <input type="file" accept="image/jpeg,image/png,image/jpg" className="hidden" ref={fileRef} onChange={handleFile} />
           {!photoPreview ? (
             <div onClick={() => fileRef.current?.click()}
-              className={`border-2 border-dashed ${errors.photo ? 'border-red-400' : 'border-gray-300 hover:border-[#7B1C2E]/50'} rounded-xl p-12 text-center cursor-pointer bg-gray-50 transition-colors`}>
+              className={`border-2 border-dashed ${errors.photo ? 'border-red-400' : 'border-gray-300 hover:border-[#0A192F]/50'} rounded-xl p-12 text-center cursor-pointer bg-gray-50 transition-colors`}>
               <div className="text-4xl mb-3">📸</div>
               <p className="text-gray-700 font-semibold text-sm">Click to upload your photo</p>
               <p className="text-gray-400 text-xs mt-1">JPG or PNG — max 5MB</p>
             </div>
           ) : (
             <div className="flex items-center gap-4 bg-gray-50 border border-gray-200 rounded-xl p-4">
-              <div className="w-16 h-16 rounded-full overflow-hidden border-2 border-[#7B1C2E]/30 flex-shrink-0">
+              <div className="w-16 h-16 rounded-full overflow-hidden border-2 border-[#0A192F]/30 flex-shrink-0">
                 <img src={photoPreview} alt="Preview" className="w-full h-full object-cover" />
               </div>
               <div className="flex-1">
@@ -384,7 +384,7 @@ export default function ProfileSetup() {
             ← Back
           </button>
           <button type="button" onClick={goNext}
-            className="bg-[#7B1C2E] text-white px-8 py-2.5 rounded-lg font-semibold text-sm hover:bg-[#5e1522] transition-colors shadow-sm">
+            className="bg-[#0A192F] text-white px-8 py-2.5 rounded-lg font-semibold text-sm hover:bg-[#040d1a] transition-colors shadow-sm disabled:opacity-50 disabled:cursor-not-allowed">
             {sIdx === SECTIONS.length - 1 ? 'Complete Profile' : 'Save & Continue →'}
           </button>
         </div>

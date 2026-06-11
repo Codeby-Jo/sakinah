@@ -5,12 +5,13 @@ const ONBOARDING_STEPS = [
   { id: 1, name: 'Role',      path: '/choose-role'   },
   { id: 2, name: 'Register',  path: '/register'      },
   { id: 3, name: 'Login',     path: '/login'         },
-  { id: 4, name: 'Profile',   path: '/profile-setup' },
-  { id: 5, name: 'KYC',       path: '/kyc'           },
-  { id: 6, name: 'Preferences', path: '/preferences' },
-  { id: 7, name: 'Dashboard', path: '/dashboard'     },
-  { id: 8, name: 'Matches',   path: '/matches'       },
-  { id: 9, name: 'Chat',      path: '/chat'          },
+  { id: 4, name: 'Verify',    path: '/verify-email'  },
+  { id: 5, name: 'Profile',   path: '/profile-setup' },
+  { id: 6, name: 'KYC',       path: '/kyc'           },
+  { id: 7, name: 'Preferences', path: '/preferences' },
+  { id: 8, name: 'Dashboard', path: '/dashboard'     },
+  { id: 9, name: 'Matches',   path: '/matches'       },
+  { id: 10, name: 'Chat',     path: '/chat'          },
 ];
 
 const STEPPER_PATHS = new Set(ONBOARDING_STEPS.map(s => s.path).concat([
@@ -19,6 +20,10 @@ const STEPPER_PATHS = new Set(ONBOARDING_STEPS.map(s => s.path).concat([
 ]));
 
 function getCurrentStepIndex(pathname: string): number {
+  if (pathname === '/interest-sent' || pathname === '/mutual-interest') return 7; // Highlight 'Matches'
+  if (pathname === '/match-generation') return 6; // Highlight 'Dashboard'
+  if (pathname === '/profile-review') return 3; // Highlight 'Profile'
+  
   for (let i = ONBOARDING_STEPS.length - 1; i >= 0; i--) {
     if (ONBOARDING_STEPS[i].path === pathname) return i;
   }
@@ -41,11 +46,13 @@ export default function ProgressStepper() {
             const isActive    = i === currentIdx;
 
             return (
-              <div key={step.id} className={`flex items-start ${i < ONBOARDING_STEPS.length - 1 ? 'flex-1' : ''}`}>
-                <div className="flex flex-col items-center gap-1.5 flex-shrink-0">
+              <div key={step.id} className={`flex flex-col relative ${i < ONBOARDING_STEPS.length - 1 ? 'flex-1' : 'w-16'}`}>
+                {/* Top Row: Circle and Line */}
+                <div className="flex items-center w-full">
+                  {/* Circle */}
                   <div className={[
-                    'flex items-center justify-center rounded-full font-bold transition-all duration-300 text-xs',
-                    isActive    ? 'w-9 h-9 bg-[#7B1C2E] text-white shadow-md ring-4 ring-[#7B1C2E]/20'
+                    'flex items-center justify-center rounded-full font-bold transition-all duration-300 text-xs z-10 flex-shrink-0 mx-auto',
+                    isActive    ? 'w-9 h-9 bg-[#0A192F] text-white shadow-md ring-4 ring-[#0A192F]/20'
                     : isCompleted ? 'w-8 h-8 bg-green-600 text-white'
                                   : 'w-8 h-8 bg-gray-100 text-gray-400 border border-gray-200',
                   ].join(' ')}>
@@ -55,21 +62,27 @@ export default function ProgressStepper() {
                       </svg>
                     ) : step.id}
                   </div>
+
+                  {/* Line connecting to the next step */}
+                  {i < ONBOARDING_STEPS.length - 1 && (
+                    <div className="flex-1 h-0.5 rounded-full overflow-hidden bg-gray-200 absolute w-[calc(100%-2rem)] left-[calc(50%+1rem)] top-[1.125rem] -translate-y-1/2">
+                      <div className="h-full rounded-full transition-all duration-500" style={{
+                        width: isCompleted ? '100%' : '0%',
+                        backgroundColor: '#16a34a',
+                      }} />
+                    </div>
+                  )}
+                </div>
+
+                {/* Bottom Row: Label */}
+                <div className="mt-2 text-center">
                   <span className={[
                     'text-xs font-medium whitespace-nowrap',
-                    isActive ? 'text-[#7B1C2E] font-semibold' : isCompleted ? 'text-green-600' : 'text-gray-400',
+                    isActive ? 'text-[#0A192F] font-semibold' : isCompleted ? 'text-green-600' : 'text-gray-400',
                   ].join(' ')}>
                     {step.name}
                   </span>
                 </div>
-                {i < ONBOARDING_STEPS.length - 1 && (
-                  <div className="flex-1 mx-1 mt-4 h-0.5 rounded-full overflow-hidden bg-gray-200">
-                    <div className="h-full rounded-full transition-all duration-500" style={{
-                      width: isCompleted ? '100%' : '0%',
-                      backgroundColor: '#16a34a',
-                    }} />
-                  </div>
-                )}
               </div>
             );
           })}
@@ -77,7 +90,7 @@ export default function ProgressStepper() {
 
         {/* Mobile */}
         <div className="sm:hidden text-center py-1">
-          <span className="text-[#7B1C2E] font-semibold text-sm">
+          <span className="text-[#0A192F] font-semibold text-sm">
             Step {currentIdx + 1} of {ONBOARDING_STEPS.length}: {ONBOARDING_STEPS[currentIdx]?.name}
           </span>
         </div>

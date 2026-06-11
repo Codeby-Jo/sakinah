@@ -13,3 +13,10 @@ yarn-error.log*
 .cache/
 .vite/
 coverage/
+
+__pycache__/
+test.db
+backend/uploads/
+backend/test_*.py
+.venv/
+

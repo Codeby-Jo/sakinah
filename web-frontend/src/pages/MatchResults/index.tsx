@@ -1,20 +1,28 @@
 import { Link, useNavigate } from 'react-router-dom';
 import { useState, useEffect } from 'react';
 import { authPost } from '../../lib/api';
+import { useAppContext } from '../../context/AppContext';
 
 export default function MatchResults() {
+  const { state, setMatches } = useAppContext();
   const navigate = useNavigate();
   const [currentIdx, setCurrentIdx] = useState(0);
-  const [activeProfiles, setActiveProfiles] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
 
+  const activeProfiles = state.matches || [];
+
   useEffect(() => {
+    if (activeProfiles.length > 0) {
+        setLoading(false);
+        return;
+    }
+
     const fetchMatches = async () => {
       try {
         const res = await authPost('/sakinah/matches/generate', {});
         // Response format is { status: "HAS_CONSIDERED_CANDIDATES", candidates: [...] }
-        if (res && res.candidates) {
+        if (res && res.candidates && res.candidates.length > 0) {
             // Map NIS Candidate Profile format to UI format
             const mapped = res.candidates.map((c: any) => ({
                 id: c.candidate_id,
@@ -29,7 +37,7 @@ export default function MatchResults() {
                 familyBackground: 'Family background details hidden until mutual interest.',
                 bio: 'Bio hidden until mutual interest to ensure character-first matching.'
             }));
-            setActiveProfiles(mapped);
+            setMatches(mapped);
         }
       } catch (err: any) {
         setError(err.message || 'Failed to generate matches from NIS Engine.');
@@ -38,6 +46,7 @@ export default function MatchResults() {
       }
     };
     fetchMatches();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const match = activeProfiles[currentIdx % (activeProfiles.length || 1)];
@@ -46,8 +55,9 @@ export default function MatchResults() {
     if (!match) return;
     try {
         await authPost(`/sakinah/candidates/${match.id}/pass`, {});
-        setActiveProfiles(prev => prev.filter(p => p.id !== match.id));
-        if (currentIdx >= activeProfiles.length - 1) setCurrentIdx(0);
+        const updated = activeProfiles.filter(p => p.id !== match.id);
+        setMatches(updated);
+        if (currentIdx >= updated.length - 1) setCurrentIdx(0);
     } catch (err) {
         console.error("Failed to record pass:", err);
     }
@@ -57,8 +67,12 @@ export default function MatchResults() {
     e.preventDefault();
     if (!match) return;
     try {
-        await authPost(`/sakinah/candidates/${match.id}/interest`, {});
-        navigate('/interest-sent');
+        const response = await authPost<{ status: string, message: string }>(`/sakinah/candidates/${match.id}/interest`, {});
+        if (response.status === 'mutual_interest') {
+            navigate('/mutual-interest');
+        } else {
+            navigate('/interest-sent');
+        }
     } catch (err) {
         console.error("Failed to record interest:", err);
     }
@@ -80,7 +94,7 @@ export default function MatchResults() {
               <div className="text-5xl mb-5">⚠️</div>
               <h2 className="text-2xl font-bold text-red-900 mb-3">NIS Engine Error</h2>
               <p className="text-gray-500 text-sm mb-8">{error}</p>
-              <Link to="/dashboard" className="text-[#7B1C2E] font-semibold hover:underline text-sm">← Return to Dashboard</Link>
+              <Link to="/dashboard" className="text-[#0A192F] font-semibold hover:underline text-sm">← Return to Dashboard</Link>
           </div>
       );
   }
@@ -91,7 +105,7 @@ export default function MatchResults() {
         <div className="text-5xl mb-5">🕌</div>
         <h2 className="text-2xl font-bold text-gray-900 mb-3">No Matches Curated Yet</h2>
         <p className="text-gray-500 text-sm mb-8">No suitable matches right now. Sakinah would rather wait than show the wrong person.</p>
-        <Link to="/dashboard" className="text-[#7B1C2E] font-semibold hover:underline text-sm">← Return to Dashboard</Link>
+        <Link to="/dashboard" className="text-[#0A192F] font-semibold hover:underline text-sm">← Return to Dashboard</Link>
       </div>
     );
   }
@@ -101,7 +115,7 @@ export default function MatchResults() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <p className="text-[#7B1C2E] text-xs font-semibold uppercase tracking-widest mb-1">NIS Curated</p>
+          <p className="text-[#0A192F] text-xs font-semibold uppercase tracking-widest mb-1">NIS Curated</p>
           <h1 className="text-2xl font-extrabold text-gray-900">Your Matches</h1>
         </div>
         <span className="text-xs text-gray-500 bg-white border border-gray-200 px-3 py-1.5 rounded-full">
@@ -115,8 +129,8 @@ export default function MatchResults() {
           <div className="bg-white border border-gray-200 rounded-2xl overflow-hidden shadow-sm">
             {/* Photo placeholder */}
             <div className="bg-gray-50 h-56 flex flex-col items-center justify-center border-b border-gray-100 gap-3">
-              <div className="w-20 h-20 rounded-full bg-[#7B1C2E]/10 border-2 border-[#7B1C2E]/20 flex items-center justify-center">
-                <span className="text-2xl font-bold text-[#7B1C2E]">{match.initials}</span>
+              <div className="w-20 h-20 rounded-full bg-[#0A192F]/10 border-2 border-[#0A192F]/20 flex items-center justify-center">
+                <span className="text-2xl font-bold text-[#0A192F]">{match.initials}</span>
               </div>
               <div className="flex items-center gap-2 text-xs text-gray-400 bg-white border border-gray-200 px-3 py-1.5 rounded-full">
                 <span>🔒</span> Photo revealed on mutual interest
@@ -128,7 +142,7 @@ export default function MatchResults() {
               <div className="flex items-start justify-between mb-5">
                 <div>
                   <h2 className="text-2xl font-extrabold text-gray-900">{match.name}, {match.age}</h2>
-                  <p className="text-[#7B1C2E] text-sm mt-1">📍 {match.city}</p>
+                  <p className="text-[#0A192F] text-sm mt-1">📍 {match.city}</p>
                 </div>
                 <span className="bg-green-50 text-green-700 text-xs font-semibold px-3 py-1.5 rounded-full border border-green-200">
                   Verified ✓
@@ -172,7 +186,7 @@ export default function MatchResults() {
               Pass Respectfully
             </button>
             <button onClick={handleInterest}
-              className="py-3.5 rounded-xl font-bold text-sm text-white bg-[#7B1C2E] hover:bg-[#5e1522] transition-colors text-center shadow-sm"
+              className="py-3.5 rounded-xl font-bold text-sm text-white bg-[#0A192F] hover:bg-[#040d1a] transition-colors text-center shadow-sm"
             >
               Express Interest 💌
             </button>
@@ -193,17 +207,17 @@ export default function MatchResults() {
               <button key={p.id} onClick={() => setCurrentIdx(i)}
                 className={[
                   'w-full text-left flex items-center gap-3 p-4 rounded-xl border transition-all bg-white',
-                  isCurrent ? 'border-[#7B1C2E] shadow-sm' : 'border-gray-200 hover:border-gray-300',
+                  isCurrent ? 'border-[#0A192F] shadow-sm' : 'border-gray-200 hover:border-gray-300',
                 ].join(' ')}
               >
-                <div className="w-10 h-10 rounded-full bg-[#7B1C2E]/10 flex items-center justify-center flex-shrink-0">
-                  <span className="text-xs font-bold text-[#7B1C2E]">{p.initials}</span>
+                <div className="w-10 h-10 rounded-full bg-[#0A192F]/10 flex items-center justify-center flex-shrink-0">
+                  <span className="text-xs font-bold text-[#0A192F]">{p.initials}</span>
                 </div>
                 <div className="min-w-0">
                   <p className="text-gray-900 font-semibold text-sm">{p.name}, {p.age}</p>
                   <p className="text-gray-400 text-xs truncate">{p.city}</p>
                 </div>
-                {isCurrent && <span className="text-[#7B1C2E] text-xs ml-auto flex-shrink-0 font-semibold">Viewing</span>}
+                {isCurrent && <span className="text-[#0A192F] text-xs ml-auto flex-shrink-0 font-semibold">Viewing</span>}
               </button>
             );
           })}

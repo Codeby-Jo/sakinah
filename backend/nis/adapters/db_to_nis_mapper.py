@@ -1,11 +1,16 @@
 from nis.models.user_profile import UserProfile
 from nis.models.candidate_profile import CandidateProfile
 from nis.models.match_preference import MatchPreference
+from nis.adapters.psychology_parser import parse_psychology_responses
 
 def map_db_user_to_user_profile(db_user: dict) -> UserProfile:
     gender = db_user.get("gender")
     if gender:
         gender = gender.upper()
+        
+    # Run the translator on the raw profile object!
+    psy_prof_obj = db_user.get("_raw_psychological_profile")
+    metrics = parse_psychology_responses(psy_prof_obj)
         
     return UserProfile(
         user_id=db_user.get("user_id"),
@@ -37,24 +42,24 @@ def map_db_user_to_user_profile(db_user: dict) -> UserProfile:
         lifestyle_pattern=db_user.get("lifestyle_pattern"),
         safety_status=db_user.get("safety_status"),
         private_notes=db_user.get("private_notes"),
-        control_tendency=db_user.get("control_tendency", "UNKNOWN"),
-        empathy_level=db_user.get("empathy_level", "UNKNOWN"),
-        accountability_level=db_user.get("accountability_level", "UNKNOWN"),
-        humility_level=db_user.get("humility_level", "UNKNOWN"),
-        boundary_respect=db_user.get("boundary_respect", "UNKNOWN"),
-        manipulation_risk=db_user.get("manipulation_risk", "UNKNOWN"),
-        silent_treatment_pattern=db_user.get("silent_treatment_pattern", "UNKNOWN"),
-        gaslighting_risk=db_user.get("gaslighting_risk", "UNKNOWN"),
-        financial_control_tendency=db_user.get("financial_control_tendency", "UNKNOWN"),
-        family_pressure_misuse_risk=db_user.get("family_pressure_misuse_risk", "UNKNOWN"),
-        religious_control_risk=db_user.get("religious_control_risk", "UNKNOWN"),
-        possessiveness_level=db_user.get("possessiveness_level", "UNKNOWN"),
-        isolation_tendency=db_user.get("isolation_tendency", "UNKNOWN"),
-        decision_fairness=db_user.get("decision_fairness", "UNKNOWN"),
-        softness_level=db_user.get("softness_level", "UNKNOWN"),
-        assertiveness_level=db_user.get("assertiveness_level", "UNKNOWN"),
-        conflict_aggression_level=db_user.get("conflict_aggression_level", "UNKNOWN"),
-        emotional_maturity=db_user.get("emotional_maturity", "UNKNOWN")
+        control_tendency=metrics["control_tendency"],
+        empathy_level=metrics["empathy_level"],
+        accountability_level=metrics["accountability_level"],
+        humility_level=metrics["humility_level"],
+        boundary_respect=metrics["boundary_respect"],
+        manipulation_risk=metrics["manipulation_risk"],
+        silent_treatment_pattern=metrics["silent_treatment_pattern"],
+        gaslighting_risk=metrics["gaslighting_risk"],
+        financial_control_tendency=metrics["financial_control_tendency"],
+        family_pressure_misuse_risk=metrics["family_pressure_misuse_risk"],
+        religious_control_risk=metrics["religious_control_risk"],
+        possessiveness_level=metrics["possessiveness_level"],
+        isolation_tendency=metrics["isolation_tendency"],
+        decision_fairness=metrics["decision_fairness"],
+        softness_level=metrics["softness_level"],
+        assertiveness_level=metrics["assertiveness_level"],
+        conflict_aggression_level=metrics["conflict_aggression_level"],
+        emotional_maturity=metrics["emotional_maturity"]
     )
 
 def map_db_candidate_to_candidate_profile(db_candidate: dict) -> CandidateProfile:
@@ -83,7 +88,7 @@ def map_db_preference_to_match_preference(db_preference: dict) -> MatchPreferenc
         location_is_strict=db_preference.get("location_is_strict", False),
         relocation_open=db_preference.get("relocation_open", False),
         preferred_tradition=db_preference.get("preferred_tradition"),
-        tradition_importance=db_preference.get("tradition_importance", "LOW"),
+        tradition_importance="REQUIRED" if db_preference.get("tradition_is_strict") else "LOW",
         religious_practice_importance=db_preference.get("religious_practice_importance"),
         preferred_islamic_environment=db_preference.get("preferred_islamic_environment"),
         preferred_education_levels=db_preference.get("preferred_education_levels", []),

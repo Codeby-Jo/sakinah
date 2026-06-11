@@ -90,7 +90,9 @@ export default function Preferences() {
     if (section === 'Character') {
       if (!form.disagreementResponse) e.disagreementResponse = 'Required';
       if (!form.accountabilityResponse) e.accountabilityResponse = 'Required';
-      if (!form.angerResponse) e.angerResponse = 'Required';
+      if (!form.familyPressureResponse) e.familyPressureResponse = 'Required';
+      if (!form.personalSpaceResponse) e.personalSpaceResponse = 'Required';
+      if (!form.financialDecisionResponse) e.financialDecisionResponse = 'Required';
     }
     if (section === 'Dealbreakers') {
       if (!form.noMatchConfirmed) e.noMatchConfirmed = 'You must acknowledge the matching policy';
@@ -118,7 +120,7 @@ export default function Preferences() {
   };
 
   const inp = (err?: string) =>
-    `w-full px-4 py-2.5 border ${err ? 'border-red-400 bg-red-50' : 'border-gray-300'} rounded-lg text-gray-800 text-sm placeholder-gray-400 focus:ring-2 focus:ring-[#7B1C2E]/30 focus:border-[#7B1C2E] outline-none transition-all bg-white appearance-none`;
+    `w-full px-4 py-2.5 border ${err ? 'border-red-400 bg-red-50' : 'border-gray-300'} rounded-lg text-gray-800 text-sm placeholder-gray-400 focus:ring-2 focus:ring-[#0A192F]/30 focus:border-[#0A192F] outline-none transition-all bg-white appearance-none`;
 
   const sel = (field: string, label: string, options: {val: string, label: string}[], error?: string) => (
     <div className="mb-4">
@@ -154,7 +156,7 @@ export default function Preferences() {
             <button key={s} onClick={() => setActiveSection(s)}
               className={[
                 'flex-shrink-0 px-4 py-2 rounded-full text-xs font-semibold transition-all border',
-                isActive ? 'bg-[#7B1C2E] text-white border-[#7B1C2E]' :
+                isActive ? 'bg-[#0A192F] text-white border-[#0A192F]' :
                 isDone   ? 'bg-green-50 text-green-700 border-green-200' :
                            'bg-white text-gray-500 border-gray-200 hover:border-gray-300',
               ].join(' ')}
@@ -359,10 +361,10 @@ export default function Preferences() {
             <label className="block text-sm font-medium text-gray-700 mb-1.5">Strict Match Flags</label>
             <p className="text-gray-500 text-xs mb-3">Check the boxes below ONLY if a preference is an absolute dealbreaker. Otherwise, NIS will try to find the closest flexible match.</p>
             <div className="grid grid-cols-2 gap-3 text-sm text-gray-700">
-              <label className="flex items-center gap-2"><input type="checkbox" checked={form.strictAge} onChange={set('strictAge')} className="text-[#7B1C2E] rounded border-gray-300" /> Strict Age</label>
-              <label className="flex items-center gap-2"><input type="checkbox" checked={form.strictLocation} onChange={set('strictLocation')} className="text-[#7B1C2E] rounded border-gray-300" /> Strict Location</label>
-              <label className="flex items-center gap-2"><input type="checkbox" checked={form.strictTradition} onChange={set('strictTradition')} className="text-[#7B1C2E] rounded border-gray-300" /> Strict Madhhab</label>
-              <label className="flex items-center gap-2"><input type="checkbox" checked={form.strictMarital} onChange={set('strictMarital')} className="text-[#7B1C2E] rounded border-gray-300" /> Strict Marital Status</label>
+              <label className="flex items-center gap-2"><input type="checkbox" checked={form.strictAge} onChange={set('strictAge')} className="text-[#0A192F] rounded border-gray-300" /> Strict Age</label>
+              <label className="flex items-center gap-2"><input type="checkbox" checked={form.strictLocation} onChange={set('strictLocation')} className="text-[#0A192F] rounded border-gray-300" /> Strict Location</label>
+              <label className="flex items-center gap-2"><input type="checkbox" checked={form.strictTradition} onChange={set('strictTradition')} className="text-[#0A192F] rounded border-gray-300" /> Strict Madhhab</label>
+              <label className="flex items-center gap-2"><input type="checkbox" checked={form.strictMarital} onChange={set('strictMarital')} className="text-[#0A192F] rounded border-gray-300" /> Strict Marital Status</label>
             </div>
           </div>
 
@@ -370,12 +372,12 @@ export default function Preferences() {
             <label className="block text-sm font-medium text-gray-700 mb-1.5">Absolute Dealbreakers (Text)</label>
             <textarea rows={3} value={form.dealbreakersText} onChange={set('dealbreakersText')}
               placeholder="e.g. Smoking, does not want children, lives abroad permanently…"
-              className="w-full px-4 py-2.5 border border-gray-300 rounded-lg text-gray-800 text-sm placeholder-gray-400 focus:ring-2 focus:ring-[#7B1C2E]/30 focus:border-[#7B1C2E] outline-none" />
+              className="w-full px-4 py-2.5 border border-gray-300 rounded-lg text-gray-800 text-sm placeholder-gray-400 focus:ring-2 focus:ring-[#0A192F]/30 focus:border-[#0A192F] outline-none" />
           </div>
 
           <div className={`p-4 rounded-xl border ${errors.noMatchConfirmed ? 'bg-red-50 border-red-200' : 'bg-gray-50 border-gray-200'}`}>
             <label className="flex items-start gap-3 cursor-pointer">
-              <input type="checkbox" checked={form.noMatchConfirmed} onChange={set('noMatchConfirmed')} className="mt-1 text-[#7B1C2E] rounded border-gray-300" />
+              <input type="checkbox" checked={form.noMatchConfirmed} onChange={set('noMatchConfirmed')} className="mt-1 text-[#0A192F] rounded border-gray-300" />
               <div>
                 <p className="text-sm font-semibold text-gray-900">NIS Matching Acknowledgment</p>
                 <p className="text-xs text-gray-500 mt-0.5 leading-snug">I understand that Sakinah would rather wait than show me the wrong person. If no candidates currently align with my values and psychology, I am comfortable waiting.</p>
@@ -397,7 +399,7 @@ export default function Preferences() {
             ← Back
           </button>
           <button type="button" onClick={goNext}
-            className="bg-[#7B1C2E] text-white px-8 py-2.5 rounded-lg font-semibold text-sm hover:bg-[#5e1522] transition-colors shadow-sm">
+            className="bg-[#0A192F] text-white px-8 py-2.5 rounded-lg font-semibold text-sm hover:bg-[#040d1a] transition-colors shadow-sm">
             {sIdx === SECTIONS.length - 1 ? 'Save & Run NIS Engine' : 'Save & Continue →'}
           </button>
         </div>

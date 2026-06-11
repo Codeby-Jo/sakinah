@@ -114,7 +114,7 @@ export default function KYC() {
 
           {!govId ? (
             <div onClick={() => govIdRef.current?.click()}
-              className={`border-2 border-dashed rounded-xl p-8 text-center cursor-pointer transition-colors ${errors.govId ? 'border-red-400 bg-red-50' : 'border-gray-300 hover:border-[#7B1C2E]/50 hover:bg-gray-50'}`}>
+              className={`border-2 border-dashed rounded-xl p-8 text-center cursor-pointer transition-colors ${errors.govId ? 'border-red-400 bg-red-50' : 'border-gray-300 hover:border-[#0A192F]/50 hover:bg-gray-50'}`}>
               <span className="text-4xl block mb-3">🪪</span>
               <p className="text-gray-700 font-semibold text-sm">Click to upload Government ID</p>
               <p className="text-gray-400 text-xs mt-1">JPG · PNG · PDF · Max 10 MB</p>
@@ -147,14 +147,14 @@ export default function KYC() {
 
           {!selfie ? (
             <div onClick={() => selfieRef.current?.click()}
-              className={`border-2 border-dashed rounded-xl p-8 text-center cursor-pointer transition-colors ${errors.selfie ? 'border-red-400 bg-red-50' : 'border-gray-300 hover:border-[#7B1C2E]/50 hover:bg-gray-50'}`}>
+              className={`border-2 border-dashed rounded-xl p-8 text-center cursor-pointer transition-colors ${errors.selfie ? 'border-red-400 bg-red-50' : 'border-gray-300 hover:border-[#0A192F]/50 hover:bg-gray-50'}`}>
               <span className="text-4xl block mb-3">🤳</span>
               <p className="text-gray-700 font-semibold text-sm">Click to upload your Selfie</p>
               <p className="text-gray-400 text-xs mt-1">JPG · PNG · Max 10 MB</p>
             </div>
           ) : (
             <div className="flex items-center gap-4 bg-gray-50 border border-gray-200 rounded-xl p-4">
-              <div className="w-12 h-12 rounded-full overflow-hidden border-2 border-[#7B1C2E]/30 flex-shrink-0">
+              <div className="w-12 h-12 rounded-full overflow-hidden border-2 border-[#0A192F]/30 flex-shrink-0">
                 <img src={URL.createObjectURL(selfie)} alt="Selfie preview" className="w-full h-full object-cover" />
               </div>
               <div className="flex-1 min-w-0">
@@ -180,7 +180,7 @@ export default function KYC() {
 
         <div className="flex justify-end">
           <button type="submit" disabled={status === 'Pending' || !isReady}
-            className={`px-8 py-3 rounded-lg font-semibold text-sm shadow-sm transition-all ${isReady && status !== 'Pending' ? 'bg-[#7B1C2E] text-white hover:bg-[#5e1522]' : 'bg-gray-100 text-gray-400 cursor-not-allowed'}`}>
+            className={`px-8 py-3 rounded-lg font-semibold text-sm shadow-sm transition-all ${isReady && status !== 'Pending' ? 'bg-[#0A192F] text-white hover:bg-[#040d1a]' : 'bg-gray-100 text-gray-400 cursor-not-allowed'}`}>
             {status === 'Pending' ? '⏳ Verifying…' : 'Submit Verification →'}
           </button>
         </div>

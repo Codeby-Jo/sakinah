@@ -28,19 +28,29 @@ export default function Dashboard() {
       {/* Greeting */}
       <div className="flex items-start justify-between flex-wrap gap-4">
         <div>
-          <p className="text-[#7B1C2E] text-xs font-semibold uppercase tracking-widest mb-1">Matrimonial Journey</p>
+          <p className="text-[#0A192F] text-xs font-semibold uppercase tracking-widest mb-1">Matrimonial Journey</p>
           <h1 className="text-3xl font-extrabold text-gray-900">Welcome, {roleLabel}</h1>
           <p className="text-gray-500 mt-1 text-sm">
             {isReady ? 'Your profile is complete. Your NIS matches are being prepared.' : 'Complete the steps below to begin receiving matches.'}
           </p>
         </div>
         <div className="bg-white border border-gray-200 rounded-xl px-6 py-4 text-center min-w-[110px] shadow-sm">
-          <p className="text-3xl font-extrabold text-[#7B1C2E]">{pct}%</p>
+          <p className="text-3xl font-extrabold text-[#0A192F]">{pct}%</p>
           <p className="text-gray-400 text-xs mt-1">Complete</p>
           <div className="w-full h-1.5 bg-gray-100 rounded-full mt-2 overflow-hidden">
-            <div className="h-full bg-[#7B1C2E] rounded-full transition-all" style={{ width: `${pct}%` }} />
+            <div className="h-full bg-[#0A192F] rounded-full transition-all" style={{ width: `${pct}%` }} />
           </div>
         </div>
+      </div>
+
+      {/* Matches CTA (DEV MODE UNLOCKED) */}
+      <div className={`rounded-2xl border p-8 text-center bg-white border-[#0A192F]/30 shadow-sm`}>
+        <div className="text-4xl mb-4">💌</div>
+        <h3 className="text-xl font-bold text-gray-900 mb-2">Your Matches Are Ready (Dev Mode Unlocked)</h3>
+        <p className="text-gray-500 text-sm mb-6 max-w-md mx-auto">Alhamdulillah! The NIS engine has reviewed your values and preferences. Your curated matches are ready.</p>
+        <button onClick={() => navigate('/matches')}
+          className="bg-[#0A192F] text-white px-10 py-3 rounded-lg font-bold hover:bg-[#040d1a] transition-colors"
+        >View My Matches</button>
       </div>
 
       {/* Journey Timeline */}
@@ -80,7 +90,7 @@ export default function Dashboard() {
                   <span className="text-xs font-semibold text-amber-700 bg-amber-100 px-3 py-1 rounded-full">Under Review</span>
                 ) : step.action && isNext ? (
                   <Link to={step.action}
-                    className="text-xs font-bold text-white bg-[#7B1C2E] px-4 py-2 rounded-full hover:bg-[#5e1522] transition-colors"
+                    className="text-xs font-bold text-white bg-[#0A192F] px-4 py-2 rounded-full hover:bg-[#040d1a] transition-colors"
                   >
                     {step.actionLabel} →
                   </Link>
@@ -91,26 +101,6 @@ export default function Dashboard() {
             );
           })}
         </div>
-      </div>
-
-      {/* Matches CTA */}
-      <div className={`rounded-2xl border p-8 text-center ${isReady ? 'bg-white border-[#7B1C2E]/30 shadow-sm' : 'bg-white border-gray-200'}`}>
-        {isReady ? (
-          <>
-            <div className="text-4xl mb-4">💌</div>
-            <h3 className="text-xl font-bold text-gray-900 mb-2">Your Matches Are Ready</h3>
-            <p className="text-gray-500 text-sm mb-6 max-w-md mx-auto">Alhamdulillah! The NIS engine has reviewed your values and preferences. Your curated matches are ready.</p>
-            <button onClick={() => navigate('/matches')}
-              className="bg-[#7B1C2E] text-white px-10 py-3 rounded-lg font-bold hover:bg-[#5e1522] transition-colors"
-            >View My Matches</button>
-          </>
-        ) : (
-          <>
-            <div className="text-4xl mb-4">🕌</div>
-            <h3 className="text-xl font-bold text-gray-900 mb-2">Complete Your Journey</h3>
-            <p className="text-gray-400 text-sm max-w-md mx-auto">Complete all the steps above — Profile, KYC, and Preferences — to unlock your matches.</p>
-          </>
-        )}
       </div>
     </div>
   );
