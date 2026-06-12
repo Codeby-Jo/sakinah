@@ -11,7 +11,7 @@
  */
 
 import { createBrowserRouter, Navigate, useRouteError } from 'react-router-dom';
-import { lazy, Suspense } from 'react';
+import React, { lazy, Suspense } from 'react';
 import logoGold from '@/assets/zaryah-logo-gold.png';
 
 // ─── Pages ───────────────────────────────────────────────────────────────────
@@ -26,6 +26,13 @@ const SakinahProfileCreationPage = lazy(() => import('@/features/sakinah/pages/S
 const SakinahPreferencesPage = lazy(() => import('@/features/sakinah/pages/SakinahPreferencesPage').then(m => ({ default: m.SakinahPreferencesPage })));
 const SakinahReviewPage = lazy(() => import('@/features/sakinah/pages/SakinahReviewPage').then(m => ({ default: m.SakinahReviewPage })));
 const SakinahDashboardPage = lazy(() => import('@/features/sakinah/pages/SakinahDashboardPage').then(m => ({ default: m.SakinahDashboardPage })));
+const SakinahChatPage = lazy(() => import('@/features/sakinah/pages/SakinahChatPage').then(m => ({ default: m.SakinahChatPage })));
+
+const SakinahMatchesPage = lazy(() => import('@/features/sakinah/pages/SakinahMatchesPage').then(m => ({ default: m.SakinahMatchesPage })));
+const SakinahInterestsPage = lazy(() => import('@/features/sakinah/pages/SakinahInterestsPage').then(m => ({ default: m.SakinahInterestsPage })));
+const SakinahSavedPage = lazy(() => import('@/features/sakinah/pages/SakinahSavedPage').then(m => ({ default: m.SakinahSavedPage })));
+const SakinahNotificationsPage = lazy(() => import('@/features/sakinah/pages/SakinahNotificationsPage').then(m => ({ default: m.SakinahNotificationsPage })));
+const SakinahSettingsPage = lazy(() => import('@/features/sakinah/pages/SakinahSettingsPage').then(m => ({ default: m.SakinahSettingsPage })));
 
 // Wali Flow
 const SakinahWaliLoginPage = lazy(() => import('@/features/sakinah/pages/SakinahWaliLoginPage').then(m => ({ default: m.SakinahWaliLoginPage })));
@@ -48,14 +55,14 @@ function PageLoader() {
 
 function LazyPage({ Component }: { Component: React.LazyExoticComponent<React.ComponentType> }) {
   return (
-    <Suspense fallback={<PageLoader />}>
+    <React.Suspense fallback={<PageLoader />}>
       <Component />
-    </Suspense>
+    </React.Suspense>
   );
 }
 
 function RootErrorBoundary() {
-  useRouteError();
+  const error = useRouteError();
   return (
     <div className="min-h-screen flex items-center justify-center bg-[#0A0E16] px-4">
       <div className="text-center max-w-md">
@@ -86,6 +93,14 @@ export const router = createBrowserRouter([
   { path: '/preferences', element: <LazyPage Component={SakinahPreferencesPage} />, errorElement: <RootErrorBoundary /> },
   { path: '/review', element: <LazyPage Component={SakinahReviewPage} />, errorElement: <RootErrorBoundary /> },
   { path: '/dashboard', element: <LazyPage Component={SakinahDashboardPage} />, errorElement: <RootErrorBoundary /> },
+  { path: '/chat', element: <LazyPage Component={SakinahChatPage} />, errorElement: <RootErrorBoundary /> },
+  
+  // App Pages
+  { path: '/matches', element: <LazyPage Component={SakinahMatchesPage} />, errorElement: <RootErrorBoundary /> },
+  { path: '/interests', element: <LazyPage Component={SakinahInterestsPage} />, errorElement: <RootErrorBoundary /> },
+  { path: '/saved', element: <LazyPage Component={SakinahSavedPage} />, errorElement: <RootErrorBoundary /> },
+  { path: '/notifications', element: <LazyPage Component={SakinahNotificationsPage} />, errorElement: <RootErrorBoundary /> },
+  { path: '/settings', element: <LazyPage Component={SakinahSettingsPage} />, errorElement: <RootErrorBoundary /> },
 
   // ─── Wali Flow ──────────────────────────────────────────────────────────
   { path: '/wali/login', element: <LazyPage Component={SakinahWaliLoginPage} />, errorElement: <RootErrorBoundary /> },

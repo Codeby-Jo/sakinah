@@ -1,18 +1,32 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { motion, AnimatePresence } from 'framer-motion';
+import { useOnboarding } from '../context/OnboardingContext';
 import { SakinahInput, SakinahButton, SakinahHeader } from '../components';
 
 export const SakinahWaliLoginPage: React.FC = () => {
   const navigate = useNavigate();
+  const { setIsWaliViewOnly } = useOnboarding();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [isPending, setIsPending] = useState(false);
+  const [loginSuccess, setLoginSuccess] = useState(false);
 
   const validate = () => {
     const e: Record<string, string> = {};
-    if (!email) e.email = 'Email or User ID is required';
-    if (!password) e.password = 'Password is required';
+    if (!email) {
+      e.email = 'Email or User ID is required';
+    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email) && email !== 'admin') {
+      e.email = 'Please enter a valid email';
+    }
+    
+    if (!password) {
+      e.password = 'Password is required';
+    } else if (password.length < 6) {
+      e.password = 'Password must be at least 6 characters';
+    }
+    
     setErrors(e);
     return Object.keys(e).length === 0;
   };
@@ -21,24 +35,75 @@ export const SakinahWaliLoginPage: React.FC = () => {
     e.preventDefault();
     if (!validate()) return;
     setIsPending(true);
+    
+    // Simulate API call
     setTimeout(() => {
       setIsPending(false);
-      navigate('/wali/dashboard');
-    }, 1200);
+      setLoginSuccess(true);
+      setIsWaliViewOnly(true);
+      
+      // Show success animation, then redirect
+      setTimeout(() => {
+        navigate('/wali/dashboard');
+      }, 2000);
+    }, 1500);
   };
 
   return (
-    <div className="sk-viewport">
-      <div className="min-h-screen flex items-center justify-center px-6 py-12">
-        <div className="w-full max-w-[440px]">
+    <div className="sk-viewport relative overflow-hidden">
+      <div className="min-h-screen flex items-center justify-center px-6 py-12 bg-gradient-to-b from-[#0A0E16] to-[#0d121c]">
+        
+        <AnimatePresence>
+          {loginSuccess && (
+            <motion.div 
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="absolute inset-0 z-50 bg-[#0A0E16]/90 backdrop-blur-md flex items-center justify-center p-6"
+            >
+              <motion.div 
+                initial={{ scale: 0.8, opacity: 0, y: 20 }}
+                animate={{ scale: 1, opacity: 1, y: 0 }}
+                className="bg-[#111826] border border-[rgba(212,168,83,0.3)] rounded-[24px] p-8 max-w-[400px] w-full text-center shadow-[0_0_50px_rgba(212,168,83,0.2)] relative overflow-hidden"
+              >
+                <div className="absolute inset-0 bg-gradient-to-tr from-[rgba(212,168,83,0.05)] to-transparent" />
+                <motion.div 
+                  initial={{ scale: 0 }}
+                  animate={{ scale: 1 }}
+                  transition={{ type: "spring", stiffness: 200, damping: 15, delay: 0.2 }}
+                  className="w-20 h-20 mx-auto mb-6 rounded-full bg-gradient-to-br from-[var(--sk-gold)] to-[#E8C97A] flex items-center justify-center shadow-[0_0_30px_rgba(212,168,83,0.4)]"
+                >
+                  <span className="text-[32px] text-[#0A0E16]">✓</span>
+                </motion.div>
+                <h3 className="font-serif text-[24px] text-[var(--sk-gold)] mb-2 relative z-10">Welcome Back</h3>
+                <p className="text-[14px] text-[var(--sk-ink-dim)] mb-4 relative z-10">Preparing your dashboard...</p>
+                <div className="w-full bg-[rgba(255,255,255,0.05)] h-[2px] rounded-full overflow-hidden relative z-10">
+                  <motion.div 
+                    initial={{ width: 0 }}
+                    animate={{ width: "100%" }}
+                    transition={{ duration: 1.5, ease: "easeInOut" }}
+                    className="h-full bg-[var(--sk-gold)]"
+                  />
+                </div>
+              </motion.div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+        <motion.div 
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5, ease: 'easeOut' }}
+          className="w-full max-w-[440px] relative z-10"
+        >
           <SakinahHeader title="Wali Login" subtitle="Access your account" onBack={() => navigate('/role')} />
 
-          <p className="text-[13px] text-[var(--sk-ink-dim)] font-light leading-[1.6] mb-6 sk-fx sk-d1">
+          <p className="text-[13px] text-[var(--sk-ink-dim)] font-light leading-[1.6] mb-8 text-center">
             Log in to manage profiles, view matches, and communicate on behalf of your loved one.
           </p>
 
-          <form onSubmit={handleSubmit} noValidate className="flex flex-col gap-4 sk-fx sk-d2">
-            <div className="bg-[rgba(212,168,83,0.02)] border border-[rgba(212,168,83,0.15)] rounded-[16px] p-5 flex flex-col gap-4">
+          <form onSubmit={handleSubmit} noValidate className="flex flex-col gap-6">
+            <div className="bg-[rgba(255,255,255,0.02)] border border-[rgba(255,255,255,0.05)] rounded-[20px] p-6 flex flex-col gap-5 shadow-2xl backdrop-blur-sm">
               <SakinahInput
                 label="Email / User ID"
                 type="email"
@@ -59,14 +124,16 @@ export const SakinahWaliLoginPage: React.FC = () => {
               />
             </div>
 
-            <div className="flex gap-3 mt-2">
-              <SakinahButton variant="ghost" onClick={() => navigate('/role')} type="button" className="flex-1">Back</SakinahButton>
-              <SakinahButton variant="primary" type="submit" disabled={isPending} className="flex-1">
-                {isPending ? 'Logging in...' : 'Login →'}
+            <div className="flex gap-4">
+              <SakinahButton variant="ghost" onClick={() => navigate('/role')} type="button" className="flex-1 hover:bg-[rgba(255,255,255,0.05)]">
+                Back
+              </SakinahButton>
+              <SakinahButton variant="primary" type="submit" disabled={isPending || loginSuccess} className="flex-1 shadow-[0_0_20px_rgba(212,168,83,0.3)] hover:shadow-[0_0_30px_rgba(212,168,83,0.5)] transition-shadow">
+                {isPending ? 'Authenticating...' : 'Login →'}
               </SakinahButton>
             </div>
           </form>
-        </div>
+        </motion.div>
       </div>
     </div>
   );

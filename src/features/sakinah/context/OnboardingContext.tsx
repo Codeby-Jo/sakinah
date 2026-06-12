@@ -156,6 +156,8 @@ interface OnboardingContextType {
   setProfileStep: (s: number) => void;
   isOnboardingComplete: boolean;
   setOnboardingComplete: (v: boolean) => void;
+  isWaliViewOnly: boolean;
+  setIsWaliViewOnly: (v: boolean) => void;
 }
 
 const OnboardingContext = createContext<OnboardingContextType | null>(null);
@@ -176,6 +178,7 @@ export const OnboardingProvider: React.FC<{ children: React.ReactNode }> = ({ ch
   const [otpVerified, setOtpVerified] = useState(false);
   const [profileStep, setProfileStep] = useState(1);
   const [isOnboardingComplete, setOnboardingComplete] = useState(false);
+  const [isWaliViewOnly, setIsWaliViewOnly] = useState(false);
 
   const updateProfile = useCallback((field: string, value: any) => {
     setProfile(prev => ({ ...prev, [field]: value }));
@@ -199,6 +202,7 @@ export const OnboardingProvider: React.FC<{ children: React.ReactNode }> = ({ ch
       otpVerified, setOtpVerified,
       profileStep, setProfileStep,
       isOnboardingComplete, setOnboardingComplete,
+      isWaliViewOnly, setIsWaliViewOnly,
     }}>
       {children}
     </OnboardingContext.Provider>

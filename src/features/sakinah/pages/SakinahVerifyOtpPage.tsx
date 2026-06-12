@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { motion, AnimatePresence } from 'framer-motion';
 import { useOnboarding } from '../context/OnboardingContext';
 import { SakinahButton, SakinahHeader } from '../components';
 
@@ -41,12 +42,21 @@ const OtpInput: React.FC<{ length: number; value: string; onChange: (v: string) 
 export const SakinahVerifyOtpPage: React.FC = () => {
   const navigate = useNavigate();
   const { auth, setOtpVerified } = useOnboarding();
+  
+  // State for Email
+  const [emailOtpSent, setEmailOtpSent] = useState(false);
   const [emailOtp, setEmailOtp] = useState('');
-  const [phoneOtp, setPhoneOtp] = useState('');
   const [emailVerified, setEmailVerified] = useState(false);
+  const [isSendingEmail, setIsSendingEmail] = useState(false);
+  
+  // State for Phone
+  const [phoneOtpSent, setPhoneOtpSent] = useState(false);
+  const [phoneOtp, setPhoneOtp] = useState('');
   const [phoneVerified, setPhoneVerified] = useState(false);
+  const [isSendingPhone, setIsSendingPhone] = useState(false);
+
   const [error, setError] = useState('');
-  const [resendTimer, setResendTimer] = useState(30);
+  const [resendTimer, setResendTimer] = useState(0);
 
   useEffect(() => {
     if (resendTimer > 0) {
@@ -54,6 +64,24 @@ export const SakinahVerifyOtpPage: React.FC = () => {
       return () => clearTimeout(t);
     }
   }, [resendTimer]);
+
+  const sendEmailOtp = () => {
+    setIsSendingEmail(true);
+    setTimeout(() => {
+      setIsSendingEmail(false);
+      setEmailOtpSent(true);
+      setResendTimer(30);
+    }, 1000);
+  };
+
+  const sendPhoneOtp = () => {
+    setIsSendingPhone(true);
+    setTimeout(() => {
+      setIsSendingPhone(false);
+      setPhoneOtpSent(true);
+      setResendTimer(30);
+    }, 1000);
+  };
 
   const verifyEmail = () => {
     if (emailOtp.length !== 6) { setError('Enter the 6-digit email OTP'); return; }
@@ -69,7 +97,7 @@ export const SakinahVerifyOtpPage: React.FC = () => {
 
   const handleContinue = () => {
     if (!emailVerified || !phoneVerified) {
-      setError('Please verify both email and phone');
+      setError('Please verify both email and phone before continuing.');
       return;
     }
     setOtpVerified(true);
@@ -78,82 +106,112 @@ export const SakinahVerifyOtpPage: React.FC = () => {
 
   return (
     <div className="sk-viewport">
-      <div className="min-h-screen flex items-center justify-center px-6 py-12">
-        <div className="w-full max-w-[480px]">
+      <div className="min-h-screen flex items-center justify-center px-6 py-12 bg-gradient-to-b from-[#0A0E16] to-[#0d121c]">
+        <motion.div 
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="w-full max-w-[480px]"
+        >
           <SakinahHeader title="Verify Identity" subtitle="Step 2 of 6 · OTP Verification" onBack={() => navigate('/register')} />
 
           <div className="w-full bg-[rgba(255,255,255,0.05)] h-[4px] rounded-full mb-8 overflow-hidden">
-            <div className="h-full bg-[var(--sk-gold)] transition-all duration-500" style={{ width: '32%' }} />
+            <motion.div className="h-full bg-[var(--sk-gold)]" initial={{ width: 0 }} animate={{ width: '32%' }} transition={{ duration: 0.5 }} />
           </div>
 
-          {error && (
-            <div className="mb-4 p-3 rounded-lg bg-[rgba(201,138,138,0.1)] border border-[rgba(201,138,138,0.2)] text-[var(--sk-rose)] text-[12px] text-center">
-              {error}
-            </div>
-          )}
+          <AnimatePresence>
+            {error && (
+              <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} className="mb-4 p-3 rounded-xl bg-[rgba(201,138,138,0.1)] border border-[rgba(201,138,138,0.2)] text-[var(--sk-rose)] text-[12px] text-center">
+                {error}
+              </motion.div>
+            )}
+          </AnimatePresence>
 
-          {/* Email OTP */}
-          <div className="sk-card p-6 mb-4 sk-fx sk-d1">
+          {/* Email OTP Section */}
+          <motion.div initial={{ opacity: 0, x: -10 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.1 }} className="bg-[rgba(255,255,255,0.02)] border border-[var(--sk-line-soft)] rounded-[20px] p-6 mb-4">
             <div className="flex items-center justify-between mb-4">
               <div>
                 <h3 className="font-serif text-[18px] text-[var(--sk-ink)]">Email Verification</h3>
-                <p className="text-[12px] text-[var(--sk-ink-dim)] mt-1">OTP sent to {auth.email || 'your email'}</p>
+                <p className="text-[12px] text-[var(--sk-ink-dim)] mt-1">{auth.email || 'your email'}</p>
               </div>
-              {emailVerified && <span className="text-[var(--sk-green)] text-[14px]">✓ Verified</span>}
+              {emailVerified && <span className="text-[var(--sk-green)] text-[14px] bg-[rgba(127,176,122,0.1)] px-3 py-1 rounded-full">✓ Verified</span>}
             </div>
+            
             {!emailVerified && (
               <>
-                <OtpInput length={6} value={emailOtp} onChange={setEmailOtp} />
-                <div className="mt-4">
-                  <SakinahButton variant="secondary" size="sm" onClick={verifyEmail}>Verify Email</SakinahButton>
-                </div>
+                {!emailOtpSent ? (
+                  <SakinahButton variant="secondary" onClick={sendEmailOtp} disabled={isSendingEmail} className="w-full">
+                    {isSendingEmail ? 'Sending...' : 'Send Email OTP'}
+                  </SakinahButton>
+                ) : (
+                  <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }}>
+                    <OtpInput length={6} value={emailOtp} onChange={setEmailOtp} />
+                    <div className="mt-4 flex gap-3">
+                      <SakinahButton variant="secondary" onClick={verifyEmail} className="flex-1 border-[var(--sk-gold)] text-[var(--sk-gold)] hover:bg-[rgba(212,168,83,0.1)]">
+                        Verify Code
+                      </SakinahButton>
+                    </div>
+                  </motion.div>
+                )}
               </>
             )}
-          </div>
+          </motion.div>
 
-          {/* Phone OTP */}
-          <div className="sk-card p-6 mb-4 sk-fx sk-d2">
+          {/* Phone OTP Section */}
+          <motion.div initial={{ opacity: 0, x: -10 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.2 }} className="bg-[rgba(255,255,255,0.02)] border border-[var(--sk-line-soft)] rounded-[20px] p-6 mb-6">
             <div className="flex items-center justify-between mb-4">
               <div>
                 <h3 className="font-serif text-[18px] text-[var(--sk-ink)]">Phone Verification</h3>
-                <p className="text-[12px] text-[var(--sk-ink-dim)] mt-1">OTP sent to {auth.phone || 'your phone'}</p>
+                <p className="text-[12px] text-[var(--sk-ink-dim)] mt-1">{auth.phone || 'your phone'}</p>
               </div>
-              {phoneVerified && <span className="text-[var(--sk-green)] text-[14px]">✓ Verified</span>}
+              {phoneVerified && <span className="text-[var(--sk-green)] text-[14px] bg-[rgba(127,176,122,0.1)] px-3 py-1 rounded-full">✓ Verified</span>}
             </div>
+
             {!phoneVerified && (
               <>
-                <OtpInput length={6} value={phoneOtp} onChange={setPhoneOtp} />
-                <div className="mt-4">
-                  <SakinahButton variant="secondary" size="sm" onClick={verifyPhone}>Verify Phone</SakinahButton>
-                </div>
+                {!phoneOtpSent ? (
+                  <SakinahButton variant="secondary" onClick={sendPhoneOtp} disabled={isSendingPhone} className="w-full">
+                    {isSendingPhone ? 'Sending...' : 'Send Phone OTP'}
+                  </SakinahButton>
+                ) : (
+                  <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }}>
+                    <OtpInput length={6} value={phoneOtp} onChange={setPhoneOtp} />
+                    <div className="mt-4 flex gap-3">
+                      <SakinahButton variant="secondary" onClick={verifyPhone} className="flex-1 border-[var(--sk-gold)] text-[var(--sk-gold)] hover:bg-[rgba(212,168,83,0.1)]">
+                        Verify Code
+                      </SakinahButton>
+                    </div>
+                  </motion.div>
+                )}
               </>
             )}
-          </div>
+          </motion.div>
 
-          {/* Resend */}
-          <div className="text-center text-[12px] text-[var(--sk-ink-faint)] mb-6 sk-fx sk-d3">
-            {resendTimer > 0 ? (
-              <span>Resend OTP in {resendTimer}s</span>
-            ) : (
-              <button onClick={() => setResendTimer(30)} className="text-[var(--sk-gold)] hover:underline">
-                Resend OTP
-              </button>
-            )}
-          </div>
+          {/* Resend Logic (Shared) */}
+          {(emailOtpSent || phoneOtpSent) && (!emailVerified || !phoneVerified) && (
+            <div className="text-center text-[12px] text-[var(--sk-ink-faint)] mb-6">
+              {resendTimer > 0 ? (
+                <span>Resend OTP in {resendTimer}s</span>
+              ) : (
+                <button onClick={() => setResendTimer(30)} className="text-[var(--sk-gold)] hover:underline">
+                  Resend OTP
+                </button>
+              )}
+            </div>
+          )}
 
           {/* Actions */}
-          <div className="flex gap-3 sk-fx sk-d3">
+          <div className="flex gap-3 mt-8">
             <SakinahButton variant="ghost" onClick={() => navigate('/register')} className="flex-1">Back</SakinahButton>
             <SakinahButton
               variant="primary"
               onClick={handleContinue}
               disabled={!emailVerified || !phoneVerified}
-              className="flex-1"
+              className="flex-1 shadow-[0_0_20px_rgba(212,168,83,0.3)] hover:shadow-[0_0_30px_rgba(212,168,83,0.5)] transition-shadow"
             >
-              Continue →
+              Continue to KYC →
             </SakinahButton>
           </div>
-        </div>
+        </motion.div>
       </div>
     </div>
   );

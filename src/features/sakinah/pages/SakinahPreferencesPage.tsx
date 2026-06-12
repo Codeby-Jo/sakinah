@@ -38,7 +38,24 @@ const PrefRow: React.FC<{
 
 export const SakinahPreferencesPage: React.FC = () => {
   const navigate = useNavigate();
-  const { preferences, updatePreference } = useOnboarding();
+  const { preferences, updatePreference, isWaliViewOnly } = useOnboarding();
+
+  if (isWaliViewOnly) {
+    return (
+      <div className="sk-viewport flex items-center justify-center min-h-screen bg-[#0A0E16]">
+        <div className="text-center p-8 bg-[rgba(201,138,138,0.05)] border border-[rgba(201,138,138,0.2)] rounded-[20px] max-w-[400px]">
+          <div className="text-[40px] mb-4">🚫</div>
+          <h2 className="font-serif text-[24px] text-[var(--sk-rose)] mb-2">Permission Denied</h2>
+          <p className="text-[14px] text-[var(--sk-ink-dim)] leading-relaxed">
+            Wali accounts have read-only access. You cannot edit matchmaking preferences.
+          </p>
+          <SakinahButton variant="secondary" onClick={() => navigate('/wali/dashboard')} className="mt-6">
+            Return to Dashboard
+          </SakinahButton>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="sk-viewport">
