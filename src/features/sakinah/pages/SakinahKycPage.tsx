@@ -1,126 +1,128 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { 
-  SakinahJourneyFrame, 
-  SakinahHeader, 
-  SakinahButton,
-  SakinahChoiceChip,
-  DevFallbackBadge
-} from '../components';
-import { startKycFlow, submitKycSandbox } from '../services/sakinahApi';
+import { useOnboarding } from '../context/OnboardingContext';
+import { SakinahButton, SakinahHeader } from '../components';
 
 export const SakinahKycPage: React.FC = () => {
   const navigate = useNavigate();
-  const [selectedId, setSelectedId] = useState<string>('aadhaar');
+  const { setKycCompleted } = useOnboarding();
+  const [idUploaded, setIdUploaded] = useState(false);
+  const [selfieVerified, setSelfieVerified] = useState(false);
+  const [consentGiven, setConsentGiven] = useState(false);
   const [loading, setLoading] = useState(false);
-  const [vendorStatus, setVendorStatus] = useState<string>('PENDING');
 
-  useEffect(() => {
-    startKycFlow().then(res => {
-      setVendorStatus(res.status);
-    }).catch(err => {
-      console.error(err);
-      setVendorStatus('ERROR');
-    });
-  }, []);
+  const allDone = idUploaded && selfieVerified && consentGiven;
 
-  const handleVerify = async () => {
-    if (vendorStatus === 'VENDOR_NOT_CONFIGURED') {
-      alert("Vendor is not configured for production yet.");
-      return;
-    }
-    
+  const simulateUpload = (cb: (v: boolean) => void) => {
     setLoading(true);
-    try {
-      // In a real flow, we would redirect to vendor SDK
-      // Here we hit the sandbox completion endpoint
-      await submitKycSandbox({
-        verified_name: "Ayman (Sandbox)",
-        verified_age: 28,
-        verified_gender: "MALE"
-      });
-      navigate('/sakinah/liveness');
-    } catch (e: any) {
-      alert(e.message || "KYC Sandbox failed");
-    } finally {
-      setLoading(false);
-    }
+    setTimeout(() => { cb(true); setLoading(false); }, 1200);
+  };
+
+  const handleContinue = () => {
+    if (!allDone) return;
+    setKycCompleted(true);
+    navigate('/profile-creation');
   };
 
   return (
-    <SakinahJourneyFrame>
-      <SakinahHeader 
-        title="Let's verify you" 
-        subtitle="So this stays a safe, real space" 
-        onBack={() => navigate(-1)} 
-      />
+    <div className="sk-viewport">
+      <div className="min-h-screen flex items-center justify-center px-6 py-12">
+        <div className="w-full max-w-[480px]">
+          <SakinahHeader title="KYC Verification" subtitle="Step 3 of 6 · Identity Check" onBack={() => navigate('/verify-otp')} />
 
-      <div className="mb-4">
-        {vendorStatus === 'VENDOR_NOT_CONFIGURED' ? (
-          <DevFallbackBadge message="Production vendor pending. Verification disabled." />
-        ) : (
-          <DevFallbackBadge message="Production KYC vendor pending. Safe sandbox mode." />
-        )}
-      </div>
+          <div className="w-full bg-[rgba(255,255,255,0.05)] h-[4px] rounded-full mb-8 overflow-hidden">
+            <div className="h-full bg-[var(--sk-gold)] transition-all duration-500" style={{ width: '48%' }} />
+          </div>
 
-      <div className="sk-meta-row sk-fx sk-d1">
-        <div className="sk-meta !flex-none !w-full">
-          <div className="flex gap-[6px]">
-            <div className="flex-1 h-[4px] rounded-[4px] bg-[var(--sk-gold)]" />
-            <div className="flex-1 h-[4px] rounded-[4px] bg-[var(--sk-gold)]" />
-            <div className="flex-1 h-[4px] rounded-[4px] bg-[var(--sk-line-soft)]" />
-            <div className="flex-1 h-[4px] rounded-[4px] bg-[var(--sk-line-soft)]" />
+          <p className="text-[13px] text-[var(--sk-ink-dim)] font-light leading-[1.6] mb-6 sk-fx sk-d1">
+            We verify every user to ensure safety and authenticity. Your documents are encrypted and used <strong className="text-[var(--sk-ink)]">only</strong> for verification.
+          </p>
+
+          {/* Government ID */}
+          <div className="sk-card p-5 mb-4 sk-fx sk-d2">
+            <div className="flex items-center justify-between">
+              <div>
+                <h3 className="font-serif text-[17px] text-[var(--sk-ink)]">Government ID</h3>
+                <p className="text-[11px] text-[var(--sk-ink-dim)] mt-1">Aadhaar, Passport, or National ID</p>
+              </div>
+              {idUploaded ? (
+                <span className="text-[var(--sk-green)] text-[13px] font-medium">✓ Uploaded</span>
+              ) : (
+                <button
+                  onClick={() => simulateUpload(setIdUploaded)}
+                  disabled={loading}
+                  className="px-4 py-2 text-[12px] border border-[var(--sk-line)] rounded-lg text-[var(--sk-gold)] hover:bg-[rgba(212,168,83,0.05)] transition-colors disabled:opacity-50"
+                >
+                  {loading ? 'Uploading...' : 'Upload'}
+                </button>
+              )}
+            </div>
+          </div>
+
+          {/* Selfie Verification */}
+          <div className="sk-card p-5 mb-4 sk-fx sk-d3">
+            <div className="flex items-center justify-between">
+              <div>
+                <h3 className="font-serif text-[17px] text-[var(--sk-ink)]">Selfie Verification</h3>
+                <p className="text-[11px] text-[var(--sk-ink-dim)] mt-1">Liveness check — proves you're real</p>
+              </div>
+              {selfieVerified ? (
+                <span className="text-[var(--sk-green)] text-[13px] font-medium">✓ Verified</span>
+              ) : (
+                <button
+                  onClick={() => simulateUpload(setSelfieVerified)}
+                  disabled={loading || !idUploaded}
+                  className="px-4 py-2 text-[12px] border border-[var(--sk-line)] rounded-lg text-[var(--sk-gold)] hover:bg-[rgba(212,168,83,0.05)] transition-colors disabled:opacity-50"
+                >
+                  {loading ? 'Verifying...' : 'Capture'}
+                </button>
+              )}
+            </div>
+            {!idUploaded && (
+              <p className="text-[10px] text-[var(--sk-ink-faint)] mt-2 italic">Upload ID first</p>
+            )}
+          </div>
+
+          {/* Face Match Status */}
+          {idUploaded && selfieVerified && (
+            <div className="p-4 rounded-xl bg-[rgba(127,176,122,0.08)] border border-[rgba(127,176,122,0.2)] mb-4 sk-fx sk-d1">
+              <div className="flex items-center gap-3">
+                <span className="text-[20px] text-[var(--sk-green)]">✓</span>
+                <div>
+                  <div className="text-[13px] font-medium text-[var(--sk-green)]">Face Match: Strong</div>
+                  <div className="text-[11px] text-[var(--sk-ink-dim)] mt-1">ID photo matches selfie with high confidence.</div>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Consent */}
+          <div className="sk-card p-5 mb-6 sk-fx sk-d4">
+            <label className="flex items-start gap-3 cursor-pointer">
+              <input
+                type="checkbox"
+                checked={consentGiven}
+                onChange={() => setConsentGiven(!consentGiven)}
+                className="mt-1 w-4 h-4 accent-[var(--sk-gold)] cursor-pointer"
+              />
+              <div>
+                <div className="text-[13px] text-[var(--sk-ink)]">Terms & Consent</div>
+                <p className="text-[11px] text-[var(--sk-ink-dim)] mt-1 leading-[1.5]">
+                  I consent to Sakinah verifying my identity for safety. I confirm that the information provided is true and accurate. I agree to the Terms of Service and Privacy Policy.
+                </p>
+              </div>
+            </label>
+          </div>
+
+          {/* Actions */}
+          <div className="flex gap-3 sk-fx sk-d5">
+            <SakinahButton variant="ghost" onClick={() => navigate('/verify-otp')} className="flex-1">Back</SakinahButton>
+            <SakinahButton variant="primary" onClick={handleContinue} disabled={!allDone} className="flex-1">
+              Continue →
+            </SakinahButton>
           </div>
         </div>
       </div>
-
-      <div className="sk-notice sk-fx sk-d1" style={{ borderColor: 'rgba(127,176,122,.25)', background: 'rgba(127,176,122,.04)' }}>
-        <div className="ni" style={{ color: 'var(--sk-green)', background: 'rgba(127,176,122,.08)', borderColor: 'rgba(127,176,122,.2)' }}>✓</div>
-        <div>
-          <b>Phone number</b>
-          <p>+91 ••••• ••741 · confirmed</p>
-        </div>
-      </div>
-
-      <div className="sk-reflect sk-fx sk-d2">
-        <div className="q !text-[15px]">Government ID — choose one</div>
-        <div className="grid grid-cols-2 gap-2 mt-2">
-          <SakinahChoiceChip 
-            label="Aadhaar · DigiLocker" 
-            selected={selectedId === 'aadhaar'} 
-            onClick={() => setSelectedId('aadhaar')} 
-            className="!m-0 text-center"
-          />
-          <SakinahChoiceChip 
-            label="Passport" 
-            selected={selectedId === 'passport'} 
-            onClick={() => setSelectedId('passport')} 
-            className="!m-0 text-center"
-          />
-          <SakinahChoiceChip 
-            label="PAN" 
-            selected={selectedId === 'pan'} 
-            onClick={() => setSelectedId('pan')} 
-            className="!m-0 text-center"
-          />
-          <SakinahChoiceChip 
-            label="Voter ID" 
-            selected={selectedId === 'voter'} 
-            onClick={() => setSelectedId('voter')} 
-            className="!m-0 text-center"
-          />
-        </div>
-      </div>
-
-      <div className="sk-insight sk-fx sk-d3" style={{ borderColor: 'var(--sk-green)', color: '#bcd6b8' }}>
-        Your ID is <b style={{ color: '#9cc596' }}>minimised and encrypted</b> — only name, age, gender; raw Aadhaar never stored; <b style={{ color: '#9cc596' }}>never shown to a match</b>. It keeps out fakes and makes a banned person stay banned.
-      </div>
-
-      <div className="sk-fx sk-d3 mt-4">
-        <SakinahButton variant="primary" onClick={handleVerify} disabled={loading || vendorStatus === 'VENDOR_NOT_CONFIGURED'}>
-          {loading ? 'Verifying...' : 'Verify with DigiLocker →'}
-        </SakinahButton>
-      </div>
-    </SakinahJourneyFrame>
+    </div>
   );
 };

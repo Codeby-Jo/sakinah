@@ -6,6 +6,7 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { useEffect, useState } from 'react';
 import { useAuthStore } from '@/core/stores/auth.store';
+import { OnboardingProvider } from '@/features/sakinah/context/OnboardingContext';
 
 // Create a query client instance
 const queryClient = new QueryClient({
@@ -27,7 +28,9 @@ export function AppProviders({ children }: AppProvidersProps) {
   return (
     <QueryClientProvider client={queryClient}>
       <AuthInitializer>
-        {children}
+        <OnboardingProvider>
+          {children}
+        </OnboardingProvider>
       </AuthInitializer>
     </QueryClientProvider>
   );
