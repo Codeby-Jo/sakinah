@@ -1,0 +1,24 @@
+services:
+  - type: web
+    name: sakinahh-backend
+    runtime: python
+    runtimeVersion: 3.10
+    buildCommand: pip install -r requirements.txt
+    startCommand: uvicorn main:app --host 0.0.0.0 --port $PORT
+    envVars:
+      - key: DATABASE_URL
+        value: postgresql://USER:PASSWORD@HOST/DATABASE
+        scope: run
+      - key: JWT_SECRET_KEY
+        value: your-secret-key-here
+        scope: run
+    disk:
+      name: postgres_data
+      mountPath: /var/lib/postgresql
+      sizeGB: 1
+
+databases:
+  - name: sakinahh-db
+    dbName: sakinahh
+    user: sakinahh_user
+    plan: free
