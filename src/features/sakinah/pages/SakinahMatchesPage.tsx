@@ -2,7 +2,7 @@ import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { useOnboarding } from '../context/OnboardingContext';
-import { SakinahLayout, SakinahHeader } from '../components';
+import { SakinahLayout, SakinahHeader, SakinahReportModal } from '../components';
 
 const MOCK_MATCHES = [
   { 
@@ -27,6 +27,7 @@ export const SakinahMatchesPage: React.FC = () => {
   const { isWaliViewOnly } = useOnboarding();
   const [saved, setSaved] = React.useState<Record<string, boolean>>({});
   const [interested, setInterested] = React.useState<Record<string, boolean>>({});
+  const [reportingProfile, setReportingProfile] = React.useState<string | null>(null);
 
   const toggleSave = (id: string) => setSaved(p => ({ ...p, [id]: !p[id] }));
   const toggleInterest = (id: string) => setInterested(p => ({ ...p, [id]: !p[id] }));
@@ -69,23 +70,43 @@ export const SakinahMatchesPage: React.FC = () => {
                       <div className="text-[13px] text-[var(--sk-ink-dim)] mt-0.5">{m.age} yrs · {m.city}</div>
                       <div className="text-[12px] text-[var(--sk-ink-faint)] mt-0.5">{m.profession}</div>
                     </div>
-                    <span className="px-3 py-1 bg-[rgba(212,168,83,0.1)] border border-[rgba(212,168,83,0.2)] text-[var(--sk-gold)] text-[12px] rounded-full font-medium">
-                      {m.match} Match
-                    </span>
+                    <div className="flex flex-col items-end gap-2">
+                      <span className="px-3 py-1 bg-[rgba(212,168,83,0.1)] border border-[rgba(212,168,83,0.2)] text-[var(--sk-gold)] text-[12px] rounded-full font-medium">
+                        {m.match} Match
+                      </span>
+                      <button 
+                        onClick={(e) => { e.stopPropagation(); setReportingProfile(m.name); }}
+                        className="text-[11px] text-[var(--sk-ink-dim)] hover:text-[var(--sk-rose)] transition-colors flex items-center gap-1 opacity-60 hover:opacity-100"
+                        title="Report this profile"
+                      >
+                        🚩 Report Profile
+                      </button>
+                    </div>
                   </div>
 
                   {/* Match Explanation */}
-                  <div className="mt-4 p-4 rounded-xl bg-[rgba(255,255,255,0.02)] border border-[rgba(255,255,255,0.05)]">
-                    <div className="text-[11px] font-mono tracking-[0.1em] text-[var(--sk-gold-dim)] uppercase mb-3">Why this profile matches you</div>
-                    <div className="flex flex-col gap-2">
-                      {m.reasons.map((reason, idx) => (
-                        <div key={idx} className="flex items-center gap-2 text-[12px] text-[var(--sk-ink-dim)]">
-                          <span className="text-[var(--sk-green)] shrink-0">✓</span>
-                          <span>{reason}</span>
-                        </div>
-                      ))}
+                  {/* Match Explanation */}
+                  {m.mutualInterest && (
+                    <div className="mt-4 p-4 rounded-xl bg-[rgba(255,255,255,0.02)] border border-[rgba(212,168,83,0.15)] shadow-[0_4px_20px_rgba(212,168,83,0.05)] transition-all">
+                      <div className="text-[14px] font-serif text-[var(--sk-gold)] mb-3 flex items-center gap-2">
+                        ✨ Why This Profile Matches You
+                      </div>
+                      <div className="flex flex-col gap-2 mb-3">
+                        {m.reasons.map((reason, idx) => (
+                          <div key={idx} className="flex items-center gap-2 text-[13px] text-[var(--sk-ink-dim)]">
+                            <span className="text-[var(--sk-green)] shrink-0">✅</span>
+                            <span>{reason}</span>
+                          </div>
+                        ))}
+                      </div>
+                      <div className="text-[13px] text-[var(--sk-ink)] font-medium mb-1">
+                        Compatibility Score: <span className="text-[var(--sk-gold)]">{m.match}</span>
+                      </div>
+                      <div className="text-[11px] italic text-[var(--sk-ink-faint)]">
+                        "Based on your profile details and preferences, this person appears to be a strong match for you."
+                      </div>
                     </div>
-                  </div>
+                  )}
                 </div>
               </div>
               <div className="p-4 border-t border-[rgba(255,255,255,0.05)] bg-[rgba(255,255,255,0.01)] flex gap-3">
@@ -107,6 +128,13 @@ export const SakinahMatchesPage: React.FC = () => {
           ))}
         </motion.div>
       </div>
+      
+      {/* Report Profile Modal */}
+      <SakinahReportModal 
+        isOpen={!!reportingProfile} 
+        onClose={() => setReportingProfile(null)} 
+        profileName={reportingProfile || ''} 
+      />
     </SakinahLayout>
   );
 };

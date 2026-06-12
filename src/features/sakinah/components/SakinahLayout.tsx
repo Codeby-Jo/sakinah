@@ -1,4 +1,5 @@
 import React from 'react';
+import { motion } from 'framer-motion';
 import { SakinahSidebar } from './SakinahSidebar';
 import { useOnboarding } from '../context/OnboardingContext';
 
@@ -8,13 +9,19 @@ interface SakinahLayoutProps {
 
 export const SakinahLayout: React.FC<SakinahLayoutProps> = ({ children }) => {
   const { isWaliViewOnly } = useOnboarding();
+  const [isExpanded, setIsExpanded] = React.useState(true);
 
   return (
     <div className="flex min-h-screen bg-[#0A0E16]">
       {/* Sidebar hidden on small screens */}
-      <div className="hidden md:block w-[280px] shrink-0">
-        <SakinahSidebar />
-      </div>
+      <motion.div 
+        initial={false}
+        animate={{ width: isExpanded ? 280 : 80 }}
+        transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
+        className="hidden md:block shrink-0"
+      >
+        <SakinahSidebar isExpanded={isExpanded} setIsExpanded={setIsExpanded} />
+      </motion.div>
       
       {/* Mobile top bar (simplified) */}
       <div className="md:hidden fixed top-0 left-0 right-0 h-[60px] bg-[#0A0E16] border-b border-[rgba(255,255,255,0.05)] z-40 flex items-center px-4">

@@ -82,7 +82,7 @@ export const SakinahWaliCandidateProfilePage: React.FC = () => {
             <SakinahInput label="Weight (kg)" type="number" className="flex-1" value={v('weight')} onChange={e => set('weight', e.target.value)} />
           </div>
           <SakinahSelect label="Marital Status" value={v('maritalStatus')} onChange={e => set('maritalStatus', e.target.value)} options={[{value:'never_married',label:'Never Married'},{value:'divorced',label:'Divorced'},{value:'widowed',label:'Widowed'}]} placeholder="Select" />
-          <SakinahSearchableSelect label="Mother Tongue" value={v('motherTongue')} onChange={v => set('motherTongue', v)} options={LANGUAGE_OPTIONS.map(o => o.value)} allowOther required error={errors.motherTongue} />
+          <SakinahSearchableSelect label="Mother Tongue" value={v('motherTongue')} onChange={v => set('motherTongue', v)} options={LANGUAGE_OPTIONS} allowOther required error={errors.motherTongue} />
           <SakinahLocationCascade 
             value={{ country: v('country'), state: v('state'), district: v('district'), city: v('city') }}
             onChange={loc => {

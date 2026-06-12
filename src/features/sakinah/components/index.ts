@@ -44,3 +44,4 @@ export * from './SakinahFileUpload';
 export * from './SakinahLocationCascade';
 export * from './SakinahSidebar';
 export * from './SakinahLayout';
+export * from './SakinahReportModal';

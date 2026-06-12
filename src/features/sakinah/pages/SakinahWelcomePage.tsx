@@ -116,25 +116,42 @@ export const SakinahWelcomePage: React.FC = () => {
         </div>
       </section>
 
-      {/* Bottom CTA */}
-      <motion.section 
-        initial={{ opacity: 0, scale: 0.95 }}
-        whileInView={{ opacity: 1, scale: 1 }}
-        viewport={{ once: true, margin: "-100px" }}
-        transition={{ duration: 0.8 }}
-        className="relative z-10 text-center py-32 px-6"
-      >
-        <div className="max-w-[600px] mx-auto bg-gradient-to-b from-[rgba(212,168,83,0.05)] to-transparent border border-[rgba(212,168,83,0.1)] rounded-[32px] p-12 backdrop-blur-sm">
-          <h2 className="font-serif text-[32px] md:text-[40px] text-[var(--sk-ink)] mb-4">Begin Your Journey</h2>
-          <p className="text-[16px] text-[var(--sk-ink-dim)] font-light mb-10">Your path to a blessed union starts with a single step.</p>
-          <button
-            onClick={() => navigate('/role')}
-            className="w-[200px] py-4 bg-[var(--sk-gold)] text-[#0A0E16] text-[15px] font-medium rounded-full hover:bg-[#E8C97A] hover:shadow-[0_0_30px_rgba(212,168,83,0.4)] transition-all duration-300"
-          >
-            Get Started →
-          </button>
+      {/* Success Stories - Scroll Reveal */}
+      <section className="relative z-10 max-w-[1100px] mx-auto px-6 py-24 border-t border-[rgba(255,255,255,0.05)]">
+        <motion.div 
+          initial={{ opacity: 0, y: 20 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true, margin: "-100px" }}
+          transition={{ duration: 0.6 }}
+          className="text-center mb-16"
+        >
+          <h2 className="font-serif text-[36px] text-[var(--sk-ink)] mb-4">Blessed Unions</h2>
+          <p className="text-[16px] text-[var(--sk-ink-dim)] font-light max-w-[600px] mx-auto">Read how Sakinah has helped practicing Muslims find their righteous spouse.</p>
+        </motion.div>
+
+        <div className="grid md:grid-cols-2 gap-8 max-w-[900px] mx-auto">
+          {[
+            { names: 'Tariq & Aisha', desc: '"We were looking for someone who prioritized Deen above all else. Sakinah\'s value-based matching found us each other when traditional methods failed."', location: 'London, UK' },
+            { names: 'Omar & Fatima', desc: '"The Wali dashboard made my father feel comfortable with the process. It was respectful, secure, and truly Halal from day one."', location: 'Toronto, Canada' }
+          ].map((s, i) => (
+            <motion.div 
+              key={s.names}
+              initial={{ opacity: 0, x: i === 0 ? -30 : 30 }}
+              whileInView={{ opacity: 1, x: 0 }}
+              viewport={{ once: true, margin: "-50px" }}
+              transition={{ duration: 0.8, delay: i * 0.2 }}
+              className="sk-card p-8 bg-[rgba(212,168,83,0.02)] border border-[rgba(212,168,83,0.1)] hover:border-[var(--sk-gold)] hover:shadow-[0_0_30px_rgba(212,168,83,0.1)] transition-all duration-500 relative"
+            >
+              <div className="absolute top-4 right-6 text-[40px] font-serif text-[var(--sk-gold)] opacity-20">"</div>
+              <p className="text-[15px] text-[var(--sk-ink)] italic font-light leading-[1.8] mb-6 relative z-10">{s.desc}</p>
+              <div className="flex justify-between items-end border-t border-[rgba(255,255,255,0.05)] pt-4">
+                <span className="font-serif text-[18px] text-[var(--sk-gold)]">{s.names}</span>
+                <span className="text-[12px] text-[var(--sk-ink-faint)] tracking-wider uppercase">{s.location}</span>
+              </div>
+            </motion.div>
+          ))}
         </div>
-      </motion.section>
+      </section>
 
       {/* Footer */}
       <footer className="relative z-10 border-t border-[rgba(255,255,255,0.05)] py-8 px-6 text-center">

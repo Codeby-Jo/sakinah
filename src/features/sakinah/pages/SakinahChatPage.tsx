@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useOnboarding } from '../context/OnboardingContext';
-import { SakinahLayout } from '../components';
+import { SakinahLayout, SakinahReportModal } from '../components';
 
 const MOCK_CHATS = [
   { id: '1', name: 'Aisha', age: 25, city: 'London', profession: 'Software Engineer', initial: 'A', online: true, match: '92%', lastMessage: 'Assalamu alaikum, how are you?', time: '10:30 AM', unread: 2 },
@@ -25,6 +25,7 @@ export const SakinahChatPage: React.FC = () => {
   // Photo Request Audit Trail Simulation
   const [showPhotoRequest, setShowPhotoRequest] = useState(false);
   const [auditLog, setAuditLog] = useState<{ requester: string; time: string; status: string }[]>([]);
+  const [reportingProfile, setReportingProfile] = useState<string | null>(null);
 
   const openChat = (chat: typeof MOCK_CHATS[0]) => {
     setActiveChat(chat);
@@ -157,15 +158,24 @@ export const SakinahChatPage: React.FC = () => {
                   </div>
                 </div>
                 
-                {/* Photo Request Action */}
-                {!isWaliViewOnly && (
+                <div className="flex gap-2 items-center">
+                  {/* Photo Request Action */}
+                  {!isWaliViewOnly && (
+                    <button 
+                      onClick={requestPhoto}
+                      className="text-[11px] px-3 py-1.5 border border-[var(--sk-gold)] text-[var(--sk-gold)] rounded-full hover:bg-[rgba(212,168,83,0.1)] transition-colors"
+                    >
+                      Request Photo
+                    </button>
+                  )}
                   <button 
-                    onClick={requestPhoto}
-                    className="text-[11px] px-3 py-1.5 border border-[var(--sk-gold)] text-[var(--sk-gold)] rounded-full hover:bg-[rgba(212,168,83,0.1)] transition-colors"
+                    onClick={() => setReportingProfile(activeChat.name)}
+                    className="text-[14px] w-8 h-8 flex items-center justify-center rounded-full hover:bg-[rgba(255,255,255,0.05)] transition-colors opacity-70 hover:opacity-100"
+                    title="Report Profile"
                   >
-                    Request Photo
+                    🚩
                   </button>
-                )}
+                </div>
               </div>
 
               {/* Messages Area */}
@@ -315,6 +325,13 @@ export const SakinahChatPage: React.FC = () => {
 
         </div>
       </div>
+      
+      {/* Report Profile Modal */}
+      <SakinahReportModal 
+        isOpen={!!reportingProfile} 
+        onClose={() => setReportingProfile(null)} 
+        profileName={reportingProfile || ''} 
+      />
     </SakinahLayout>
   );
 };

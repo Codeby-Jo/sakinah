@@ -106,7 +106,7 @@ export const SakinahProfileCreationPage: React.FC = () => {
             <SakinahInput label="Weight (kg)" type="number" className="flex-1" value={v('weight')} onChange={e => set('weight', e.target.value)} />
           </div>
           <SakinahSelect label="Marital Status" value={v('maritalStatus')} onChange={e => set('maritalStatus', e.target.value)} required error={errors.maritalStatus} options={[{value:'never_married',label:'Never Married'},{value:'divorced',label:'Divorced'},{value:'widowed',label:'Widowed'},{value:'annulled',label:'Annulled'}]} placeholder="Select" />
-          <SakinahSearchableSelect label="Mother Tongue" value={v('motherTongue')} onChange={v => set('motherTongue', v)} options={['English', 'Urdu', 'Arabic', 'Tamil', 'Hindi', 'Bengali', 'Malayalam', 'Gujarati', 'Punjabi', 'Somali', 'Turkish', 'French', 'Other']} allowOther required error={errors.motherTongue} />
+          <SakinahSearchableSelect label="Mother Tongue" value={v('motherTongue')} onChange={v => set('motherTongue', v)} options={LANGUAGE_OPTIONS} allowOther required error={errors.motherTongue} />
           <SakinahInput label="Nationality" value={v('nationality')} onChange={e => set('nationality', e.target.value)} placeholder="e.g. Indian, British" />
         </div>
       );

@@ -1,10 +1,11 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { SakinahHeader, SakinahLayout } from '../components';
+import { SakinahHeader, SakinahLayout, SakinahReportModal } from '../components';
 
 export const SakinahDashboardPage: React.FC = () => {
   const navigate = useNavigate();
+  const [reportingProfile, setReportingProfile] = React.useState<string | null>(null);
 
   const containerVariants = {
     hidden: { opacity: 0 },
@@ -71,10 +72,12 @@ export const SakinahDashboardPage: React.FC = () => {
               {[
                 { 
                   initial: 'A', name: 'Aisha', age: 25, city: 'London', profession: 'Software Engineer', match: '92%', 
+                  mutualInterest: true,
                   reasons: ['Similar religious practice', 'Same preferred age range', 'Shared interests', 'Compatible education', 'Location preference matches']
                 },
                 { 
                   initial: 'M', name: 'Maryam', age: 27, city: 'Toronto', profession: 'Doctor', match: '87%',
+                  mutualInterest: false,
                   reasons: ['Compatible education level', 'Same Islamic sect', 'Similar family values', 'Shared lifestyle choices']
                 },
               ].map(m => (
@@ -93,24 +96,43 @@ export const SakinahDashboardPage: React.FC = () => {
                           <span className="px-3 py-1 bg-[rgba(212,168,83,0.1)] border border-[rgba(212,168,83,0.2)] text-[var(--sk-gold)] text-[12px] rounded-full font-medium">
                             {m.match} Match
                           </span>
-                          <button className="text-[12px] px-4 py-1.5 bg-[var(--sk-gold)] text-[#0A0E16] rounded-full font-medium hover:bg-[#E8C97A] transition-colors">
-                            Send Interest
+                          <button 
+                            onClick={(e) => { e.stopPropagation(); setReportingProfile(m.name); }}
+                            className="text-[11px] text-[var(--sk-ink-dim)] hover:text-[var(--sk-rose)] transition-colors flex items-center gap-1 opacity-60 hover:opacity-100"
+                            title="Report this profile"
+                          >
+                            🚩 Report Profile
                           </button>
+                          {!m.mutualInterest && (
+                            <button className="text-[12px] px-4 py-1.5 mt-1 bg-[var(--sk-gold)] text-[#0A0E16] rounded-full font-medium hover:bg-[#E8C97A] transition-colors">
+                              Send Interest
+                            </button>
+                          )}
                         </div>
                       </div>
 
                       {/* Match Explanation */}
-                      <div className="mt-4 p-4 rounded-xl bg-[rgba(255,255,255,0.02)] border border-[rgba(255,255,255,0.05)]">
-                        <div className="text-[11px] font-mono tracking-[0.1em] text-[var(--sk-gold-dim)] uppercase mb-3">Why this profile matches you</div>
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
-                          {m.reasons.map((reason, idx) => (
-                            <div key={idx} className="flex items-center gap-2 text-[12px] text-[var(--sk-ink-dim)]">
-                              <span className="text-[var(--sk-green)]">✓</span>
-                              {reason}
-                            </div>
-                          ))}
+                      {m.mutualInterest && (
+                        <div className="mt-4 p-4 rounded-xl bg-[rgba(255,255,255,0.02)] border border-[rgba(212,168,83,0.15)] shadow-[0_4px_20px_rgba(212,168,83,0.05)] transition-all">
+                          <div className="text-[14px] font-serif text-[var(--sk-gold)] mb-3 flex items-center gap-2">
+                            ✨ Why This Profile Matches You
+                          </div>
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-2 mb-3">
+                            {m.reasons.map((reason, idx) => (
+                              <div key={idx} className="flex items-center gap-2 text-[13px] text-[var(--sk-ink-dim)]">
+                                <span className="text-[var(--sk-green)] shrink-0">✅</span>
+                                <span>{reason}</span>
+                              </div>
+                            ))}
+                          </div>
+                          <div className="text-[13px] text-[var(--sk-ink)] font-medium mb-1 mt-2 border-t border-[rgba(255,255,255,0.05)] pt-3">
+                            Compatibility Score: <span className="text-[var(--sk-gold)]">{m.match}</span>
+                          </div>
+                          <div className="text-[11px] italic text-[var(--sk-ink-faint)] mt-1">
+                            "Based on your profile details and preferences, this person appears to be a strong match for you."
+                          </div>
                         </div>
-                      </div>
+                      )}
                     </div>
                   </div>
                 </div>
@@ -134,6 +156,13 @@ export const SakinahDashboardPage: React.FC = () => {
           
         </motion.div>
       </div>
+      
+      {/* Report Profile Modal */}
+      <SakinahReportModal 
+        isOpen={!!reportingProfile} 
+        onClose={() => setReportingProfile(null)} 
+        profileName={reportingProfile || ''} 
+      />
     </SakinahLayout>
   );
 };

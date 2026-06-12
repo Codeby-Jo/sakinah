@@ -33,6 +33,7 @@ const SakinahInterestsPage = lazy(() => import('@/features/sakinah/pages/Sakinah
 const SakinahSavedPage = lazy(() => import('@/features/sakinah/pages/SakinahSavedPage').then(m => ({ default: m.SakinahSavedPage })));
 const SakinahNotificationsPage = lazy(() => import('@/features/sakinah/pages/SakinahNotificationsPage').then(m => ({ default: m.SakinahNotificationsPage })));
 const SakinahSettingsPage = lazy(() => import('@/features/sakinah/pages/SakinahSettingsPage').then(m => ({ default: m.SakinahSettingsPage })));
+const SakinahSupportPage = lazy(() => import('@/features/sakinah/pages/SakinahSupportPage').then(m => ({ default: m.SakinahSupportPage })));
 
 // Wali Flow
 const SakinahWaliLoginPage = lazy(() => import('@/features/sakinah/pages/SakinahWaliLoginPage').then(m => ({ default: m.SakinahWaliLoginPage })));
@@ -101,6 +102,7 @@ export const router = createBrowserRouter([
   { path: '/saved', element: <LazyPage Component={SakinahSavedPage} />, errorElement: <RootErrorBoundary /> },
   { path: '/notifications', element: <LazyPage Component={SakinahNotificationsPage} />, errorElement: <RootErrorBoundary /> },
   { path: '/settings', element: <LazyPage Component={SakinahSettingsPage} />, errorElement: <RootErrorBoundary /> },
+  { path: '/support', element: <LazyPage Component={SakinahSupportPage} />, errorElement: <RootErrorBoundary /> },
 
   // ─── Wali Flow ──────────────────────────────────────────────────────────
   { path: '/wali/login', element: <LazyPage Component={SakinahWaliLoginPage} />, errorElement: <RootErrorBoundary /> },
