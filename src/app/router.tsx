@@ -30,6 +30,10 @@ const SakinahSafetyPage = lazy(() => import('@/features/sakinah/pages/SakinahSaf
 const SakinahCommunityPage = lazy(() => import('@/features/sakinah/pages/SakinahCommunityPage').then(m => ({ default: m.SakinahCommunityPage })));
 const SakinahVentPage = lazy(() => import('@/features/sakinah/pages/SakinahVentPage').then(m => ({ default: m.SakinahVentPage })));
 const SakinahNisProofPage = lazy(() => import('@/features/sakinah/pages/SakinahNisProofPage').then(m => ({ default: m.SakinahNisProofPage })));
+const SakinahLoginPage = lazy(() => import('@/features/sakinah/pages/SakinahLoginPage').then(m => ({ default: m.SakinahLoginPage })));
+const SakinahWaliDashboardPage = lazy(() => import('@/features/sakinah/pages/SakinahWaliDashboardPage').then(m => ({ default: m.SakinahWaliDashboardPage })));
+const SakinahProfileCreationPage = lazy(() => import('@/features/sakinah/pages/SakinahProfileCreationPage').then(m => ({ default: m.SakinahProfileCreationPage })));
+const SakinahDashboardPage = lazy(() => import('@/features/sakinah/pages/SakinahDashboardPage').then(m => ({ default: m.SakinahDashboardPage })));
 
 // Loading fallback component
 function PageLoader() {
@@ -202,6 +206,26 @@ export const router = createBrowserRouter([
   {
     path: '/sakinah/dev/proof-report',
     element: <LazyPage Component={SakinahNisProofPage} />,
+    errorElement: <RootErrorBoundary />,
+  },
+  {
+    path: '/login',
+    element: <LazyPage Component={SakinahLoginPage} />,
+    errorElement: <RootErrorBoundary />,
+  },
+  {
+    path: '/sakinah/wali-dashboard',
+    element: <LazyPage Component={SakinahWaliDashboardPage} />,
+    errorElement: <RootErrorBoundary />,
+  },
+  {
+    path: '/sakinah/profile-creation',
+    element: <LazyPage Component={SakinahProfileCreationPage} />,
+    errorElement: <RootErrorBoundary />,
+  },
+  {
+    path: '/sakinah/dashboard',
+    element: <LazyPage Component={SakinahDashboardPage} />,
     errorElement: <RootErrorBoundary />,
   },
 

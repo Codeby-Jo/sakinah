@@ -80,18 +80,30 @@
 html, body {
   margin: 0;
   padding: 0;
-  background-color: #ffffff;
+  background-color: var(--color-background-primary);
+  /* dvh keeps the layout stable when iOS Safari shows/hides the URL bar */
   min-height: 100dvh;
+  /* iOS rubber-band scroll fix inside Capacitor webview */
   overscroll-behavior-y: none;
   -webkit-tap-highlight-color: transparent;
+  /* Hard-cap horizontal width — small Samsung devices (S10, A10, A30) are
+     360 CSS px wide and any element wider than that creates horizontal
+     overflow that pushes content beyond the screen. `clip` (not `hidden`)
+     so we don't accidentally promote overflow-y into a scroll container,
+     which would give us two stacked vertical scrollbars (html + body)
+     and breaks touch-scroll bubbling on iOS/Android WebView. */
   max-width: 100vw;
   overflow-x: clip;
 }
 body {
-  color: #374151;
+  color: var(--color-text-secondary);
   font-family: var(--font-sans);
   position: relative;
   z-index: 0;
+  /* Honour notch / Dynamic Island / Samsung punch-hole on every page.
+   * Capacitor StatusBar plugin sets these CSS env vars on Android too.
+   * Use max() so we still get a baseline 12px on devices without insets
+   * (so headers don't sit flush against the very top edge). */
   padding-top: max(env(safe-area-inset-top), 0px);
   padding-right: env(safe-area-inset-right);
   padding-bottom: env(safe-area-inset-bottom);
@@ -99,6 +111,7 @@ body {
 }
 #root {
   min-height: 100dvh;
+  /* Prevent any descendant from forcing horizontal scroll on narrow phones. */
   max-width: 100%;
   overflow-x: clip;
 }
@@ -160,8 +173,8 @@ html {
 /* Minimum tap target: 40px even on the smallest screens. Phosphor icon
    buttons in our codebase often size to icon dimensions (12-16px) which
    on a Samsung A10 with chunky thumbs is hard to hit. */
-button, [role="button"] {
-  min-height: 32px;
+button, [role="button"], a {
+  min-height: 32px; /* baseline; explicit sizes still win */
 }
 @media (pointer: coarse) {
   /* Touch-only devices — bump tap targets a bit */
@@ -181,21 +194,30 @@ input, textarea, [contenteditable] {
   user-select: text;
 }
 
-/* Global headings — clean sans-serif for professional matrimonial site */
+/* Global headings — Barakah serif, static warm-gold (no shimmer).
+   Per-page components are free to override color/style. */
 h1,
 h2,
 h3,
 h4,
 h5,
 h6 {
-  font-family: var(--font-sans);
-  color: #111827;
-  letter-spacing: -0.01em;
+  font-family: var(--font-display);
+  color: var(--color-text-heading);
+  letter-spacing: 0.2px;
 }
 
-/* No ambient glow on white theme */
+/* Ambient page glow — soft gold + emerald radials (replaces the prior
+   gold-dot starfield). Lives behind the React tree, pointer-events off. */
 body::before {
-  content: none;
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  background-image:
+    radial-gradient(ellipse 60% 50% at 50% 30%, rgba(212,168,83, 0.05), transparent 70%),
+    radial-gradient(ellipse 70% 55% at 50% 80%, rgba(42, 157, 111, 0.035), transparent 75%);
 }
 
 /* Scrollbar styling */
@@ -318,23 +340,12 @@ body::before {
 
 
 /* Hide scrollbar utility */
-.scrollbar-hide,
-.no-scrollbar {
+.scrollbar-hide {
   -ms-overflow-style: none;
   scrollbar-width: none;
 }
-.scrollbar-hide::-webkit-scrollbar,
-.no-scrollbar::-webkit-scrollbar {
+.scrollbar-hide::-webkit-scrollbar {
   display: none;
-}
-
-/* Stepper connector fill animation */
-@keyframes stepper-fill {
-  from { width: 0%; }
-  to   { width: 100%; }
-}
-.stepper-connector-fill {
-  animation: stepper-fill 0.5s ease forwards;
 }
 
 /* Line clamp utilities */
