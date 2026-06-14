@@ -88,8 +88,8 @@ export const SakinahLivenessPage: React.FC = () => {
               ✓ Photo-matched
             </span>
           </div>
-          <SakinahButton variant="primary" onClick={() => navigate('/sakinah/home')}>
-            Enter Sakinah →
+          <SakinahButton variant="primary" onClick={() => navigate('/sakinah/profile-creation')}>
+            Create Profile →
           </SakinahButton>
         </div>
       )}

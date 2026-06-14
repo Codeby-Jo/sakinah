@@ -1,18 +1,16 @@
 /**
  * Sakinah App Root Component
+ * Entry point for the Sakinah frontend application
  */
 
 import { RouterProvider } from 'react-router-dom';
-import { router } from './routes';
-import { AppProviders } from './app/providers';
-import { AppProvider } from './context/AppContext';
+import { router } from '@/app/router';
+import { AppProviders } from '@/app/providers';
 
 function App() {
   return (
     <AppProviders>
-      <AppProvider>
-        <RouterProvider router={router} />
-      </AppProvider>
+      <RouterProvider router={router} />
     </AppProviders>
   );
 }

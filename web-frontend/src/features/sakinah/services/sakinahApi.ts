@@ -53,6 +53,41 @@ async function fetchNisApi(endpoint: string, options: RequestInit = {}) {
   return response.json();
 }
 
+// Auth
+export async function registerSakinah(data: any) {
+  return fetchNisApi('/auth/register', {
+    method: 'POST',
+    body: JSON.stringify(data)
+  });
+}
+
+export async function loginSakinah(email: string, password: string) {
+  const formData = new URLSearchParams();
+  formData.append('username', email);
+  formData.append('password', password);
+
+  const response = await fetch(`${API_BASE}/auth/login`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/x-www-form-urlencoded',
+    },
+    body: formData.toString()
+  });
+
+  if (!response.ok) {
+    let errorMsg = 'Login failed';
+    try {
+      const errorData = await response.json();
+      errorMsg = errorData.detail || errorMsg;
+    } catch {
+      // Ignored
+    }
+    throw new Error(errorMsg);
+  }
+
+  return response.json();
+}
+
 // KYC / Eligibility
 export async function getSakinahEligibility() {
   return fetchNisApi('/eligibility/me');
@@ -63,9 +98,9 @@ export async function getSakinahProfile(): Promise<SakinahProfileData> {
   return fetchNisApi('/profile/me');
 }
 
-export async function updateSakinahProfile(data: Partial<SakinahProfileData>) {
-  return fetchNisApi('/profile/me', {
-    method: 'PUT',
+export async function updateSakinahProfile(data: any) {
+  return fetchNisApi('/profile', {
+    method: 'POST',
     body: JSON.stringify(data)
   });
 }
@@ -110,16 +145,30 @@ export async function submitDecision(matchflowId: string, outcome: 'PROCEED' | '
   });
 }
 
-// Conversation
-export async function getStructuredConversation(conversationId: string): Promise<ConversationResponse> {
-  return fetchNisApi(`/conversations/${conversationId}`);
+// Conversation — real backend routes
+export async function getMyConversations() {
+  return fetchNisApi('/conversations/');
 }
 
-export async function sendConversationMessage(conversationId: string, topic: string, content: string) {
+export async function getConversationMessages(conversationId: string) {
+  return fetchNisApi(`/conversations/${conversationId}/messages`);
+}
+
+export async function sendMessage(conversationId: string, text: string, msg_type = 'text') {
   return fetchNisApi(`/conversations/${conversationId}/messages`, {
     method: 'POST',
-    body: JSON.stringify({ topic, content })
+    body: JSON.stringify({ text, msg_type })
   });
+}
+
+/** @deprecated kept for type compatibility — use getMyConversations / getConversationMessages */
+export async function getStructuredConversation(conversationId: string): Promise<ConversationResponse> {
+  return fetchNisApi(`/conversations/${conversationId}/messages`);
+}
+
+/** @deprecated kept for type compatibility — use sendMessage */
+export async function sendConversationMessage(conversationId: string, _topic: string, content: string) {
+  return sendMessage(conversationId, content);
 }
 
 // Reports
