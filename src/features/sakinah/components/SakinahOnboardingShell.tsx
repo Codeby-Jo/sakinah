@@ -1,54 +1,46 @@
 /**
  * SakinahOnboardingShell — Shared animated layout for all /matrimony onboarding steps.
- * Renders the immersive left-rail step navigator (desktop) + collapsible mobile header.
- * Each page just calls <SakinahOnboardingShell step={N}> and puts its content inside.
+ * Premium, glassmorphism, gold accents.
  */
 import React, { useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
-  UserPlus, ShieldCheck, IdentificationCard, UserList, Heart, CheckCircle,
-  ArrowLeft, List, X,
+  UserPlus, IdentificationCard, UserList, Heart, CheckCircle,
+  List, X,
 } from '@phosphor-icons/react';
 
 export const ONBOARDING_STEPS = [
   {
     num: 1,
-    label: 'Registration',
-    subtitle: 'Create your account',
+    label: 'Account Setup',
+    subtitle: 'Email & Password',
     icon: UserPlus,
     path: '/matrimony/register',
   },
   {
     num: 2,
-    label: 'Verification',
-    subtitle: 'Verify email & phone',
-    icon: ShieldCheck,
-    path: '/matrimony/verify-otp',
-  },
-  {
-    num: 3,
     label: 'Identity KYC',
-    subtitle: 'Upload ID & selfie',
+    subtitle: 'Selfie & Govt ID',
     icon: IdentificationCard,
     path: '/matrimony/kyc',
   },
   {
-    num: 4,
-    label: 'Profile Details',
-    subtitle: 'Basic, religion, lifestyle',
+    num: 3,
+    label: 'Profile Basics',
+    subtitle: 'Personal details',
     icon: UserList,
     path: '/matrimony/profile-creation',
   },
   {
-    num: 5,
-    label: 'Preferences',
-    subtitle: 'Set match criteria',
+    num: 4,
+    label: 'Match Preferences',
+    subtitle: 'What you seek',
     icon: Heart,
     path: '/matrimony/preferences',
   },
   {
-    num: 6,
+    num: 5,
     label: 'Review & Submit',
     subtitle: 'Finalize & submit',
     icon: CheckCircle,
@@ -80,70 +72,72 @@ export const SakinahOnboardingShell: React.FC<Props> = ({ step, children, title,
   };
 
   return (
-    <div className="min-h-screen flex flex-col md:flex-row bg-[#070a10] overflow-x-hidden">
-
-      {/* ── Animated particle background ─────────────────────── */}
+    <div className="min-h-screen flex flex-col md:flex-row bg-[#050816] overflow-x-hidden font-sans">
+      {/* ── Animated background ─────────────────────── */}
       <div className="fixed inset-0 pointer-events-none overflow-hidden z-0">
-        {[...Array(6)].map((_, i) => (
+        {[...Array(3)].map((_, i) => (
           <motion.div
             key={i}
-            className="absolute rounded-full opacity-[0.04]"
+            className="absolute rounded-full opacity-[0.03]"
             style={{
-              width: `${180 + i * 80}px`,
-              height: `${180 + i * 80}px`,
-              background: 'radial-gradient(circle, #D4A853, transparent)',
-              left: `${[10, 60, 20, 75, 40, 85][i]}%`,
-              top: `${[15, 70, 45, 10, 80, 50][i]}%`,
+              width: `${300 + i * 150}px`,
+              height: `${300 + i * 150}px`,
+              background: 'radial-gradient(circle, #D4AF37, transparent)',
+              left: `${[10, 70, 30][i]}%`,
+              top: `${[20, 80, 50][i]}%`,
             }}
             animate={{
-              x: [0, 20, -10, 0],
-              y: [0, -15, 10, 0],
-              scale: [1, 1.05, 0.97, 1],
+              x: [0, 30, -20, 0],
+              y: [0, -20, 20, 0],
+              scale: [1, 1.1, 0.95, 1],
             }}
             transition={{
-              duration: 8 + i * 2,
+              duration: 15 + i * 5,
               repeat: Infinity,
               ease: 'easeInOut',
-              delay: i * 0.8,
+              delay: i * 2,
             }}
           />
         ))}
       </div>
 
       {/* ── Desktop Left Rail ──────────────────────────────────── */}
-      <div className="hidden md:flex flex-col w-[300px] lg:w-[340px] min-h-screen sticky top-0 bg-[#080b12]/95 backdrop-blur-xl border-r border-white/[0.04] z-20 shrink-0">
-
+      <div className="hidden md:flex flex-col w-[320px] lg:w-[360px] min-h-screen sticky top-0 bg-[#0B1020]/90 backdrop-blur-2xl border-r border-[rgba(212,175,55,0.15)] z-20 shrink-0">
         {/* Logo / Brand */}
         <div className="p-8 pb-6">
           <motion.div
             initial={{ opacity: 0, y: -10 }}
             animate={{ opacity: 1, y: 0 }}
-            className="flex items-center gap-3 mb-6"
+            className="flex items-center gap-4 mb-8"
           >
-            <div className="w-10 h-10 bg-gradient-to-br from-[#D4A853] to-[#8C6220] rounded-xl rotate-45 flex items-center justify-center shadow-[0_0_24px_rgba(212,168,83,0.35)] shrink-0">
-              <span className="-rotate-45 text-[#0A0E16] text-lg font-bold font-serif">S</span>
+            <div className="w-12 h-12 bg-gradient-to-br from-[#D4AF37] to-[#8C6220] rounded-xl rotate-45 flex items-center justify-center shadow-[0_0_30px_rgba(212,175,55,0.4)] shrink-0">
+              <span className="-rotate-45 text-[#050816] text-xl font-bold font-serif">S</span>
             </div>
             <div>
-              <h2 className="font-serif text-[20px] text-white leading-none">Sakinah</h2>
-              <span className="text-[9px] text-[#D4A853]/50 uppercase tracking-[0.2em]">Matrimony</span>
+              <h2 className="font-serif text-[24px] text-white leading-none tracking-wide">Sakinah</h2>
+              <span className="text-[10px] text-[#F5D77A]/60 uppercase tracking-[0.25em]">Premium Matrimony</span>
             </div>
           </motion.div>
 
           {/* Progress bar */}
-          <div className="h-[3px] bg-white/[0.05] rounded-full overflow-hidden">
-            <motion.div
-              className="h-full bg-gradient-to-r from-[#D4A853] to-[#E8C97A] rounded-full"
-              initial={{ width: 0 }}
-              animate={{ width: `${progress}%` }}
-              transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
-            />
+          <div className="mb-2">
+            <div className="flex justify-between items-center mb-2">
+              <span className="text-[10px] text-[#D4AF37]/80 uppercase tracking-widest">Progress</span>
+              <span className="text-[10px] text-white/50">{Math.round(progress)}%</span>
+            </div>
+            <div className="h-[4px] bg-[rgba(212,175,55,0.1)] rounded-full overflow-hidden">
+              <motion.div
+                className="h-full bg-gradient-to-r from-[#D4AF37] to-[#F5D77A] rounded-full shadow-[0_0_10px_rgba(212,175,55,0.5)]"
+                initial={{ width: 0 }}
+                animate={{ width: `${progress}%` }}
+                transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
+              />
+            </div>
           </div>
-          <p className="text-[10px] text-white/30 mt-2">Step {step} of {ONBOARDING_STEPS.length}</p>
         </div>
 
         {/* Steps */}
-        <div className="flex-1 px-5 pb-8 flex flex-col gap-1">
-          <p className="text-[9px] text-white/25 uppercase tracking-[0.18em] mb-3 ml-2">Onboarding Journey</p>
+        <div className="flex-1 px-6 pb-8 flex flex-col gap-2">
           {ONBOARDING_STEPS.map((s, i) => {
             const isActive = s.num === step;
             const isCompleted = s.num < step;
@@ -152,99 +146,78 @@ export const SakinahOnboardingShell: React.FC<Props> = ({ step, children, title,
             return (
               <motion.button
                 key={s.num}
-                initial={{ opacity: 0, x: -12 }}
+                initial={{ opacity: 0, x: -15 }}
                 animate={{ opacity: 1, x: 0 }}
-                transition={{ delay: i * 0.05 }}
+                transition={{ delay: i * 0.08 }}
                 onClick={() => handleStepClick(s)}
                 disabled={!isClickable}
-                className={`relative flex items-center gap-3.5 px-3 py-3 rounded-2xl transition-all duration-300 group text-left w-full ${
+                className={`relative flex items-center gap-4 px-4 py-3.5 rounded-2xl transition-all duration-300 group text-left w-full overflow-hidden ${
                   isActive
-                    ? 'bg-[rgba(212,168,83,0.1)] border border-[rgba(212,168,83,0.2)]'
+                    ? 'bg-gradient-to-r from-[rgba(212,175,55,0.15)] to-transparent border border-[rgba(212,175,55,0.25)] shadow-[inset_0_0_20px_rgba(212,175,55,0.05)]'
                     : isClickable
-                    ? 'hover:bg-white/[0.03] cursor-pointer'
-                    : 'opacity-35 cursor-default'
+                    ? 'hover:bg-[rgba(212,175,55,0.05)] border border-transparent cursor-pointer'
+                    : 'opacity-40 cursor-default border border-transparent'
                 }`}
               >
-                {/* Active glow */}
+                {/* Active indicator bar */}
                 {isActive && (
                   <motion.div
-                    layoutId="step-glow"
-                    className="absolute left-0 top-0 bottom-0 w-[3px] bg-[#D4A853] rounded-full shadow-[0_0_12px_rgba(212,168,83,0.8)]"
+                    layoutId="active-step"
+                    className="absolute left-0 top-0 bottom-0 w-[4px] bg-[#D4AF37] shadow-[0_0_15px_rgba(212,175,55,1)]"
                   />
                 )}
 
-                {/* Icon bubble */}
-                <div className={`w-9 h-9 rounded-xl flex items-center justify-center shrink-0 transition-all duration-300 ${
+                {/* Icon */}
+                <div className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 transition-all duration-500 ${
                   isActive
-                    ? 'bg-[#D4A853] text-[#0A0E16] shadow-[0_0_16px_rgba(212,168,83,0.4)]'
+                    ? 'bg-gradient-to-br from-[#D4AF37] to-[#8C6220] text-[#050816] shadow-[0_0_20px_rgba(212,175,55,0.5)]'
                     : isCompleted
-                    ? 'bg-[rgba(212,168,83,0.12)] text-[#D4A853]'
-                    : 'bg-white/[0.04] text-white/30'
+                    ? 'bg-[rgba(212,175,55,0.15)] text-[#D4AF37] border border-[rgba(212,175,55,0.3)]'
+                    : 'bg-white/[0.03] text-white/40 border border-white/[0.05]'
                 }`}>
                   {isCompleted ? (
-                    <motion.span
-                      initial={{ scale: 0 }}
-                      animate={{ scale: 1 }}
-                      className="text-sm font-bold"
-                    >✓</motion.span>
+                    <motion.span initial={{ scale: 0 }} animate={{ scale: 1 }} className="text-sm font-bold">✓</motion.span>
                   ) : (
-                    <Icon weight={isActive ? 'fill' : 'regular'} size={17} />
+                    <Icon weight={isActive ? 'fill' : 'regular'} size={20} />
                   )}
                 </div>
 
                 {/* Label */}
                 <div className="flex-1 min-w-0">
-                  <div className={`text-[13px] font-medium leading-none mb-0.5 transition-colors duration-300 ${
-                    isActive ? 'text-[#D4A853]' : isCompleted ? 'text-white/80' : 'text-white/35 group-hover:text-white/55'
+                  <div className={`text-[14px] font-medium leading-tight mb-1 transition-colors duration-300 ${
+                    isActive ? 'text-[#F5D77A]' : isCompleted ? 'text-white/90' : 'text-white/50 group-hover:text-white/70'
                   }`}>
                     {s.label}
                   </div>
-                  <div className="text-[11px] text-white/25 truncate">{s.subtitle}</div>
-                </div>
-
-                {/* Chevron */}
-                <div className={`text-xs transition-colors duration-300 pr-1 ${isActive ? 'text-[#D4A853]' : 'text-white/10 group-hover:text-white/25'}`}>
-                  ›
+                  <div className={`text-[11px] truncate transition-colors duration-300 ${isActive ? 'text-[#D4AF37]/80' : 'text-white/30'}`}>
+                    {s.subtitle}
+                  </div>
                 </div>
               </motion.button>
             );
           })}
         </div>
-
-        {/* Exit link */}
-        <div className="p-5 border-t border-white/[0.04]">
-          <button
-            onClick={() => navigate('/raya-gateway')}
-            className="flex items-center gap-2.5 text-[12px] text-white/25 hover:text-white/50 transition-colors"
-          >
-            <ArrowLeft size={14} />
-            Back to Zaryah+
-          </button>
-        </div>
       </div>
 
       {/* ── Mobile Top Bar ─────────────────────────────────────── */}
       <div className="md:hidden sticky top-0 z-50">
-        <div className="bg-[#080b12]/96 backdrop-blur-xl border-b border-white/[0.05] px-5 py-4 flex items-center justify-between">
-          <button onClick={() => navigate(-1)} className="w-9 h-9 flex items-center justify-center bg-white/[0.04] rounded-full text-white/60 hover:text-white transition-colors">
-            <ArrowLeft size={16} />
-          </button>
-          <div className="text-center">
-            <div className="text-[14px] font-medium text-white">{currentStep?.label}</div>
-            <div className="text-[10px] text-white/35">{currentStep?.subtitle}</div>
+        <div className="bg-[#0B1020]/95 backdrop-blur-2xl border-b border-[rgba(212,175,55,0.15)] px-5 py-4 flex items-center justify-between">
+          <div className="text-center w-full relative">
+            <div className="text-[16px] font-serif text-[#F5D77A]">{currentStep?.label}</div>
+            <div className="text-[10px] text-white/50 uppercase tracking-widest mt-0.5">Step {step} of 5</div>
           </div>
           <button
             onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-            className="w-9 h-9 flex items-center justify-center bg-white/[0.04] rounded-full text-white/60 hover:text-[#D4A853] transition-colors"
+            className="absolute right-5 w-10 h-10 flex items-center justify-center bg-[rgba(212,175,55,0.1)] rounded-full text-[#D4AF37] hover:bg-[rgba(212,175,55,0.2)] transition-colors"
           >
-            {mobileMenuOpen ? <X size={16} /> : <List size={16} />}
+            {mobileMenuOpen ? <X size={18} /> : <List size={18} />}
           </button>
         </div>
 
         {/* Mobile progress */}
-        <div className="h-[3px] bg-white/[0.04]">
+        <div className="h-[2px] bg-white/[0.04]">
           <motion.div
-            className="h-full bg-gradient-to-r from-[#D4A853] to-[#E8C97A]"
+            className="h-full bg-gradient-to-r from-[#D4AF37] to-[#F5D77A]"
             initial={{ width: 0 }}
             animate={{ width: `${progress}%` }}
             transition={{ duration: 0.5 }}
@@ -258,10 +231,10 @@ export const SakinahOnboardingShell: React.FC<Props> = ({ step, children, title,
               initial={{ height: 0, opacity: 0 }}
               animate={{ height: 'auto', opacity: 1 }}
               exit={{ height: 0, opacity: 0 }}
-              transition={{ duration: 0.25, ease: [0.16, 1, 0.3, 1] }}
-              className="overflow-hidden bg-[#08111a]/98 backdrop-blur-xl border-b border-white/[0.05]"
+              transition={{ duration: 0.3, ease: [0.16, 1, 0.3, 1] }}
+              className="overflow-hidden bg-[#050816]/98 backdrop-blur-xl border-b border-[rgba(212,175,55,0.2)]"
             >
-              <div className="p-4 space-y-1">
+              <div className="p-5 space-y-2">
                 {ONBOARDING_STEPS.map((s) => {
                   const isActive = s.num === step;
                   const isCompleted = s.num < step;
@@ -271,16 +244,16 @@ export const SakinahOnboardingShell: React.FC<Props> = ({ step, children, title,
                       key={s.num}
                       onClick={() => handleStepClick(s)}
                       disabled={s.num > step}
-                      className={`flex items-center gap-3 w-full px-3 py-2.5 rounded-xl transition-all ${
-                        isActive ? 'bg-[rgba(212,168,83,0.1)]' : s.num <= step ? 'hover:bg-white/[0.03]' : 'opacity-30'
+                      className={`flex items-center gap-4 w-full px-4 py-3 rounded-xl transition-all ${
+                        isActive ? 'bg-[rgba(212,175,55,0.15)] border border-[rgba(212,175,55,0.3)]' : s.num <= step ? 'hover:bg-white/[0.03]' : 'opacity-30'
                       }`}
                     >
-                      <div className={`w-8 h-8 rounded-lg flex items-center justify-center shrink-0 ${
-                        isActive ? 'bg-[#D4A853] text-[#0A0E16]' : isCompleted ? 'bg-[rgba(212,168,83,0.1)] text-[#D4A853]' : 'bg-white/[0.04] text-white/30'
+                      <div className={`w-9 h-9 rounded-lg flex items-center justify-center shrink-0 ${
+                        isActive ? 'bg-gradient-to-br from-[#D4AF37] to-[#8C6220] text-[#050816]' : isCompleted ? 'bg-[rgba(212,175,55,0.1)] text-[#D4AF37]' : 'bg-white/[0.04] text-white/30'
                       }`}>
-                        {isCompleted ? <span className="text-xs font-bold">✓</span> : <Icon size={15} weight={isActive ? 'fill' : 'regular'} />}
+                        {isCompleted ? <span className="text-xs font-bold">✓</span> : <Icon size={18} weight={isActive ? 'fill' : 'regular'} />}
                       </div>
-                      <span className={`text-[13px] font-medium ${isActive ? 'text-[#D4A853]' : 'text-white/60'}`}>{s.label}</span>
+                      <span className={`text-[14px] font-medium ${isActive ? 'text-[#F5D77A]' : 'text-white/70'}`}>{s.label}</span>
                     </button>
                   );
                 })}
@@ -292,24 +265,24 @@ export const SakinahOnboardingShell: React.FC<Props> = ({ step, children, title,
 
       {/* ── Main Content ───────────────────────────────────────── */}
       <div className="flex-1 relative z-10 overflow-x-hidden">
-        <div className="min-h-screen flex flex-col px-5 py-8 md:px-12 md:py-14 max-w-[680px] mx-auto">
+        <div className="min-h-screen flex flex-col px-6 py-10 md:px-14 md:py-16 max-w-[760px] mx-auto">
           {/* Desktop page header */}
           {(title || subtitle) && (
             <motion.div
               key={location.pathname}
-              initial={{ opacity: 0, y: 14 }}
+              initial={{ opacity: 0, y: 15 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
-              className="hidden md:block mb-10"
+              transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
+              className="hidden md:block mb-12"
             >
               {title && (
-                <h1 className="font-serif text-[38px] lg:text-[46px] text-white leading-tight mb-2"
-                  style={{ textShadow: '0 0 40px rgba(212,168,83,0.15)' }}>
+                <h1 className="font-serif text-[42px] lg:text-[50px] text-white leading-tight mb-3 tracking-tight"
+                  style={{ textShadow: '0 0 50px rgba(212,175,55,0.2)' }}>
                   {title}
                 </h1>
               )}
               {subtitle && (
-                <p className="text-[15px] text-white/40 font-light leading-relaxed">{subtitle}</p>
+                <p className="text-[16px] text-white/50 font-light leading-relaxed max-w-xl">{subtitle}</p>
               )}
             </motion.div>
           )}
@@ -317,10 +290,10 @@ export const SakinahOnboardingShell: React.FC<Props> = ({ step, children, title,
           {/* Page content with enter animation */}
           <motion.div
             key={location.pathname}
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -10 }}
-            transition={{ duration: 0.35, ease: [0.16, 1, 0.3, 1] }}
+            initial={{ opacity: 0, scale: 0.98, y: 20 }}
+            animate={{ opacity: 1, scale: 1, y: 0 }}
+            exit={{ opacity: 0, scale: 0.98, y: -20 }}
+            transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
             className="flex-1"
           >
             {children}

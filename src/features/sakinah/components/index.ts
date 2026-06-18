@@ -20,8 +20,6 @@ export * from './SakinahInput';
 export * from './SakinahTextarea';
 export * from './SakinahLoadingState';
 export * from './SakinahErrorState';
-
-// Phase B Components (Dev Reference Parity)
 export * from './SakinahJourneyFrame';
 export * from './SakinahStageRail';
 export * from './SakinahJourneyStepper';
@@ -46,3 +44,14 @@ export * from './SakinahSidebar';
 export * from './SakinahLayout';
 export * from './SakinahReportModal';
 export * from './SakinahOnboardingShell';
+export * from './SakinahAnimatedCardGroup';
+export * from './SakinahSegmentedControl';
+export * from './SakinahDualSlider';
+export * from './SakinahTimelineCards';
+export * from './SakinahMultiSelectChips';
+export * from './SakinahToast';
+export * from './SakinahLocationSelect';
+export * from './SakinahMultiLocationSelect';
+export * from './SakinahSecurePhotoViewer';
+export * from './SakinahVerifiedBadge';
+export * from './LivenessVerification';

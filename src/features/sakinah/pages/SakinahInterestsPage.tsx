@@ -8,16 +8,9 @@ const TABS = ['Received', 'Sent', 'Accepted', 'Pending', 'Rejected'] as const;
 type TabType = typeof TABS[number];
 
 const MOCK_INTERESTS: Record<TabType, Array<{ id: string, name: string, age: number, city: string, date: string, initial: string }>> = {
-  Received: [
-    { id: '1', name: 'Zaid', age: 28, city: 'London', date: '2 hours ago', initial: 'Z' },
-    { id: '2', name: 'Omar', age: 29, city: 'Manchester', date: 'Yesterday', initial: 'O' }
-  ],
-  Sent: [
-    { id: '3', name: 'Tariq', age: 30, city: 'Birmingham', date: '3 days ago', initial: 'T' }
-  ],
-  Accepted: [
-    { id: '4', name: 'Aisha', age: 25, city: 'London', date: 'Last week', initial: 'A' }
-  ],
+  Received: [],
+  Sent: [],
+  Accepted: [],
   Pending: [],
   Rejected: []
 };

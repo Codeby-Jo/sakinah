@@ -5,12 +5,12 @@ import { motion } from 'framer-motion';
 export const SakinahWelcomePage: React.FC = () => {
   const navigate = useNavigate();
 
-  const containerVars = {
+  const containerVars: any = {
     hidden: { opacity: 0 },
     show: { opacity: 1, transition: { staggerChildren: 0.2 } }
   };
 
-  const itemVars = {
+  const itemVars: any = {
     hidden: { opacity: 0, y: 40, filter: 'blur(10px)' },
     show: { opacity: 1, y: 0, filter: 'blur(0px)', transition: { duration: 1.2, ease: [0.16, 1, 0.3, 1] } }
   };
@@ -66,10 +66,10 @@ export const SakinahWelcomePage: React.FC = () => {
 
           <motion.div variants={itemVars} className="w-full max-w-[400px]">
             <button
-              onClick={() => navigate('/matrimony/role')}
+              onClick={() => navigate('/matrimony/begin')}
               className="relative w-full py-5 px-8 bg-gradient-to-r from-[#FDE6B8] via-[#E8C97A] to-[#D4A853] text-[#0A0E16] text-[18px] font-bold tracking-[0.2em] uppercase rounded-full shadow-[0_0_40px_rgba(212,168,83,0.4)] hover:shadow-[0_0_80px_rgba(212,168,83,0.7)] hover:-translate-y-2 transition-all duration-500 transform overflow-hidden group"
             >
-              <span className="relative z-10">Get Started</span>
+              <span className="relative z-10">Begin Gently</span>
               <div className="absolute inset-0 bg-white opacity-0 group-hover:opacity-20 transition-opacity duration-300" />
             </button>
           </motion.div>

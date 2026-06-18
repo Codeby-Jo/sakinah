@@ -2,93 +2,52 @@ import React, { createContext, useContext, useState, useCallback, useEffect } fr
 
 // ─── Types ──────────────────────────────────────────────────────────────────
 export interface SeekerProfile {
-  // Step 1: Basic
-  fullName: string;
-  gender: string;
-  dob: string;
   age: string;
-  height: string;
-  weight: string;
-  maritalStatus: string;
-  motherTongue: string;
-  nationality: string;
-  // Step 2: Location
-  country: string;
-  state: string;
-  district: string;
-  city: string;
-  postalCode: string;
-  // Step 3: Religious
-  religion: string;
-  sect: string;
-  madhab: string;
-  prayerStatus: string;
-  quranReading: string;
-  hijabBeard: string;
-  islamicEducation: string;
-  religiousLifestyle: string;
-  // Step 4: Education
-  qualification: string;
-  degree: string;
-  college: string;
-  fieldOfStudy: string;
-  // Step 5: Career
-  occupation: string;
-  company: string;
-  employmentType: string;
-  annualIncome: string;
-  workLocation: string;
-  // Step 6: Family
-  fatherOccupation: string;
-  motherOccupation: string;
-  familyType: string;
-  familyValues: string;
-  brothers: string;
-  sisters: string;
-  // Step 7: Lifestyle
-  foodPreference: string;
-  smoking: string;
-  drinking: string;
-  hobbies: string;
-  languages: string;
-  interests: string;
-  // Step 8: About
-  bio: string;
-  personality: string;
-  goals: string;
-  expectations: string;
-  // Step 9: Photos
-  profilePhoto: string;
-  additionalPhotos: string[];
-}
-
-export interface PartnerPreference {
-  value: string;
-  priority: 'must_have' | 'preferred' | 'flexible';
+  gender: string;
+  location: string;
+  marital_status: string;
+  education_occupation: string;
+  religious_practice_and_islamic_home: string;
+  marriage_readiness: string;
 }
 
 export interface PartnerPreferences {
-  preferredGender: PartnerPreference;
-  ageMin: PartnerPreference;
-  ageMax: PartnerPreference;
-  heightMin: PartnerPreference;
-  religion: PartnerPreference;
-  sect: PartnerPreference;
-  madhab: PartnerPreference;
-  religiousPractice: PartnerPreference;
-  minQualification: PartnerPreference;
-  preferredProfession: PartnerPreference;
-  incomeRange: PartnerPreference;
-  country: PartnerPreference;
-  state: PartnerPreference;
-  city: PartnerPreference;
-  foodPreference: PartnerPreference;
-  smokingPreference: PartnerPreference;
-  drinkingPreference: PartnerPreference;
-  familyValues: PartnerPreference;
-  familyType: PartnerPreference;
-  maritalStatus: PartnerPreference;
-  additionalExpectations: PartnerPreference;
+  minAge: string;
+  maxAge: string;
+  locationPref: string[];
+  locationFlexibility: string;
+  maritalStatus: string;
+  educationPref: string[];
+  workOutlook: string;
+  workAfterMarriage: string;
+  traditionPref: string;
+  traditionStrictness: string;
+  religiousPracticePref: string;
+  islamicEnvPref: string;
+  learningPref: string;
+  reminderStyle: string;
+  familyInvolvement: string;
+  communicationStyle: string;
+  repairStyle: string;
+  angerLevel: string;
+  boundaryStrength: string;
+  boundarySafety: string;
+  emotionalSteadiness: string;
+  financialResp: string;
+  lifestyle: string;
+  lifestyleFinances: string;
+  disagreementResponse: string;
+  familyPressureResponse: string;
+  accountabilityResponse: string;
+  personalSpaceResponse: string;
+  financialDecisionResponse: string;
+  dealbreakersText: string;
+  dealbreakers: string[];
+  strictAge: boolean;
+  strictLocation: boolean;
+  strictTradition: boolean;
+  strictMarital: boolean;
+  noMatchConfirmed: boolean;
 }
 
 export interface WaliDetails {
@@ -106,52 +65,53 @@ export interface AuthData {
   confirmPassword: string;
 }
 
+export interface KycData {
+  identityType: string;
+  frontImage: string;
+  backImage: string;
+  selfieImage: string;
+  aadhaarNumber: string;
+  aadhaarName: string;
+  aadhaarDob: string;
+}
+
 // ─── Default Values ─────────────────────────────────────────────────────────
-const defaultPref = (): PartnerPreference => ({ value: '', priority: 'flexible' });
 
 const defaultProfile = (): SeekerProfile => ({
-  fullName: '', gender: '', dob: '', age: '', height: '', weight: '',
-  maritalStatus: '', motherTongue: '', nationality: '',
-  country: '', state: '', district: '', city: '', postalCode: '',
-  religion: '', sect: '', madhab: '', prayerStatus: '', quranReading: '',
-  hijabBeard: '', islamicEducation: '', religiousLifestyle: '',
-  qualification: '', degree: '', college: '', fieldOfStudy: '',
-  occupation: '', company: '', employmentType: '', annualIncome: '', workLocation: '',
-  fatherOccupation: '', motherOccupation: '', familyType: '', familyValues: '',
-  brothers: '', sisters: '',
-  foodPreference: '', smoking: '', drinking: '', hobbies: '', languages: '', interests: '',
-  bio: '', personality: '', goals: '', expectations: '',
-  profilePhoto: '', additionalPhotos: [],
+  age: '', gender: '', location: '', marital_status: '',
+  education_occupation: '', religious_practice_and_islamic_home: '', marriage_readiness: ''
 });
 
 const defaultPreferences = (): PartnerPreferences => ({
-  preferredGender: defaultPref(), ageMin: defaultPref(), ageMax: defaultPref(),
-  heightMin: defaultPref(), religion: defaultPref(), sect: defaultPref(),
-  madhab: defaultPref(), religiousPractice: defaultPref(),
-  minQualification: defaultPref(), preferredProfession: defaultPref(),
-  incomeRange: defaultPref(), country: defaultPref(), state: defaultPref(),
-  city: defaultPref(), foodPreference: defaultPref(),
-  smokingPreference: defaultPref(), drinkingPreference: defaultPref(),
-  familyValues: defaultPref(), familyType: defaultPref(),
-  maritalStatus: defaultPref(), additionalExpectations: defaultPref(),
+  minAge: '', maxAge: '', locationPref: [], locationFlexibility: '', maritalStatus: '',
+  educationPref: [], workOutlook: '', workAfterMarriage: '', traditionPref: '', traditionStrictness: '',
+  religiousPracticePref: '', islamicEnvPref: '', learningPref: '', reminderStyle: '', familyInvolvement: '',
+  communicationStyle: '', repairStyle: '', angerLevel: '', boundaryStrength: '', boundarySafety: '',
+  emotionalSteadiness: '', financialResp: '', lifestyle: '', lifestyleFinances: '', disagreementResponse: '', familyPressureResponse: '',
+  accountabilityResponse: '', personalSpaceResponse: '', financialDecisionResponse: '', dealbreakersText: '', dealbreakers: [],
+  strictAge: false, strictLocation: false, strictTradition: false, strictMarital: false, noMatchConfirmed: false
+});
+
+const defaultKyc = (): KycData => ({
+  identityType: '', frontImage: '', backImage: '', selfieImage: '', aadhaarNumber: '', aadhaarName: '', aadhaarDob: ''
 });
 
 // ─── Context ────────────────────────────────────────────────────────────────
 interface OnboardingContextType {
-  userType: 'seeker' | 'wali' | null;
-  setUserType: (t: 'seeker' | 'wali') => void;
+  userType: 'SEEKER' | 'LOOKING_FOR_SOMEONE_ELSE' | 'WALI_VIEW' | null;
+  setUserType: (t: 'SEEKER' | 'LOOKING_FOR_SOMEONE_ELSE' | 'WALI_VIEW' | null) => void;
   auth: AuthData;
   setAuth: React.Dispatch<React.SetStateAction<AuthData>>;
   profile: SeekerProfile;
-  updateProfile: (field: string, value: any) => void;
+  updateProfile: (field: keyof SeekerProfile, value: any) => void;
   preferences: PartnerPreferences;
-  updatePreference: (field: string, pref: Partial<PartnerPreference>) => void;
-  waliDetails: WaliDetails;
-  setWaliDetails: React.Dispatch<React.SetStateAction<WaliDetails>>;
+  updatePreference: (field: keyof PartnerPreferences, value: any) => void;
+  kyc: KycData;
+  updateKyc: (field: keyof KycData, value: any) => void;
+  waliDetails: WaliDetails[];
+  setWaliDetails: React.Dispatch<React.SetStateAction<WaliDetails[]>>;
   kycCompleted: boolean;
   setKycCompleted: (v: boolean) => void;
-  otpVerified: boolean;
-  setOtpVerified: (v: boolean) => void;
   profileStep: number;
   setProfileStep: (s: number) => void;
   isOnboardingComplete: boolean;
@@ -160,7 +120,7 @@ interface OnboardingContextType {
   setIsWaliViewOnly: (v: boolean) => void;
 }
 
-const OnboardingContext = createContext<OnboardingContextType | null>(null);
+export const OnboardingContext = createContext<OnboardingContextType | null>(null);
 
 export const useOnboarding = () => {
   const ctx = useContext(OnboardingContext);
@@ -169,35 +129,68 @@ export const useOnboarding = () => {
 };
 
 export const OnboardingProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [userType, setUserType] = useState<'seeker' | 'wali' | null>(null);
-  const [auth, setAuth] = useState<AuthData>({ email: '', phone: '', password: '', confirmPassword: '' });
-  const [profile, setProfile] = useState<SeekerProfile>(defaultProfile());
-  const [preferences, setPreferences] = useState<PartnerPreferences>(defaultPreferences());
-  const [waliDetails, setWaliDetails] = useState<WaliDetails>({ fullName: '', relationship: '', phone: '', email: '', address: '' });
-  const [kycCompleted, setKycCompleted] = useState(false);
-  const [otpVerified, setOtpVerified] = useState(false);
+  // Initialize userType from persisted progress so it survives navigation/refresh
+  const [userType, setUserType] = useState<'SEEKER' | 'LOOKING_FOR_SOMEONE_ELSE' | 'WALI_VIEW' | null>(() => {
+    try {
+      const stored = localStorage.getItem('sakinah_progress');
+      if (stored) {
+        const parsed = JSON.parse(stored);
+        const role = parsed?.role;
+        if (role === 'SEEKER' || role === 'LOOKING_FOR_SOMEONE_ELSE' || role === 'WALI_VIEW') {
+          return role;
+        }
+      }
+    } catch { /* ignore */ }
+    return null;
+  });
+  
+  // Persisted state initialization
+  const loadPersisted = <T,>(key: string, defaultVal: T): T => {
+    try {
+      const item = localStorage.getItem(`sakinah_onboarding_${key}`);
+      return item ? JSON.parse(item) : defaultVal;
+    } catch {
+      return defaultVal;
+    }
+  };
+
+  const [auth, setAuth] = useState<AuthData>(() => loadPersisted('auth', { email: '', phone: '', password: '', confirmPassword: '' }));
+  const [profile, setProfile] = useState<SeekerProfile>(() => loadPersisted('profile', defaultProfile()));
+  const [preferences, setPreferences] = useState<PartnerPreferences>(() => loadPersisted('preferences', defaultPreferences()));
+  const [kyc, setKyc] = useState<KycData>(() => loadPersisted('kyc', defaultKyc()));
+  const [waliDetails, setWaliDetails] = useState<WaliDetails[]>(() => {
+    const persisted = loadPersisted<any>('wali', []);
+    return Array.isArray(persisted) ? persisted : (persisted?.email ? [persisted] : []);
+  });
+  const [kycCompleted, setKycCompleted] = useState(() => loadPersisted('kycCompleted', false));
+
+  // Persistence effects
+  useEffect(() => { localStorage.setItem('sakinah_onboarding_auth', JSON.stringify(auth)); }, [auth]);
+  useEffect(() => { localStorage.setItem('sakinah_onboarding_profile', JSON.stringify(profile)); }, [profile]);
+  useEffect(() => { localStorage.setItem('sakinah_onboarding_preferences', JSON.stringify(preferences)); }, [preferences]);
+  useEffect(() => { localStorage.setItem('sakinah_onboarding_kyc', JSON.stringify(kyc)); }, [kyc]);
+  useEffect(() => { localStorage.setItem('sakinah_onboarding_wali', JSON.stringify(waliDetails)); }, [waliDetails]);
+  useEffect(() => { localStorage.setItem('sakinah_onboarding_kycCompleted', JSON.stringify(kycCompleted)); }, [kycCompleted]);
+
   const [profileStep, setProfileStep] = useState(1);
   const [isOnboardingComplete, setOnboardingComplete] = useState(false);
-  // Restore Wali mode from localStorage so it survives page refresh
-  const [isWaliViewOnly, _setIsWaliViewOnly] = useState<boolean>(
-    () => localStorage.getItem('sakinah_role') === 'wali'
-  );
-  const setIsWaliViewOnly = useCallback((v: boolean) => {
-    _setIsWaliViewOnly(v);
-    if (v) localStorage.setItem('sakinah_role', 'wali');
-    else localStorage.removeItem('sakinah_role');
-  }, []);
 
-  const updateProfile = useCallback((field: string, value: any) => {
+  const updateProfile = useCallback((field: keyof SeekerProfile, value: any) => {
     setProfile(prev => ({ ...prev, [field]: value }));
   }, []);
 
-  const updatePreference = useCallback((field: string, pref: Partial<PartnerPreference>) => {
-    setPreferences(prev => ({
-      ...prev,
-      [field]: { ...prev[field as keyof PartnerPreferences], ...pref },
-    }));
+  const updatePreference = useCallback((field: keyof PartnerPreferences, value: any) => {
+    setPreferences(prev => ({ ...prev, [field]: value }));
   }, []);
+
+  const updateKyc = useCallback((field: keyof KycData, value: any) => {
+    setKyc(prev => ({ ...prev, [field]: value }));
+  }, []);
+
+  const isWaliViewOnly = userType === 'WALI_VIEW';
+  const setIsWaliViewOnly = (v: boolean) => {
+    if (v) setUserType('WALI_VIEW');
+  };
 
   return (
     <OnboardingContext.Provider value={{
@@ -205,9 +198,9 @@ export const OnboardingProvider: React.FC<{ children: React.ReactNode }> = ({ ch
       auth, setAuth,
       profile, updateProfile,
       preferences, updatePreference,
+      kyc, updateKyc,
       waliDetails, setWaliDetails,
       kycCompleted, setKycCompleted,
-      otpVerified, setOtpVerified,
       profileStep, setProfileStep,
       isOnboardingComplete, setOnboardingComplete,
       isWaliViewOnly, setIsWaliViewOnly,

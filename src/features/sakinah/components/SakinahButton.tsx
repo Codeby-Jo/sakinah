@@ -13,6 +13,7 @@ export const SakinahButton: React.FC<SakinahButtonProps> = ({
   size = 'md',
   className = '',
   disabled,
+  type = 'button',
   ...props
 }) => {
   const baseStyles = "sk-btn";
@@ -35,6 +36,7 @@ export const SakinahButton: React.FC<SakinahButtonProps> = ({
 
   return (
     <button
+      type={type}
       className={`${baseStyles} ${sizeStyles[size]} ${variantStyles[variant]} ${widthStyle} ${className}`}
       disabled={disabled}
       {...props}

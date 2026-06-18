@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { getReadinessHome } from '../services/sakinahApi';
 import { 
@@ -11,10 +11,8 @@ import {
 
 export const SakinahHomePage: React.FC = () => {
   const navigate = useNavigate();
-  const [readiness, setReadiness] = useState<any>(null);
-
   useEffect(() => {
-    getReadinessHome().then(setReadiness).catch(console.error);
+    getReadinessHome().catch(console.error);
   }, []);
 
   return (

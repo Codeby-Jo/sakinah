@@ -15,10 +15,10 @@ export const SakinahSupportPage: React.FC = () => {
 
         <div className="mt-8 grid md:grid-cols-2 gap-6">
           <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }} className="sk-card p-8 text-center">
-            <div className="text-[40px] text-[var(--sk-gold)] mb-4">💬</div>
-            <h3 className="font-serif text-[22px] text-[var(--sk-ink)] mb-2">Live Chat</h3>
-            <p className="text-[14px] text-[var(--sk-ink-dim)] mb-6">Chat with our support team instantly.</p>
-            <button className="px-6 py-2 bg-[var(--sk-gold)] text-[#0A0E16] font-medium rounded-full hover:bg-[#E8C97A] transition-colors">Start Chat</button>
+            <div className="text-[40px] text-[var(--sk-gold)] mb-4">📞</div>
+            <h3 className="font-serif text-[22px] text-[var(--sk-ink)] mb-2">Call Us</h3>
+            <p className="text-[14px] text-[var(--sk-ink-dim)] mb-6">Talk to our support team over the phone.</p>
+            <button className="px-6 py-2 bg-[var(--sk-gold)] text-[#0A0E16] font-medium rounded-full hover:bg-[#E8C97A] transition-colors">+91 98765 43210</button>
           </motion.div>
 
           <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }} className="sk-card p-8 text-center">

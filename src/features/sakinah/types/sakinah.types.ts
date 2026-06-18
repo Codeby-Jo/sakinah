@@ -73,3 +73,60 @@ export interface MatchflowResponse {
   current_step: string;
   steps: any[];
 }
+
+export interface TrustScoreData {
+  score: number;
+  level: 'Basic' | 'Trusted' | 'Highly Trusted' | 'Premium Verified';
+  factors: {
+    profileCompleteness: boolean;
+    kycCompletion: boolean;
+    emailVerification: boolean;
+    phoneVerification: boolean;
+    identityVerification: boolean;
+  };
+}
+
+export interface ProfileVisit {
+  visitorId: string;
+  visitorName: string;
+  timestamp: string;
+  timeAgo: string;
+}
+
+export interface ProfileAnalytics {
+  totalViews: number;
+  weeklyViews: number;
+  monthlyViews: number;
+  recentVisitors: ProfileVisit[];
+}
+
+export interface NotificationItem {
+  id: string;
+  type: 'NEW_MATCH' | 'PROFILE_VIEW' | 'PHOTO_REQUEST' | 'PROFILE_SHARED' | 'MESSAGE' | 'FAMILY_ADDED' | 'REPORT_SUBMITTED';
+  title: string;
+  message: string;
+  timestamp: string;
+  read: boolean;
+  actionUrl?: string;
+}
+
+export interface FamilyMember {
+  id: string;
+  name: string;
+  role: 'Wali' | 'Father' | 'Mother' | 'Sibling' | 'Guardian';
+  status: 'PENDING' | 'APPROVED';
+}
+
+export interface PinnedMessage {
+  id: string;
+  text: string;
+  senderName: string;
+  pinnedAt: string;
+}
+
+export interface VerifiedBadges {
+  phoneVerified: boolean;
+  emailVerified: boolean;
+  idVerified: boolean;
+}
+

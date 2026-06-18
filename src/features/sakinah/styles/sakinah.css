@@ -198,11 +198,12 @@
 .sk-card {
   background: linear-gradient(160deg, var(--sk-panel), var(--sk-panel2));
   border: 1px solid var(--sk-line-soft);
-  border-radius: var(--sk-radius);
-  padding: 18px;
-  margin-bottom: 13px;
+  border-radius: 24px;
+  padding: 24px;
+  margin-bottom: 16px;
   position: relative;
   overflow: hidden;
+  box-shadow: 0 10px 30px -10px rgba(0,0,0,0.5);
 }
 .sk-card.gold-edge {
   border-color: var(--sk-line);
