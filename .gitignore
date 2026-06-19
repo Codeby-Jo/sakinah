@@ -1,0 +1,16 @@
+# Node modules
+node_modules/
+dist/
+
+# Python Virtual Environments
+venv/
+__pycache__/
+*.pyc
+
+# Environment files
+.env
+.env.local
+firebase-credentials.json
+
+# OS files
+.DS_Store
