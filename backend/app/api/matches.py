@@ -395,7 +395,8 @@ async def express_interest(candidate_id: str, current_user: dict = Depends(get_c
     
     if opp_doc.exists and opp_doc.to_dict().get("status") == "INTEREST":
         is_mutual = True
-        convo_id = f"convo_{uid[:4]}_{candidate_id[:4]}"
+        # Use the actual UUID parts (after "user_") or just the full strings to ensure unique conversations
+        convo_id = f"convo_{uid}_{candidate_id}"
         
         # Create mutual match
         db.collection("matches").document(convo_id).set({
