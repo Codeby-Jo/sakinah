@@ -7,7 +7,9 @@ import type {
 } from '../types/sakinah.types';
 
 // Use standard API v1 path. In development it points to localhost:8000
-const API_BASE = '/api/v1/nis';
+const API_BASE = import.meta.env.PROD 
+  ? 'https://sakinah-ovaf.onrender.com/api/v1/nis'
+  : '/api/v1/nis';
 
 /**
  * Sakinah-specific API wrapper.
