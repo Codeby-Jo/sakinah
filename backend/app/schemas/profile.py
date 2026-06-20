@@ -15,6 +15,7 @@ class ProfileCreate(BaseModel):
     firstName: Optional[str] = ""
     lastName: Optional[str] = ""
     city: Optional[str] = ""
+    dateOfBirth: Optional[str] = ""
 
 class ProfileResponse(ProfileCreate):
     uid: str

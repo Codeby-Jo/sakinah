@@ -18,6 +18,7 @@ import { setProgress, getNextRoute } from '../services/sakinahProgress';
 const profileSchema = z.object({
   firstName: z.string().trim().min(1, 'First Name is required'),
   lastName: z.string().trim().min(1, 'Last Name is required'),
+  dateOfBirth: z.string().min(1, 'Date of Birth is required'),
   age: z.string()
     .min(1, 'Age is required')
     .refine((val) => Number(val) >= 18, { message: 'Must be at least 18 years old' })
@@ -136,6 +137,18 @@ export const SakinahProfileCreationPage: React.FC = () => {
                     className="w-full bg-[#050816]/40 backdrop-blur-xl border border-[rgba(212,175,55,0.15)] text-white placeholder-white/20 rounded-xl px-4 py-4 text-[15px] outline-none transition-all duration-300 focus:border-[#D4AF37]/60 focus:ring-1 focus:ring-[#D4AF37]/20 hover:border-[rgba(212,175,55,0.3)]"
                   />
                   <FieldError error={errors.lastName?.message} />
+                </div>
+
+                {/* Date of Birth */}
+                <div>
+                  <label className="block text-[11px] text-[#F5D77A]/60 uppercase mb-3 font-medium tracking-widest">Date of Birth</label>
+                  <input
+                    type="date"
+                    {...watch('dateOfBirth') !== undefined ? { value: watch('dateOfBirth') } : {}}
+                    onChange={(e) => setValue('dateOfBirth', e.target.value, { shouldValidate: true })}
+                    className="w-full bg-[#050816]/40 backdrop-blur-xl border border-[rgba(212,175,55,0.15)] text-white placeholder-white/20 rounded-xl px-4 py-4 text-[15px] outline-none transition-all duration-300 focus:border-[#D4AF37]/60 focus:ring-1 focus:ring-[#D4AF37]/20 hover:border-[rgba(212,175,55,0.3)] [&::-webkit-calendar-picker-indicator]:filter [&::-webkit-calendar-picker-indicator]:invert"
+                  />
+                  <FieldError error={errors.dateOfBirth?.message} />
                 </div>
 
                 {/* Age */}

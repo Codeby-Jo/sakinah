@@ -177,6 +177,7 @@ export const SakinahReviewPage: React.FC = () => {
              <SectionHeader title="Your Profile Basics" icon={User} editPath="/matrimony/profile-creation" />
              <div className="grid grid-cols-2 md:grid-cols-3 gap-y-6 gap-x-4 mt-4">
                 <DataItem label="Full Name" value={`${profile.firstName || ''} ${profile.lastName || ''}`.trim() || kyc.aadhaarName || 'Not provided'} />
+                <DataItem label="Date of Birth" value={profile.dateOfBirth} />
                 <DataItem label="Age" value={profile.age} />
                 <DataItem label="Gender" value={profile.gender} />
                 <DataItem label="Location" value={profile.location} />

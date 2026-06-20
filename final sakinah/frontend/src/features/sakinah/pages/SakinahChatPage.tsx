@@ -402,7 +402,23 @@ export const SakinahChatPage: React.FC = () => {
                                   ? 'bg-gradient-to-br from-[#D4AF37] to-[#C19825] text-[#0A0E16] rounded-[20px] rounded-br-[4px]'
                                   : 'bg-[#161D2C] border border-[rgba(255,255,255,0.05)] text-[#EDE7DA] rounded-[20px] rounded-bl-[4px]'
                               }`}>
-                                {msg.text}
+                                {msg.msg_type === 'photo' ? (
+                                  <div className="flex flex-col gap-2">
+                                    <div 
+                                      className="relative w-full max-w-[200px] aspect-[3/4] rounded-lg overflow-hidden cursor-pointer group/photo border border-[rgba(255,255,255,0.1)]"
+                                      onClick={() => setViewingPhotoUrl(msg.photo_url || 'https://images.unsplash.com/photo-1542204165-65bf26472b9b?auto=format&fit=crop&q=80&w=800')}
+                                    >
+                                      <div className="absolute inset-0 bg-black/40 backdrop-blur-md z-10 flex flex-col items-center justify-center transition-opacity group-hover/photo:opacity-80">
+                                        <span className="text-[32px] text-[var(--sk-gold)] mb-2">🔐</span>
+                                        <span className="text-[10px] font-bold text-white uppercase tracking-wider">Tap to unlock</span>
+                                      </div>
+                                      <img src={msg.photo_url || 'https://images.unsplash.com/photo-1542204165-65bf26472b9b?auto=format&fit=crop&q=80&w=800'} alt="Secure Photo" className="w-full h-full object-cover blur-[10px]" />
+                                    </div>
+                                    <span className="text-[12px] opacity-80">{msg.text || 'Secure photo shared'}</span>
+                                  </div>
+                                ) : (
+                                  msg.text
+                                )}
 
                                 {/* Message Actions (Hover) */}
                                 <AnimatePresence>
@@ -450,7 +466,28 @@ export const SakinahChatPage: React.FC = () => {
                 <div className="p-4 md:p-6 bg-[#0A0E16] border-t border-[rgba(255,255,255,0.05)] z-20">
                     <form onSubmit={handleSend} className="flex items-end gap-3 max-w-4xl mx-auto">
                       <div className="flex-1 bg-[#111826] border border-[rgba(255,255,255,0.08)] focus-within:border-[rgba(212,168,83,0.5)] focus-within:shadow-[0_0_15px_rgba(212,168,83,0.1)] rounded-[20px] p-2 flex items-end transition-all">
-                        <button type="button" className="p-2.5 text-[var(--sk-ink-dim)] hover:text-[var(--sk-gold)] hover:bg-[rgba(255,255,255,0.05)] rounded-full transition-colors shrink-0">📎</button>
+                        <button 
+                          type="button" 
+                          className="p-2.5 text-[var(--sk-ink-dim)] hover:text-[var(--sk-gold)] hover:bg-[rgba(255,255,255,0.05)] rounded-full transition-colors shrink-0 relative group"
+                          onClick={() => {
+                            // Test function: Simulate receiving a photo
+                            const testPhotoMsg: Message = {
+                              id: `test-photo-${Date.now()}`,
+                              text: 'Here is my verification photo',
+                              msg_type: 'photo',
+                              sender: 'them',
+                              senderName: activeConvo?.other_user?.name || 'Contact',
+                              time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+                              status: 'delivered',
+                              photo_url: 'https://images.unsplash.com/photo-1542204165-65bf26472b9b?auto=format&fit=crop&q=80&w=800'
+                            };
+                            setMessages(prev => [...prev, testPhotoMsg]);
+                            setTimeout(() => bottomRef.current?.scrollIntoView({ behavior: 'smooth' }), 50);
+                          }}
+                        >
+                          📎
+                          <span className="absolute -top-8 left-1/2 -translate-x-1/2 bg-[#111826] border border-[var(--sk-gold)] text-[10px] text-[var(--sk-gold)] px-2 py-1 rounded opacity-0 group-hover:opacity-100 whitespace-nowrap pointer-events-none transition-opacity">Simulate Receive Photo</span>
+                        </button>
                         <textarea value={input} onChange={e => setInput(e.target.value)} onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleSend(); } }} placeholder="Write your message..." className="flex-1 bg-transparent border-none outline-none text-[15px] text-[#EDE7DA] py-2.5 px-2 max-h-[120px] resize-none custom-scrollbar" rows={1} style={{ minHeight: '44px' }} />
                         <button type="button" className="p-2.5 text-[var(--sk-ink-dim)] hover:text-[var(--sk-gold)] hover:bg-[rgba(255,255,255,0.05)] rounded-full transition-colors shrink-0">🎤</button>
                       </div>
