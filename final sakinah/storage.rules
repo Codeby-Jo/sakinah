@@ -1,0 +1,58 @@
+rules_version = '2';
+
+// Cloud Storage security rules.
+// Default: deny everything. Explicit allows below for the paths the app uses.
+service firebase.storage {
+  match /b/{bucket}/o {
+
+    // ============================================================
+    // User-owned files under users/{uid}/*
+    // - Profile photos, KYC attachments, audio notes, etc.
+    // - Owner read/write; limits below keep things sane.
+    // ============================================================
+    match /users/{userId}/{allPaths=**} {
+      allow read: if request.auth != null && request.auth.uid == userId;
+      allow write: if request.auth != null
+                   && request.auth.uid == userId
+                   && request.resource.size < 15 * 1024 * 1024
+                   && (request.resource.contentType.matches('image/.*')
+                       || request.resource.contentType.matches('audio/.*')
+                       || request.resource.contentType == 'application/pdf');
+      allow delete: if request.auth != null && request.auth.uid == userId;
+    }
+
+    // ============================================================
+    // Public profile photos (mirror of public_profiles doc).
+    // Anyone can read; only the owner can write their own.
+    // ============================================================
+    match /public_profiles/{userId}/{allPaths=**} {
+      allow read: if true;
+      allow write: if request.auth != null
+                   && request.auth.uid == userId
+                   && request.resource.size < 5 * 1024 * 1024
+                   && request.resource.contentType.matches('image/.*');
+      allow delete: if request.auth != null && request.auth.uid == userId;agai
+    }
+
+    // ============================================================
+    // Shared-conversation assets (public, read-only).
+    // Writes happen server-side via Admin SDK only.
+    // ============================================================
+    match /shared_conversations/{shareId}/{allPaths=**} {
+      allow read: if true;
+      allow write: if false;
+    }
+
+    // ============================================================
+    // Mushaf page-scan images (public, read-only).
+    // Static Quran page images under mushaf/{style}/pageNNN.png.
+    // Uploaded out-of-band (gsutil/Admin); never written by clients.
+    // ============================================================
+    match /mushaf/{allPaths=**} {
+      allow read: if true;
+      allow write: if false;
+    }
+
+    // Everything else is denied by default.
+  }
+}
