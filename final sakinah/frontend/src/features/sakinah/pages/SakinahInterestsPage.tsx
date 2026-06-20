@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useOnboarding } from '../context/OnboardingContext';
-import { SakinahLayout, SakinahHeader } from '../components';
+import { SakinahLayout, SakinahHeader, SakinahMutualMatchCelebration } from '../components';
 import { TrayArrowDown, TrayArrowUp, Handshake, Hourglass, Prohibit } from '@phosphor-icons/react';
 
 const TABS = ['Received', 'Sent', 'Accepted', 'Pending', 'Rejected'] as const;
@@ -16,6 +16,7 @@ export const SakinahInterestsPage: React.FC = () => {
   const [activeTab, setActiveTab] = useState<TabType>('Received');
   const [items, setItems] = useState<Array<{ id: string, name: string, age: number, city: string, date: string, initial: string }>>([]);
   const [dataCache, setDataCache] = useState<{ sent: any[], received: any[], accepted: any[], pending: any[], rejected: any[] }>({ sent: [], received: [], accepted: [], pending: [], rejected: [] });
+  const [mutualMatchCandidate, setMutualMatchCandidate] = useState<{name: string, initial: string} | null>(null);
 
   React.useEffect(() => {
     getInterests().then(res => {
@@ -43,9 +44,12 @@ export const SakinahInterestsPage: React.FC = () => {
           setDataCache(prev => ({ ...prev, received: prev.received.filter(i => i.id !== candidateId) }));
         }
       } else if (action === 'accept') {
-        await expressInterest(candidateId);
+        const res: any = await expressInterest(candidateId);
         const accItem = items.find(i => i.id === candidateId);
         if (accItem) {
+          if (res && (res.status === 'mutual_interest' || res.status === 'MUTUAL_INTEREST' || res.status === 'mutual')) {
+            setMutualMatchCandidate({ name: accItem.name, initial: accItem.initial });
+          }
           setItems(prev => prev.filter(i => i.id !== candidateId));
           setDataCache(prev => ({ 
             ...prev, 
@@ -74,6 +78,16 @@ export const SakinahInterestsPage: React.FC = () => {
       setItems([]);
     }
   }, [activeTab, dataCache]);
+
+  if (mutualMatchCandidate) {
+    return (
+      <SakinahMutualMatchCelebration
+        matchedUserName={mutualMatchCandidate.name}
+        matchedUserInitial={mutualMatchCandidate.initial}
+        onStartConversation={() => navigate('/matrimony/messages')}
+      />
+    );
+  }
 
   return (
     <SakinahLayout>

@@ -18,6 +18,9 @@ def init_firebase():
             if cert_path and os.path.exists(cert_path):
                 cred = credentials.Certificate(cert_path)
                 firebase_admin.initialize_app(cred)
+            elif os.path.exists("firebase-credentials.json"):
+                cred = credentials.Certificate("firebase-credentials.json")
+                firebase_admin.initialize_app(cred)
             else:
                 # Default init (relies on GOOGLE_APPLICATION_CREDENTIALS)
                 firebase_admin.initialize_app()

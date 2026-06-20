@@ -4,7 +4,8 @@ import {
   SakinahLayout,
   CandidatePortraitCard, 
   SakinahButton,
-  DevFallbackBadge
+  DevFallbackBadge,
+  SakinahMutualMatchCelebration
 } from '../components';
 import { getCandidateDetail, expressInterest, silentPass } from '../services/sakinahApi';
 import type { CandidateSummary } from '../types/sakinah.types';
@@ -50,8 +51,8 @@ export const SakinahCandidatePage: React.FC = () => {
           setMatchStatus('mutual');
         } else {
           setMatchStatus('sent');
+          setTimeout(() => navigate('/matrimony/matches'), 3000);
         }
-        setTimeout(() => navigate('/matrimony/matches'), 3000);
       }
     } catch (err) {
       console.warn('Backend offline or failed', err);
@@ -80,7 +81,17 @@ export const SakinahCandidatePage: React.FC = () => {
     }
   };
 
-  if (matchStatus !== 'idle') {
+  if (matchStatus === 'mutual' && candidate) {
+    return (
+      <SakinahMutualMatchCelebration
+        matchedUserName={candidate.displayName}
+        matchedUserInitial={candidate.displayName.charAt(0)}
+        onStartConversation={() => navigate('/matrimony/messages')}
+      />
+    );
+  }
+
+  if (matchStatus === 'sent') {
     return (
       <SakinahLayout>
         <div className="flex flex-col items-center justify-center min-h-screen p-6 text-center">
@@ -88,12 +99,10 @@ export const SakinahCandidatePage: React.FC = () => {
             <span className="text-4xl text-[#4ADE80]">✓</span>
           </div>
           <h1 className="text-3xl font-serif text-[#D4AF37] mb-4">
-            {matchStatus === 'mutual' ? 'Mutual Interest!' : 'Interest Sent'}
+            Interest Sent
           </h1>
           <p className="text-[var(--sk-ink-dim)] max-w-md mx-auto">
-            {matchStatus === 'mutual' 
-              ? 'Both of you expressed interest! A new conversation has been opened.' 
-              : 'Wait for the conversation to open if both of you accept.'}
+            Wait for the conversation to open if both of you accept.
           </p>
         </div>
       </SakinahLayout>

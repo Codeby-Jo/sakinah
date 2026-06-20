@@ -1,10 +1,10 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { SakinahLayout, SakinahHeader, SakinahReportModal } from '../components';
+import { SakinahLayout, SakinahHeader, SakinahReportModal, SakinahMutualMatchCelebration } from '../components';
 import { getConsideredFew, expressInterest, silentPass, getMyConversations, saveProfile } from '../services/sakinahApi';
 import { getProgress } from '../services/sakinahProgress';
-import { ShieldCheck, Star, Flag, Sparkle, CheckCircle, Check, Warning, Moon } from '@phosphor-icons/react';
+import { ShieldCheck, Star, Flag, Sparkle, CheckCircle, Check, Moon } from '@phosphor-icons/react';
 
 interface MatchItem {
   id: string;
@@ -168,6 +168,7 @@ export const SakinahMatchesPage: React.FC = () => {
   const navigate = useNavigate();
   const isWali = getProgress().role === 'LOOKING_FOR_SOMEONE_ELSE' || getProgress().role === 'WALI_VIEW';
   const [matches, setMatches] = useState<MatchItem[]>([]);
+  const [mutualMatchCandidate, setMutualMatchCandidate] = useState<{name: string, initial: string} | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   
@@ -253,9 +254,14 @@ export const SakinahMatchesPage: React.FC = () => {
       setInterested(p => ({ ...p, [id]: true }));
       const response = await expressInterest(id);
       
-      if (response && response.status === 'mutual_interest') {
-        // Redirect immediately if it's a mutual match
-        navigate('/matrimony/messages');
+      if (response && (response.status === 'mutual_interest' || response.status === 'MUTUAL_INTEREST' || response.status === 'mutual')) {
+        const matchedUser = matches.find(m => m.id === id);
+        if (matchedUser) {
+          setMutualMatchCandidate({
+            name: matchedUser.name,
+            initial: matchedUser.name.charAt(0)
+          });
+        }
         return;
       }
       
@@ -267,7 +273,7 @@ export const SakinahMatchesPage: React.FC = () => {
       setInterested(p => ({ ...p, [id]: false }));
       console.error('Failed to register interest:', err);
     }
-  }, [interested, navigate]);
+  }, [interested, matches]);
 
   // Handle infinite scroll trigger
   const handleScroll = useCallback((e: React.UIEvent<HTMLDivElement>) => {
@@ -294,6 +300,16 @@ export const SakinahMatchesPage: React.FC = () => {
       />
     ));
   }, [matches, isWali, interested, savedProfiles, handlePass, handleInterest, handleSave, navigate]);
+
+  if (mutualMatchCandidate) {
+    return (
+      <SakinahMutualMatchCelebration
+        matchedUserName={mutualMatchCandidate.name}
+        matchedUserInitial={mutualMatchCandidate.initial}
+        onStartConversation={() => navigate('/matrimony/messages')}
+      />
+    );
+  }
 
   return (
     <SakinahLayout>

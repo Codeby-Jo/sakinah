@@ -8,8 +8,9 @@ from typing import Optional
 router = APIRouter()
 
 class SendMessageRequest(BaseModel):
-    text: str
-    msg_type: str = "text"  # text | system | image | video
+    text: str = ""
+    msg_type: str = "text"  # text | system | photo
+    photo_url: Optional[str] = None
 
 @router.get("/")
 async def get_my_conversations(current_user: dict = Depends(get_current_user)):
@@ -109,7 +110,8 @@ async def get_messages(
             "msg_type": mdata.get("msg_type", "text"),
             "sender": "me" if mdata.get("sender_id") == uid else ("system" if mdata.get("sender_id") == "system" else "them"),
             "sender_id": mdata.get("sender_id"),
-            "time": time_str
+            "time": time_str,
+            "photo_url": mdata.get("photo_url")
         })
         
     return {
@@ -117,6 +119,7 @@ async def get_messages(
         "status": c.get("status", "ACTIVE"),
         "matchflow_step": c.get("matchflow_step", "CONVERSATION_OPEN"),
         "photo_unlocked": c.get("photo_unlocked", False),
+        "first_photo_shared_by": c.get("first_photo_shared_by"),
         "messages": messages
     }
 
@@ -152,6 +155,23 @@ async def send_message(
         "msg_type": req.msg_type,
         "created_at": created_at
     }
+    if req.photo_url:
+        msg_data["photo_url"] = req.photo_url
+        
+    # Handle first photo watermark logic
+    first_photo_shared_by = c.get("first_photo_shared_by")
+    if req.msg_type == "photo" and not first_photo_shared_by:
+        # Get sender's name
+        profile_doc = db.collection("profiles").document(uid).get()
+        sender_name = "User"
+        if profile_doc.exists:
+            pdata = profile_doc.to_dict()
+            sender_name = pdata.get("fullName") or pdata.get("first_name") or "User"
+            
+        convo_doc.reference.update({
+            "first_photo_shared_by": sender_name
+        })
+        first_photo_shared_by = sender_name
     
     try:
         new_msg_ref.set(msg_data)
@@ -168,8 +188,10 @@ async def send_message(
         "id": msg_id,
         "text": req.text,
         "msg_type": req.msg_type,
+        "photo_url": req.photo_url,
         "sender": "me",
-        "time": time_str
+        "time": time_str,
+        "first_photo_shared_by": first_photo_shared_by if req.msg_type == "photo" else c.get("first_photo_shared_by")
     }
 
 

@@ -5,6 +5,8 @@ import { getProgress } from '../services/sakinahProgress';
 import { SakinahLayout, SakinahReportModal, SakinahSecurePhotoViewer } from '../components';
 import { getMyConversations, getConversationMessages, sendMessage, pinMessage, unpinMessage } from '../services/sakinahApi';
 import type { PinnedMessage, FamilyMember } from '../types/sakinah.types';
+import { storage } from '@/config/firebase.config';
+import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 
 /* ── Types ─────────────────────────────────────────────────── */
 interface OtherUser {
@@ -30,6 +32,7 @@ interface ConvoItem {
   other_user: OtherUser | null;
   last_message: LastMessage | null;
   participants: FamilyMember[]; // New
+  first_photo_shared_by?: string; // New
 }
 
 interface Message {
@@ -69,6 +72,11 @@ export const SakinahChatPage: React.FC = () => {
   const [currentTopicIndex, setCurrentTopicIndex] = useState(0);
   const [showDecisionModal, setShowDecisionModal] = useState(false);
 
+  // Etiquette Modal
+  const [showEtiquetteModal, setShowEtiquetteModal] = useState(false);
+  const [pendingConvoToOpen, setPendingConvoToOpen] = useState<ConvoItem | null>(null);
+
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const bottomRef = useRef<HTMLDivElement>(null);
 
   const PRE_NIKAH_TOPICS = [
@@ -121,7 +129,6 @@ export const SakinahChatPage: React.FC = () => {
       
       setMessages(loadedMessages);
       
-      // Simulate loaded pinned messages
       if (isInitial && loadedMessages.length > 5) {
         setPinnedMessages([{
           id: loadedMessages[2].id,
@@ -131,6 +138,10 @@ export const SakinahChatPage: React.FC = () => {
         }]);
       } else {
         setPinnedMessages([]);
+      }
+
+      if (data.first_photo_shared_by) {
+        setActiveConvo(prev => prev ? { ...prev, first_photo_shared_by: data.first_photo_shared_by } : null);
       }
 
       if (isInitial) {
@@ -145,14 +156,65 @@ export const SakinahChatPage: React.FC = () => {
   }, []);
 
   /* ── Open conversation ───────────────────────────────────── */
-  const openConvo = (c: ConvoItem) => {
+  const executeOpenConvo = (c: ConvoItem) => {
     setActiveConvo(c);
     setMessages([]);
     loadMessages(c.conversation_id, true);
     setConversations(prev => prev.map(conv => conv.conversation_id === c.conversation_id ? { ...conv, unread_count: 0 } : conv));
   };
 
+  const openConvo = (c: ConvoItem) => {
+    const hasSeen = localStorage.getItem(`etiquette_seen_${c.conversation_id}`);
+    if (!hasSeen) {
+      setPendingConvoToOpen(c);
+      setShowEtiquetteModal(true);
+      return;
+    }
+    executeOpenConvo(c);
+  };
+
   /* ── Send message ────────────────────────────────────────── */
+  const handlePhotoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file || !activeConvo) return;
+    
+    // Reset input
+    if (fileInputRef.current) fileInputRef.current.value = '';
+
+    setSending(true);
+    const storageRef = ref(storage, `chat_photos/${activeConvo.conversation_id}/${Date.now()}_${file.name}`);
+    try {
+      const snapshot = await uploadBytes(storageRef, file);
+      const downloadURL = await getDownloadURL(snapshot.ref);
+      
+      const tempId = `temp-photo-${Date.now()}`;
+      const optimisticMsg: Message = {
+        id: tempId,
+        text: '',
+        msg_type: 'photo',
+        sender: 'me',
+        senderName: auth?.email?.split('@')[0] || 'Me',
+        time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+        status: 'sent',
+        photo_url: downloadURL
+      };
+      
+      setMessages(prev => [...prev, optimisticMsg]);
+      setTimeout(() => bottomRef.current?.scrollIntoView({ behavior: 'smooth' }), 50);
+
+      const msg: any = await sendMessage(activeConvo.conversation_id, '', 'photo', downloadURL);
+      setMessages(prev => prev.map(m => m.id === tempId ? { ...msg, id: msg.id.toString(), status: 'delivered' } : m));
+      
+      if (msg.first_photo_shared_by && !activeConvo.first_photo_shared_by) {
+        setActiveConvo(prev => prev ? { ...prev, first_photo_shared_by: msg.first_photo_shared_by } : null);
+      }
+    } catch (err: any) {
+      console.error('Photo upload failed:', err);
+    } finally {
+      setSending(false);
+    }
+  };
+
   const handleSend = async (e?: React.FormEvent) => {
     if (e) e.preventDefault();
     if (!input.trim() || !activeConvo || sending) return;
@@ -361,6 +423,13 @@ export const SakinahChatPage: React.FC = () => {
 
               {/* Messages Area */}
               <div className="flex-1 overflow-y-auto p-4 md:p-6 custom-scrollbar flex flex-col gap-4 relative">
+                {/* Photo Watermark */}
+                {activeConvo?.first_photo_shared_by && (
+                  <div className="w-full text-center py-2 bg-[rgba(212,168,83,0.05)] border-y border-[rgba(212,168,83,0.15)] text-[10px] text-[var(--sk-gold)] tracking-[0.2em] uppercase font-bold sticky top-0 z-30 backdrop-blur-md shadow-sm">
+                    First Photo Shared by {activeConvo.first_photo_shared_by}
+                  </div>
+                )}
+
                 {messagesLoading ? (
                   <div className="flex-1 flex items-center justify-center"><span className="text-[var(--sk-gold)] animate-spin text-2xl">⚙</span></div>
                 ) : messages.length === 0 ? (
@@ -466,27 +535,19 @@ export const SakinahChatPage: React.FC = () => {
                 <div className="p-4 md:p-6 bg-[#0A0E16] border-t border-[rgba(255,255,255,0.05)] z-20">
                     <form onSubmit={handleSend} className="flex items-end gap-3 max-w-4xl mx-auto">
                       <div className="flex-1 bg-[#111826] border border-[rgba(255,255,255,0.08)] focus-within:border-[rgba(212,168,83,0.5)] focus-within:shadow-[0_0_15px_rgba(212,168,83,0.1)] rounded-[20px] p-2 flex items-end transition-all">
+                        <input 
+                          type="file" 
+                          ref={fileInputRef} 
+                          className="hidden" 
+                          accept="image/jpeg, image/png, image/webp" 
+                          onChange={handlePhotoUpload} 
+                        />
                         <button 
                           type="button" 
                           className="p-2.5 text-[var(--sk-ink-dim)] hover:text-[var(--sk-gold)] hover:bg-[rgba(255,255,255,0.05)] rounded-full transition-colors shrink-0 relative group"
-                          onClick={() => {
-                            // Test function: Simulate receiving a photo
-                            const testPhotoMsg: Message = {
-                              id: `test-photo-${Date.now()}`,
-                              text: 'Here is my verification photo',
-                              msg_type: 'photo',
-                              sender: 'them',
-                              senderName: activeConvo?.other_user?.name || 'Contact',
-                              time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-                              status: 'delivered',
-                              photo_url: 'https://images.unsplash.com/photo-1542204165-65bf26472b9b?auto=format&fit=crop&q=80&w=800'
-                            };
-                            setMessages(prev => [...prev, testPhotoMsg]);
-                            setTimeout(() => bottomRef.current?.scrollIntoView({ behavior: 'smooth' }), 50);
-                          }}
+                          onClick={() => fileInputRef.current?.click()}
                         >
                           📎
-                          <span className="absolute -top-8 left-1/2 -translate-x-1/2 bg-[#111826] border border-[var(--sk-gold)] text-[10px] text-[var(--sk-gold)] px-2 py-1 rounded opacity-0 group-hover:opacity-100 whitespace-nowrap pointer-events-none transition-opacity">Simulate Receive Photo</span>
                         </button>
                         <textarea value={input} onChange={e => setInput(e.target.value)} onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleSend(); } }} placeholder="Write your message..." className="flex-1 bg-transparent border-none outline-none text-[15px] text-[#EDE7DA] py-2.5 px-2 max-h-[120px] resize-none custom-scrollbar" rows={1} style={{ minHeight: '44px' }} />
                         <button type="button" className="p-2.5 text-[var(--sk-ink-dim)] hover:text-[var(--sk-gold)] hover:bg-[rgba(255,255,255,0.05)] rounded-full transition-colors shrink-0">🎤</button>
@@ -550,6 +611,50 @@ export const SakinahChatPage: React.FC = () => {
         )}
       </AnimatePresence>
       <SakinahReportModal isOpen={!!reportingProfile} onClose={() => setReportingProfile(null)} profileName={reportingProfile ?? ''} />
+      
+      {/* Etiquette Modal */}
+      <AnimatePresence>
+        {showEtiquetteModal && (
+          <div className="fixed inset-0 z-[110] flex items-center justify-center bg-[#0A0E16]/80 backdrop-blur-sm p-6">
+            <motion.div initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.9, opacity: 0 }} className="bg-[#111826] border border-[rgba(212,168,83,0.2)] rounded-2xl p-6 max-w-[400px] w-full relative text-center">
+              <div className="w-16 h-16 rounded-full bg-[rgba(212,168,83,0.1)] border border-[rgba(212,168,83,0.2)] flex items-center justify-center mx-auto mb-4">
+                <span className="text-[28px]">🕌</span>
+              </div>
+              <h3 className="font-serif text-[22px] text-[var(--sk-gold)] mb-3">Islamic Communication Reminder</h3>
+              <p className="text-[14px] text-[var(--sk-ink-dim)] leading-relaxed mb-6">
+                Communicate with kindness, honesty and respect. Maintain modesty and uphold Islamic values in all conversations.
+              </p>
+              
+              <div className="flex flex-col gap-3">
+                <button 
+                  onClick={() => {
+                    setShowEtiquetteModal(false);
+                    if (pendingConvoToOpen) {
+                      localStorage.setItem(`etiquette_seen_${pendingConvoToOpen.conversation_id}`, 'true');
+                      executeOpenConvo(pendingConvoToOpen);
+                    }
+                  }}
+                  className="w-full py-3 bg-gradient-to-r from-[var(--sk-gold)] to-[#E8C97A] text-[#0A0E16] text-[14px] font-bold rounded-xl shadow-md hover:scale-105 transition-all"
+                >
+                  Continue
+                </button>
+                <button 
+                  onClick={() => {
+                    setShowEtiquetteModal(false);
+                    if (pendingConvoToOpen) {
+                      localStorage.setItem(`etiquette_seen_${pendingConvoToOpen.conversation_id}`, 'true');
+                      executeOpenConvo(pendingConvoToOpen);
+                    }
+                  }}
+                  className="text-[12px] text-[var(--sk-ink-dim)] hover:text-white transition-colors"
+                >
+                  Don't show again
+                </button>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
     </SakinahLayout>
   );
 };

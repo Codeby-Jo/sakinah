@@ -5,6 +5,7 @@ export * from './SafetyNotice';
 export * from './RayaScriptCard';
 export * from './ConsideredFewList';
 export * from './EmptyMatchState';
+export * from './SakinahMutualMatchCelebration';
 export * from './MatchflowStepper';
 export * from './CandidatePortraitCard';
 export * from './InterestActionPanel';
