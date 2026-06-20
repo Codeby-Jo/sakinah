@@ -3,32 +3,73 @@ import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useOnboarding } from '../context/OnboardingContext';
 import { SakinahLayout, SakinahHeader } from '../components';
+import { TrayArrowDown, TrayArrowUp, Handshake, Hourglass, Prohibit } from '@phosphor-icons/react';
 
 const TABS = ['Received', 'Sent', 'Accepted', 'Pending', 'Rejected'] as const;
 type TabType = typeof TABS[number];
 
-import { getInterests } from '../services/sakinahApi';
+import { getInterests, silentPass, expressInterest } from '../services/sakinahApi';
 
 export const SakinahInterestsPage: React.FC = () => {
   const navigate = useNavigate();
   const { isWaliViewOnly } = useOnboarding();
   const [activeTab, setActiveTab] = useState<TabType>('Received');
   const [items, setItems] = useState<Array<{ id: string, name: string, age: number, city: string, date: string, initial: string }>>([]);
-  const [dataCache, setDataCache] = useState<{ sent: any[], received: any[] }>({ sent: [], received: [] });
+  const [dataCache, setDataCache] = useState<{ sent: any[], received: any[], accepted: any[], pending: any[], rejected: any[] }>({ sent: [], received: [], accepted: [], pending: [], rejected: [] });
 
   React.useEffect(() => {
     getInterests().then(res => {
-      setDataCache({ sent: res.sent || [], received: res.received || [] });
+      setDataCache({ 
+        sent: res.sent || [], 
+        received: res.received || [],
+        accepted: res.accepted || [],
+        pending: res.pending || [],
+        rejected: res.rejected || []
+      });
     }).catch(err => {
       console.warn("Failed to fetch interests", err);
     });
   }, []);
+
+  const handleAction = async (action: 'withdraw' | 'decline' | 'accept', candidateId: string, e: React.MouseEvent) => {
+    e.stopPropagation();
+    try {
+      if (action === 'withdraw' || action === 'decline') {
+        await silentPass(candidateId);
+        setItems(prev => prev.filter(i => i.id !== candidateId));
+        if (action === 'withdraw') {
+          setDataCache(prev => ({ ...prev, sent: prev.sent.filter(i => i.id !== candidateId), pending: prev.pending.filter(i => i.id !== candidateId) }));
+        } else {
+          setDataCache(prev => ({ ...prev, received: prev.received.filter(i => i.id !== candidateId) }));
+        }
+      } else if (action === 'accept') {
+        await expressInterest(candidateId);
+        const accItem = items.find(i => i.id === candidateId);
+        if (accItem) {
+          setItems(prev => prev.filter(i => i.id !== candidateId));
+          setDataCache(prev => ({ 
+            ...prev, 
+            received: prev.received.filter(i => i.id !== candidateId),
+            accepted: [...prev.accepted, accItem]
+          }));
+        }
+      }
+    } catch (err) {
+      console.warn(`Failed to ${action} interest`, err);
+    }
+  };
 
   React.useEffect(() => {
     if (activeTab === 'Sent') {
       setItems(dataCache.sent);
     } else if (activeTab === 'Received') {
       setItems(dataCache.received);
+    } else if (activeTab === 'Accepted') {
+      setItems(dataCache.accepted);
+    } else if (activeTab === 'Pending') {
+      setItems(dataCache.pending);
+    } else if (activeTab === 'Rejected') {
+      setItems(dataCache.rejected);
     } else {
       setItems([]);
     }
@@ -69,8 +110,8 @@ export const SakinahInterestsPage: React.FC = () => {
             >
               {items.length === 0 ? (
                 <div className="max-w-[400px] mx-auto text-center mt-12">
-                  <div className="w-20 h-20 mx-auto rounded-full bg-[rgba(212,168,83,0.05)] border border-[rgba(212,168,83,0.1)] flex items-center justify-center text-[var(--sk-gold)] text-[32px] mb-6 shadow-[0_0_30px_rgba(212,168,83,0.1)]">
-                    {activeTab === 'Received' ? '📥' : activeTab === 'Sent' ? '📤' : activeTab === 'Accepted' ? '🤝' : activeTab === 'Pending' ? '⏳' : '🚫'}
+                  <div className="w-20 h-20 mx-auto rounded-full bg-[rgba(212,168,83,0.05)] border border-[rgba(212,168,83,0.1)] flex items-center justify-center text-[var(--sk-gold)] mb-6 shadow-[0_0_30px_rgba(212,168,83,0.1)]">
+                    {activeTab === 'Received' ? <TrayArrowDown className="text-[32px]" /> : activeTab === 'Sent' ? <TrayArrowUp className="text-[32px]" /> : activeTab === 'Accepted' ? <Handshake className="text-[32px]" /> : activeTab === 'Pending' ? <Hourglass className="text-[32px]" /> : <Prohibit className="text-[32px]" />}
                   </div>
                   <h3 className="font-serif text-[22px] text-[var(--sk-ink)] mb-3">No {activeTab} Interests</h3>
                   <p className="text-[14px] text-[var(--sk-ink-dim)] mb-8">
@@ -107,12 +148,12 @@ export const SakinahInterestsPage: React.FC = () => {
                           <>
                             {activeTab === 'Received' && (
                               <>
-                                <button className="flex-1 py-1.5 bg-[rgba(127,176,122,0.1)] text-[var(--sk-green)] border border-[rgba(127,176,122,0.2)] rounded-full text-[12px] hover:bg-[rgba(127,176,122,0.2)] transition-colors" onClick={(e) => { e.stopPropagation(); }}>Accept</button>
-                                <button className="flex-1 py-1.5 bg-[rgba(255,255,255,0.02)] text-[var(--sk-ink-dim)] border border-[rgba(255,255,255,0.05)] rounded-full text-[12px] hover:text-[var(--sk-ink)] transition-colors" onClick={(e) => { e.stopPropagation(); }}>Decline</button>
+                                <button className="flex-1 py-1.5 bg-[rgba(127,176,122,0.1)] text-[var(--sk-green)] border border-[rgba(127,176,122,0.2)] rounded-full text-[12px] hover:bg-[rgba(127,176,122,0.2)] transition-colors" onClick={(e) => handleAction('accept', item.id, e)}>Accept</button>
+                                <button className="flex-1 py-1.5 bg-[rgba(255,255,255,0.02)] text-[var(--sk-ink-dim)] border border-[rgba(255,255,255,0.05)] rounded-full text-[12px] hover:text-[var(--sk-ink)] transition-colors" onClick={(e) => handleAction('decline', item.id, e)}>Decline</button>
                               </>
                             )}
                             {activeTab === 'Sent' && (
-                              <button className="w-full py-1.5 bg-[rgba(255,255,255,0.02)] text-[var(--sk-ink-dim)] border border-[rgba(255,255,255,0.05)] rounded-full text-[12px] hover:text-[var(--sk-ink)] transition-colors" onClick={(e) => { e.stopPropagation(); }}>Withdraw Interest</button>
+                              <button className="w-full py-1.5 bg-[rgba(255,255,255,0.02)] text-[var(--sk-ink-dim)] border border-[rgba(255,255,255,0.05)] rounded-full text-[12px] hover:text-[var(--sk-ink)] transition-colors" onClick={(e) => handleAction('withdraw', item.id, e)}>Withdraw Interest</button>
                             )}
                             {activeTab === 'Accepted' && (
                               <button onClick={(e) => { e.stopPropagation(); navigate('/matrimony/chat'); }} className="w-full py-1.5 bg-[var(--sk-gold)] text-[#0A0E16] rounded-full text-[12px] font-medium hover:bg-[#E8C97A] transition-colors shadow-[0_0_15px_rgba(212,168,83,0.2)]">Message Now</button>

@@ -3,24 +3,24 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 import { UserPlus, EnvelopeSimple, Phone, ShieldCheck, CheckCircle, Trash, Users } from '@phosphor-icons/react';
 import { SakinahButton } from '../components';
+import { inviteFamilyMember } from '../services/sakinahApi';
 
 export interface WaliAccount {
   id?: string;
   fullName: string;
   email: string;
-  phone: string;
+  phone?: string;
   relationship: string;
 }
 
 export const SakinahWaliSetupPage: React.FC = () => {
   const navigate = useNavigate();
   const [email, setEmail] = useState('');
-  const [phone, setPhone] = useState('');
   const [name, setName] = useState('');
   const [loading, setLoading] = useState(false);
   const [successMessage, setSuccessMessage] = useState(false);
   const [walis, setWalis] = useState<WaliAccount[]>([]);
-  const [errors, setErrors] = useState<{ email?: string; phone?: string }>({});
+  const [errors, setErrors] = useState<{ email?: string; name?: string }>({});
 
   useEffect(() => {
     try {
@@ -41,12 +41,6 @@ export const SakinahWaliSetupPage: React.FC = () => {
     if (!emailRegex.test(email)) {
       newErrors.email = 'Please enter a valid email address';
     }
-    
-    const phoneRegex = /^\d{10,15}$/;
-    if (!phoneRegex.test(phone)) {
-      newErrors.phone = 'Phone number must contain 10-15 digits only';
-    }
-
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
@@ -62,7 +56,6 @@ export const SakinahWaliSetupPage: React.FC = () => {
       id: Date.now().toString(),
       fullName: name,
       email: email,
-      phone: phone,
       relationship: 'Guardian'
     };
 
@@ -73,12 +66,15 @@ export const SakinahWaliSetupPage: React.FC = () => {
       localStorage.setItem('sakinah_onboarding_wali', JSON.stringify(updatedWalis));
     } catch { /* storage full — ignore */ }
 
-    // Simulate API call
-    await new Promise(r => setTimeout(r, 1000));
+    // Sync with backend so /wali/verify works
+    try {
+      await inviteFamilyMember(name, email, 'Guardian');
+    } catch (err) {
+      console.warn('Backend not connected, saved locally only.', err);
+    }
     
     setName('');
     setEmail('');
-    setPhone('');
     setSuccessMessage(true);
     setLoading(false);
     
@@ -122,7 +118,7 @@ export const SakinahWaliSetupPage: React.FC = () => {
             </div>
             <div>
               <h1 className="text-3xl font-serif text-[#F5D77A]">Wali Setup</h1>
-              <p className="text-white/50 text-sm mt-1">Invite your Wali (Guardian) to join your journey securely.</p>
+              <p className="text-white/50 text-sm mt-1">Add your Wali (Guardian) to your journey securely.</p>
             </div>
           </div>
         </motion.div>
@@ -190,35 +186,14 @@ export const SakinahWaliSetupPage: React.FC = () => {
               {errors.email && <span className="text-red-400 text-[11px] mt-1">{errors.email}</span>}
             </div>
 
-            <div className="flex flex-col gap-1.5">
-              <label className="text-[11px] uppercase tracking-widest font-semibold text-[#D4AF37]/80">
-                Phone Number
-              </label>
-              <div className="relative">
-                <Phone size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-white/30" />
-                <input
-                  required
-                  type="tel"
-                  value={phone}
-                  onChange={(e) => {
-                    setPhone(e.target.value);
-                    if (errors.phone) setErrors({ ...errors, phone: undefined });
-                  }}
-                  placeholder="10-15 digit phone number"
-                  className={`w-full bg-[#050816]/50 border text-white rounded-xl pl-12 pr-4 py-3.5 outline-none transition-all ${errors.phone ? 'border-red-500/50 focus:border-red-500 focus:ring-1 focus:ring-red-500/20' : 'border-[rgba(212,175,55,0.15)] focus:border-[#D4AF37]/50 focus:ring-1 focus:ring-[#D4AF37]/20'}`}
-                />
-              </div>
-              {errors.phone && <span className="text-red-400 text-[11px] mt-1">{errors.phone}</span>}
-            </div>
-
             <div className="mt-4 pt-6 border-t border-[rgba(212,175,55,0.1)]">
               <SakinahButton
                 variant="primary"
                 type="submit"
-                disabled={loading || !name || !email || !phone}
+                disabled={loading || !name || !email}
                 className="w-full py-4 text-[15px] font-semibold rounded-xl bg-gradient-to-r from-[#D4AF37] to-[#F5D77A] text-[#050816] hover:shadow-[0_0_30px_rgba(212,175,55,0.4)] disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                {loading ? 'Sending Invite...' : 'Send Invitation link'}
+                {loading ? 'Adding Wali...' : 'Add Wali'}
               </SakinahButton>
             </div>
           </form>
@@ -242,7 +217,6 @@ export const SakinahWaliSetupPage: React.FC = () => {
                     <span className="text-white font-medium text-[15px]">{wali.fullName}</span>
                     <div className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-4 mt-2">
                       <span className="text-white/50 text-[13px] flex items-center gap-1.5"><EnvelopeSimple size={14}/> {wali.email}</span>
-                      <span className="text-white/50 text-[13px] flex items-center gap-1.5"><Phone size={14}/> {wali.phone}</span>
                       <span className="text-[#D4AF37]/80 text-[13px] flex items-center gap-1.5"><ShieldCheck size={14}/> {wali.relationship}</span>
                     </div>
                   </div>

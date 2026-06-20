@@ -185,6 +185,8 @@ const SakinahMatchesPage = lazy(() => import('@/features/sakinah/pages/SakinahMa
 const SakinahCandidatePage = lazy(() => import('@/features/sakinah/pages/SakinahCandidatePage').then(m => ({ default: m.SakinahCandidatePage })));
 const SakinahInterestsPage = lazy(() => import('@/features/sakinah/pages/SakinahInterestsPage').then(m => ({ default: m.SakinahInterestsPage })));
 const SakinahSavedPage = lazy(() => import('@/features/sakinah/pages/SakinahSavedPage').then(m => ({ default: m.SakinahSavedPage })));
+const SakinahViewsPage = lazy(() => import('@/features/sakinah/pages/SakinahViewsPage').then(m => ({ default: m.SakinahViewsPage })));
+const SakinahLogoutPage = lazy(() => import('@/features/sakinah/pages/SakinahLogoutPage').then(m => ({ default: m.SakinahLogoutPage })));
 const SakinahNotificationsPage = lazy(() => import('@/features/sakinah/pages/SakinahNotificationsPage').then(m => ({ default: m.SakinahNotificationsPage })));
 const SakinahSettingsPage = lazy(() => import('@/features/sakinah/pages/SakinahSettingsPage').then(m => ({ default: m.SakinahSettingsPage })));
 const SakinahSupportPage = lazy(() => import('@/features/sakinah/pages/SakinahSupportPage').then(m => ({ default: m.SakinahSupportPage })));
@@ -720,6 +722,7 @@ export const router = createBrowserRouter([
       { path: 'role', element: <LazyPage Component={SakinahRolePage} /> },
       { path: 'role-selection', element: <LazyPage Component={SakinahRoleSelectionPage} /> },
       { path: 'login', element: <LazyPage Component={SakinahLoginPage} /> },
+      { path: 'logout', element: <LazyPage Component={SakinahLogoutPage} /> },
       { path: 'register', element: <LazyPage Component={SakinahRegisterPage} /> },
       { path: 'kyc', element: <LazyPage Component={SakinahKycPage} /> },
       { path: 'profile-creation', element: <LazyPage Component={SakinahProfileCreationPage} /> },
@@ -737,6 +740,7 @@ export const router = createBrowserRouter([
           { path: 'candidates/:candidateId', element: <LazyPage Component={SakinahCandidatePage} /> },
           { path: 'interests', element: <LazyPage Component={SakinahInterestsPage} /> },
           { path: 'saved', element: <LazyPage Component={SakinahSavedPage} /> },
+          { path: 'views', element: <LazyPage Component={SakinahViewsPage} /> },
           { path: 'notifications', element: <LazyPage Component={SakinahNotificationsPage} /> },
           { path: 'settings', element: <LazyPage Component={SakinahSettingsPage} /> },
           { path: 'support', element: <LazyPage Component={SakinahSupportPage} /> },
@@ -750,6 +754,8 @@ export const router = createBrowserRouter([
           { path: 'wali-chat', element: <LazyPage Component={SakinahChatPage} /> },
           { path: 'wali-messages', element: <LazyPage Component={SakinahChatPage} /> },
           { path: 'wali-interests', element: <LazyPage Component={SakinahInterestsPage} /> },
+          { path: 'wali-saved', element: <LazyPage Component={SakinahSavedPage} /> },
+          { path: 'wali-views', element: <LazyPage Component={SakinahViewsPage} /> },
           { path: 'wali-notifications', element: <LazyPage Component={SakinahNotificationsPage} /> },
           { path: 'wali-support', element: <LazyPage Component={SakinahSupportPage} /> },
         ],

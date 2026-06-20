@@ -143,6 +143,14 @@ export async function silentPass(candidateId: string) {
   return fetchNisApi(`/candidates/${candidateId}/pass`, { method: 'POST' });
 }
 
+export async function saveProfile(candidateId: string) {
+  return fetchNisApi(`/candidates/${candidateId}/save`, { method: 'POST' });
+}
+
+export async function getSavedProfiles() {
+  return fetchNisApi('/saved-profiles');
+}
+
 export async function getCandidateDetail(candidateId: string) {
   return fetchNisApi(`/candidates/${candidateId}`);
 }
@@ -462,9 +470,7 @@ export async function verifyWaliAccess(email: string) {
       } catch { /* ignore */ }
     }
     
-    // For local testing, allow any email to bypass
-    console.warn(`[SakinahAPI] Wali email ${email} not found in local setup, bypassing for test.`);
-    return { success: true, token: `wali_session_test_${Date.now()}` };
+    throw new Error('This email is not authorized by the respective user.');
   }
 }
 

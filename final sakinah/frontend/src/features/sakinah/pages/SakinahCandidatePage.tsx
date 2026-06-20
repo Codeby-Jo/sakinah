@@ -51,13 +51,13 @@ export const SakinahCandidatePage: React.FC = () => {
         } else {
           setMatchStatus('sent');
         }
-        setTimeout(() => navigate('/matrimony/considered-few'), 3000);
+        setTimeout(() => navigate('/matrimony/matches'), 3000);
       }
     } catch (err) {
       console.warn('Backend offline or failed', err);
       // Assume success for demo if offline
       setMatchStatus('sent');
-      setTimeout(() => navigate('/matrimony/considered-few'), 3000);
+      setTimeout(() => navigate('/matrimony/matches'), 3000);
     } finally {
       setIsPending(false);
     }
@@ -69,12 +69,12 @@ export const SakinahCandidatePage: React.FC = () => {
     try {
       if (candidate) {
         await silentPass(candidate.candidateId);
-        navigate('/matrimony/considered-few');
+        navigate('/matrimony/matches');
       }
     } catch (err) {
       console.warn('Backend offline or failed', err);
       setErrorFallback('Backend unreachable.');
-      setTimeout(() => navigate('/matrimony/considered-few'), 1000);
+      setTimeout(() => navigate('/matrimony/matches'), 1000);
     } finally {
       setIsPending(false);
     }
@@ -108,7 +108,7 @@ export const SakinahCandidatePage: React.FC = () => {
         {/* Back Button & Header */}
         <div className="flex items-center gap-4 mb-10 relative z-10">
           <button 
-            onClick={() => navigate('/matrimony/considered-few')}
+            onClick={() => navigate('/matrimony/matches')}
             className="w-10 h-10 rounded-full border border-[rgba(255,255,255,0.1)] flex items-center justify-center text-[var(--sk-ink-dim)] hover:bg-[rgba(255,255,255,0.05)] hover:text-[#EDE7DA] transition-all group"
           >
             <span className="text-[18px] group-hover:-translate-x-1 transition-transform">←</span>

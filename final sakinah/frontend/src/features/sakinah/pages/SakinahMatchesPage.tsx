@@ -2,8 +2,9 @@ import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { SakinahLayout, SakinahHeader, SakinahReportModal } from '../components';
-import { getConsideredFew, expressInterest, silentPass, getMyConversations } from '../services/sakinahApi';
+import { getConsideredFew, expressInterest, silentPass, getMyConversations, saveProfile } from '../services/sakinahApi';
 import { getProgress } from '../services/sakinahProgress';
+import { ShieldCheck, Star, Flag, Sparkle, CheckCircle, Check, Warning, Moon } from '@phosphor-icons/react';
 
 interface MatchItem {
   id: string;
@@ -47,16 +48,20 @@ const MatchCard = React.memo(({
   m,
   isWali,
   interested, 
+  saved,
   onPass,
   onInterest, 
+  onSave,
   onReport,
   onView
-}: { 
+}: {
   m: MatchItem;
   isWali: boolean; 
   interested: boolean; 
+  saved: boolean;
   onPass: () => void; 
   onInterest: () => void; 
+  onSave: () => void;
   onReport: () => void;
   onView: () => void;
 }) => (
@@ -87,7 +92,7 @@ const MatchCard = React.memo(({
               {m.name}
               {m.managedByWali && (
                 <span className="text-[10px] bg-[#10B981]/10 text-[#10B981] border border-[#10B981]/30 px-2 py-0.5 rounded-full whitespace-nowrap flex items-center gap-1">
-                  <span className="text-[12px]">🛡️</span> Managed by Wali
+                  <ShieldCheck weight="fill" className="text-[12px]" /> Managed by Wali
                 </span>
               )}
             </h3>
@@ -98,13 +103,22 @@ const MatchCard = React.memo(({
             <span className="px-3 py-1 bg-[rgba(212,168,83,0.1)] border border-[rgba(212,168,83,0.2)] text-[var(--sk-gold)] text-[12px] rounded-full font-medium">
               {m.match} Match
             </span>
-            <button 
-              onClick={(e) => { e.stopPropagation(); onReport(); }}
-              className="text-[11px] text-[var(--sk-ink-dim)] hover:text-[var(--sk-rose)] transition-colors flex items-center gap-1 opacity-60 hover:opacity-100"
-              title="Report this profile"
-            >
-              🚩 Report
-            </button>
+            <div className="flex items-center gap-3">
+              <button 
+                onClick={(e) => { e.stopPropagation(); onSave(); }}
+                className={`text-[11px] transition-colors flex items-center gap-1 opacity-80 hover:opacity-100 ${saved ? 'text-[var(--sk-gold)]' : 'text-[var(--sk-ink-dim)] hover:text-[var(--sk-gold)]'}`}
+                title="Save this profile"
+              >
+                <Star weight={saved ? 'fill' : 'regular'} className="text-[14px]" /> {saved ? 'Saved' : 'Save'}
+              </button>
+              <button 
+                onClick={(e) => { e.stopPropagation(); onReport(); }}
+                className="text-[11px] text-[var(--sk-ink-dim)] hover:text-[var(--sk-rose)] transition-colors flex items-center gap-1 opacity-60 hover:opacity-100"
+                title="Report this profile"
+              >
+                <Flag weight="fill" className="text-[12px]" /> Report
+              </button>
+            </div>
           </div>
         </div>
 
@@ -112,12 +126,12 @@ const MatchCard = React.memo(({
         {m.mutualInterest && m.reasons && m.reasons.length > 0 && (
           <div className="mt-4 p-4 rounded-xl bg-[rgba(255,255,255,0.02)] border border-[rgba(212,168,83,0.15)] shadow-[0_4px_20px_rgba(212,168,83,0.05)] transition-all">
             <div className="text-[13px] font-serif text-[var(--sk-gold)] mb-3 flex items-center gap-2">
-              ✨ Why This Profile Matches You
+              <Sparkle weight="fill" className="text-[14px]" /> Why This Profile Matches You
             </div>
             <div className="flex flex-col gap-2 mb-3">
               {m.reasons.map((reason, idx) => (
                 <div key={idx} className="flex items-start gap-2 text-[12px] text-[var(--sk-ink-dim)]">
-                  <span className="text-[var(--sk-green)] shrink-0 mt-0.5">✅</span>
+                  <CheckCircle weight="fill" className="text-[var(--sk-green)] shrink-0 mt-0.5 text-[14px]" />
                   <span className="leading-tight">{reason}</span>
                 </div>
               ))}
@@ -142,9 +156,9 @@ const MatchCard = React.memo(({
       <button 
         onClick={onInterest} 
         disabled={interested}
-        className={`flex-[1.5] py-2.5 rounded-xl text-[13px] font-bold transition-all duration-300 shadow-lg ${interested ? 'bg-[rgba(127,176,122,0.1)] text-[var(--sk-green)] border border-[rgba(127,176,122,0.2)] opacity-50 cursor-not-allowed' : 'bg-gradient-to-r from-[var(--sk-gold)] to-[#E8C97A] text-[#0A0E16] hover:shadow-[0_0_20px_rgba(212,168,83,0.4)] hover:scale-[1.02]'}`}
+        className={`flex-[1.5] py-2.5 rounded-xl text-[13px] font-bold transition-all duration-300 shadow-lg flex items-center justify-center gap-2 ${interested ? 'bg-[rgba(127,176,122,0.1)] text-[var(--sk-green)] border border-[rgba(127,176,122,0.2)] opacity-50 cursor-not-allowed' : 'bg-gradient-to-r from-[var(--sk-gold)] to-[#E8C97A] text-[#0A0E16] hover:shadow-[0_0_20px_rgba(212,168,83,0.4)] hover:scale-[1.02]'}`}
       >
-        {isWali ? (interested ? 'Interest Recommended ✓' : 'Recommend Interest') : (interested ? 'Interest Sent ✓' : 'Express Interest')}
+        {isWali ? (interested ? <><Check weight="bold" /> Interest Recommended</> : 'Recommend Interest') : (interested ? <><Check weight="bold" /> Interest Sent</> : 'Express Interest')}
       </button>
     </div>
   </motion.div>
@@ -159,6 +173,7 @@ export const SakinahMatchesPage: React.FC = () => {
   
   // Track actions per profile ID
   const [interested, setInterested] = useState<Record<string, boolean>>({});
+  const [savedProfiles, setSavedProfiles] = useState<Record<string, boolean>>({});
   const [reportingProfile, setReportingProfile] = useState<string | null>(null);
 
   // Pagination states
@@ -207,6 +222,15 @@ export const SakinahMatchesPage: React.FC = () => {
       await silentPass(id);
     } catch (err) {
       console.error('Failed to pass:', err);
+    }
+  }, []);
+
+  const handleSave = useCallback(async (id: string) => {
+    try {
+      const resp: any = await saveProfile(id);
+      setSavedProfiles(p => ({ ...p, [id]: resp.saved }));
+    } catch (err) {
+      console.error('Failed to save profile:', err);
     }
   }, []);
 
@@ -261,13 +285,15 @@ export const SakinahMatchesPage: React.FC = () => {
         m={m}
         isWali={isWali}
         interested={!!interested[m.id]}
+        saved={!!savedProfiles[m.id]}
         onPass={() => handlePass(m.id)}
         onInterest={() => handleInterest(m.id)}
+        onSave={() => handleSave(m.id)}
         onReport={() => setReportingProfile(m.id)}
         onView={() => navigate(`/matrimony/candidates/${m.id}`)}
       />
     ));
-  }, [matches, isWali, interested, handlePass, handleInterest, navigate]);
+  }, [matches, isWali, interested, savedProfiles, handlePass, handleInterest, handleSave, navigate]);
 
   return (
     <SakinahLayout>
@@ -302,8 +328,8 @@ export const SakinahMatchesPage: React.FC = () => {
               animate={{ opacity: 1, scale: 1 }}
               className="mt-12 flex flex-col items-center justify-center text-center p-12 sk-card"
             >
-              <div className="w-24 h-24 rounded-full bg-[rgba(212,168,83,0.05)] border border-[rgba(212,168,83,0.1)] flex items-center justify-center mb-6 shadow-[0_0_30px_rgba(212,168,83,0.1)]">
-                <span className="text-[40px]">🌙</span>
+              <div className="w-24 h-24 rounded-full bg-[rgba(212,168,83,0.05)] border border-[rgba(212,168,83,0.1)] flex items-center justify-center mb-6 shadow-[0_0_30px_rgba(212,168,83,0.1)] text-[var(--sk-gold)]">
+                <Moon weight="fill" className="text-[40px]" />
               </div>
               <h3 className="font-serif text-[24px] text-[var(--sk-gold)] mb-3">No New Matches</h3>
               <p className="text-[14px] text-[var(--sk-ink-dim)] max-w-[400px] leading-relaxed mb-8">

@@ -3,22 +3,23 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useOnboarding } from '../context/OnboardingContext';
 import { clearProgress } from '../services/sakinahProgress';
+import { SquaresFour, User, Heart, Lock, Bell, Question, Sparkle, EnvelopeSimple, ShieldCheck, SignOut } from '@phosphor-icons/react';
 
 const SEEKER_NAV_ITEMS = [
-  { label: 'Dashboard', path: '/matrimony/dashboard', icon: '⊞' },
-  { label: 'My Profile', path: '/matrimony/profile-creation', icon: '👤' },
-  { label: 'Recommended Matches', path: '/matrimony/matches', icon: '♡' },
-  { label: 'Wali Setup', path: '/matrimony/wali-setup', icon: '🔒' },
-  { label: 'Notifications', path: '/matrimony/notifications', icon: '🔔' },
-  { label: 'Help & Support', path: '/matrimony/support', icon: '❓' },
+  { label: 'Dashboard', path: '/matrimony/dashboard', icon: <SquaresFour weight="duotone" /> },
+  { label: 'My Profile', path: '/matrimony/profile-creation', icon: <User weight="duotone" /> },
+  { label: 'Recommended Matches', path: '/matrimony/matches', icon: <Heart weight="duotone" /> },
+  { label: 'Wali Setup', path: '/matrimony/wali-setup', icon: <Lock weight="duotone" /> },
+  { label: 'Notifications', path: '/matrimony/notifications', icon: <Bell weight="duotone" /> },
+  { label: 'Help & Support', path: '/matrimony/support', icon: <Question weight="duotone" /> },
 ];
 
 const WALI_NAV_ITEMS = [
-  { label: 'Wali Dashboard', path: '/matrimony/wali-dashboard', icon: '⊞' },
-  { label: 'Interests', path: '/matrimony/wali-interests', icon: '✦' },
-  { label: 'Messages', path: '/matrimony/wali-messages', icon: '✉' },
-  { label: 'Notifications', path: '/matrimony/wali-notifications', icon: '🔔' },
-  { label: 'Contact Support', path: '/matrimony/wali-support', icon: '❓' },
+  { label: 'Wali Dashboard', path: '/matrimony/wali-dashboard', icon: <SquaresFour weight="duotone" /> },
+  { label: 'Interests', path: '/matrimony/wali-interests', icon: <Sparkle weight="duotone" /> },
+  { label: 'Messages', path: '/matrimony/wali-messages', icon: <EnvelopeSimple weight="duotone" /> },
+  { label: 'Notifications', path: '/matrimony/wali-notifications', icon: <Bell weight="duotone" /> },
+  { label: 'Contact Support', path: '/matrimony/wali-support', icon: <Question weight="duotone" /> },
 ];
 
 export const SakinahSidebar: React.FC<{ isExpanded: boolean; setIsExpanded: (v: boolean) => void }> = ({ isExpanded, setIsExpanded }) => {
@@ -26,7 +27,8 @@ export const SakinahSidebar: React.FC<{ isExpanded: boolean; setIsExpanded: (v: 
   const location = useLocation();
   const { userType, isWaliViewOnly } = useOnboarding();
 
-  const NAV_ITEMS = userType === 'WALI_VIEW' ? WALI_NAV_ITEMS : SEEKER_NAV_ITEMS;
+  const isWaliMode = isWaliViewOnly || userType === 'WALI_VIEW' || location.pathname.includes('wali-');
+  const NAV_ITEMS = isWaliMode ? WALI_NAV_ITEMS : SEEKER_NAV_ITEMS;
 
   return (
     <motion.div 
@@ -41,11 +43,7 @@ export const SakinahSidebar: React.FC<{ isExpanded: boolean; setIsExpanded: (v: 
           whileHover={{ scale: 1.02, x: -2 }}
           whileTap={{ scale: 0.97 }}
           onClick={() => {
-            if (isWaliViewOnly) {
-              navigate('/matrimony/login', { replace: true });
-            } else {
-              navigate('/', { replace: true });
-            }
+            navigate('/', { replace: true });
           }}
           className={`flex items-center gap-2.5 w-full py-2.5 px-3 rounded-xl bg-[rgba(212,168,83,0.06)] border border-[rgba(212,168,83,0.15)] text-[var(--sk-gold)] hover:bg-[rgba(212,168,83,0.12)] hover:border-[rgba(212,168,83,0.35)] transition-all duration-300 group`}
           title="Back to Zaryah+"
@@ -98,7 +96,7 @@ export const SakinahSidebar: React.FC<{ isExpanded: boolean; setIsExpanded: (v: 
           >
             <div className="bg-gradient-to-r from-[rgba(212,175,55,0.1)] to-[rgba(212,175,55,0.05)] border border-[var(--sk-gold)] rounded-lg py-2 px-3 flex items-center justify-center gap-2 shadow-[0_0_15px_rgba(212,175,55,0.15)] relative overflow-hidden group">
               <div className="absolute inset-0 bg-[linear-gradient(45deg,transparent,rgba(255,255,255,0.05),transparent)] -translate-x-[100%] group-hover:translate-x-[100%] transition-transform duration-1000" />
-              <span className="text-[12px] relative z-10">🛡️</span>
+              <ShieldCheck weight="fill" className="text-[14px] relative z-10" />
               <span className="text-[10px] font-bold text-[var(--sk-gold)] uppercase tracking-widest relative z-10">WALI VERIFIED</span>
             </div>
           </motion.div>
@@ -147,15 +145,11 @@ export const SakinahSidebar: React.FC<{ isExpanded: boolean; setIsExpanded: (v: 
           whileTap={{ scale: 0.98 }}
           onClick={() => { 
             clearProgress(); 
-            if (isWaliViewOnly) {
-              navigate('/matrimony/login', { replace: true });
-            } else {
-              navigate('/', { replace: true }); 
-            }
+            navigate('/matrimony/logout', { replace: true }); 
           }}
           className={`flex items-center ${isExpanded ? 'gap-4 px-4' : 'justify-center px-0'} w-full py-3 rounded-xl text-red-400/80 hover:bg-red-500/10 hover:text-red-400 transition-all duration-300`}
         >
-          <span className="text-[18px] shrink-0">🚪</span>
+          <span className="text-[18px] shrink-0"><SignOut weight="duotone" /></span>
           <AnimatePresence>
             {isExpanded && (
               <motion.span initial={{ opacity: 0, width: 0 }} animate={{ opacity: 1, width: 'auto' }} exit={{ opacity: 0, width: 0, display: 'none' }} className="text-[14px] font-medium tracking-wide whitespace-nowrap overflow-hidden">

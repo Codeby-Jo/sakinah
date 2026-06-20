@@ -321,6 +321,48 @@ async def pass_candidate(candidate_id: str, current_user: dict = Depends(get_cur
     
     return {"status": "success", "message": "Candidate passed silently."}
 
+@router.post("/candidates/{candidate_id}/save")
+async def save_profile(candidate_id: str, current_user: dict = Depends(get_current_user)):
+    uid = current_user.get("uid")
+    db = get_db()
+    save_id = f"{uid}_{candidate_id}"
+    save_ref = db.collection("saved_profiles").document(save_id)
+    if save_ref.get().exists:
+        save_ref.delete()
+        return {"status": "success", "message": "Profile unsaved.", "saved": False}
+    else:
+        save_ref.set({
+            "seeker_id": uid,
+            "candidate_id": candidate_id,
+            "saved_at": datetime.utcnow().isoformat()
+        })
+        return {"status": "success", "message": "Profile saved.", "saved": True}
+
+@router.get("/saved-profiles")
+async def get_saved_profiles(current_user: dict = Depends(get_current_user)):
+    uid = current_user.get("uid")
+    db = get_db()
+    saved_docs = db.collection("saved_profiles").where("seeker_id", "==", uid).get()
+    
+    saved_list = []
+    for doc in saved_docs:
+        cid = doc.to_dict().get("candidate_id")
+        user_doc = db.collection("profiles").document(cid).get()
+        if user_doc.exists:
+            ud = user_doc.to_dict()
+            first_name = ud.get("firstName") or ud.get("first_name") or "User"
+            saved_list.append({
+                "id": cid,
+                "name": first_name,
+                "age": ud.get("age", 25),
+                "city": ud.get("city", ud.get("location", "Unknown")),
+                "date": "Saved recently",
+                "initial": first_name[0].upper(),
+                "profession": ud.get("education_occupation") or ud.get("occupation") or "Private"
+            })
+            
+    return {"saved": saved_list}
+
 @router.post("/candidates/{candidate_id}/interest")
 async def express_interest(candidate_id: str, current_user: dict = Depends(get_current_user)):
     uid = current_user.get("uid")
@@ -656,35 +698,60 @@ async def get_interests(current_user: dict = Depends(get_current_user)):
     
     sent_docs = db.collection("candidate_interactions").where("seeker_id", "==", uid).where("status", "==", "INTEREST").get()
     recv_docs = db.collection("candidate_interactions").where("candidate_id", "==", uid).where("status", "==", "INTEREST").get()
+    pass_docs = db.collection("candidate_interactions").where("seeker_id", "==", uid).where("status", "==", "PASS").get()
     
-    sent = []
-    for doc in sent_docs:
-        cid = doc.to_dict().get("candidate_id")
-        user_doc = db.collection("sakinah_profiles").document(cid).get()
+    # Matches (Accepted)
+    matches_docs = db.collection("matches").where("users", "array_contains", uid).get()
+    accepted_cids = []
+    accepted = []
+    for doc in matches_docs:
+        users = doc.to_dict().get("users", [])
+        for u in users:
+            if u != uid:
+                accepted_cids.append(u)
+                
+    for cid in accepted_cids:
+        user_doc = db.collection("profiles").document(cid).get()
         if user_doc.exists:
             ud = user_doc.to_dict()
-            sent.append({
+            first_name = ud.get("firstName") or ud.get("first_name") or "User"
+            accepted.append({
                 "id": cid,
-                "name": ud.get("name", "Unknown"),
+                "name": first_name,
                 "age": ud.get("age", 25),
-                "city": ud.get("location", ud.get("city", "Unknown")),
-                "date": "Just now",
-                "initial": ud.get("name", "U")[0].upper()
+                "city": ud.get("city", ud.get("location", "Unknown")),
+                "date": "Matched",
+                "initial": first_name[0].upper()
             })
-            
-    recv = []
-    for doc in recv_docs:
-        sid = doc.to_dict().get("seeker_id")
-        user_doc = db.collection("sakinah_profiles").document(sid).get()
-        if user_doc.exists:
-            ud = user_doc.to_dict()
-            recv.append({
-                "id": sid,
-                "name": ud.get("name", "Unknown"),
-                "age": ud.get("age", 25),
-                "city": ud.get("location", ud.get("city", "Unknown")),
-                "date": "Just now",
-                "initial": ud.get("name", "U")[0].upper()
-            })
-            
-    return {"sent": sent, "received": recv}
+    
+    def process_interactions(docs, id_key):
+        result = []
+        for doc in docs:
+            cid = doc.to_dict().get(id_key)
+            if cid in accepted_cids:
+                continue # If it's accepted, don't show in sent/received/pending
+            user_doc = db.collection("profiles").document(cid).get()
+            if user_doc.exists:
+                ud = user_doc.to_dict()
+                first_name = ud.get("firstName") or ud.get("first_name") or "User"
+                result.append({
+                    "id": cid,
+                    "name": first_name,
+                    "age": ud.get("age", 25),
+                    "city": ud.get("city", ud.get("location", "Unknown")),
+                    "date": "Recently",
+                    "initial": first_name[0].upper()
+                })
+        return result
+        
+    sent = process_interactions(sent_docs, "candidate_id")
+    recv = process_interactions(recv_docs, "seeker_id")
+    rejected = process_interactions(pass_docs, "candidate_id")
+    
+    return {
+        "sent": sent,
+        "received": recv,
+        "accepted": accepted,
+        "pending": sent,
+        "rejected": rejected
+    }

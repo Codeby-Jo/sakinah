@@ -6,6 +6,21 @@ import {
   SakinahReportModal,
   SakinahVerifiedBadge
 } from '../components';
+import { 
+  ShieldCheck, 
+  Star, 
+  Check, 
+  X, 
+  TrendUp, 
+  ChartBar, 
+  Eye, 
+  Sparkle, 
+  EnvelopeSimple, 
+  BookmarkSimple, 
+  Lightning, 
+  Gear, 
+  MagnifyingGlass 
+} from '@phosphor-icons/react';
 import { getTrustScore, getProfileAnalytics, getAnalyticsSummary, getConsideredFew } from '../services/sakinahApi';
 import type { TrustScoreData, ProfileAnalytics } from '../types/sakinah.types';
 import { getProgress } from '../services/sakinahProgress';
@@ -133,7 +148,7 @@ export const SakinahDashboardPage: React.FC = () => {
 
         <motion.div initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }} className="relative z-10 mb-8 flex items-center justify-between">
           <div>
-            <h1 className="font-display text-[32px] md:text-[40px] text-[var(--sk-gold)] mb-2 flex items-center gap-3">
+            <h1 className="font-sans font-light text-[32px] md:text-[40px] text-[var(--sk-gold)] mb-2 flex items-center gap-3">
               {profile?.firstName ? `Welcome, ${profile.firstName}` : 'Dashboard'}
               {!loading && trustScore && (
                 <div className="flex gap-2">
@@ -166,7 +181,7 @@ export const SakinahDashboardPage: React.FC = () => {
                 {trustScore ? (
                   <motion.div variants={itemVariants} className="sk-card gold-edge flex flex-col md:flex-row items-center gap-8 group relative overflow-hidden">
                     <div className="absolute top-0 right-0 p-4 opacity-10">
-                      <span className="text-[100px] leading-none text-[var(--sk-gold)]">🛡️</span>
+                      <span className="text-[100px] leading-none text-[var(--sk-gold)]"><ShieldCheck weight="fill" /></span>
                     </div>
                     
                     <div className="relative shrink-0 z-10">
@@ -202,7 +217,7 @@ export const SakinahDashboardPage: React.FC = () => {
                       <div className="flex flex-col md:flex-row md:items-center gap-3 mb-2">
                         <h3 className="font-serif text-[24px] text-[var(--sk-ink)] m-0">Sakinah Trust Score</h3>
                         <span className="px-3 py-1 bg-gradient-to-r from-[rgba(212,168,83,0.1)] to-transparent border border-[rgba(212,168,83,0.3)] text-[var(--sk-gold)] text-[12px] font-bold tracking-wide rounded-full flex items-center gap-1.5 shadow-[0_0_10px_rgba(212,168,83,0.1)]">
-                          ⭐ {trustScore?.level}
+                          <Star weight="fill" className="text-[14px]" /> {trustScore?.level}
                         </span>
                       </div>
                       <p className="text-[13px] text-[var(--sk-ink-dim)] leading-relaxed max-w-[450px] mb-4">
@@ -216,7 +231,7 @@ export const SakinahDashboardPage: React.FC = () => {
                           const isVerified = trustScore?.factors?.[factor.key as keyof typeof trustScore.factors];
                           return (
                             <div key={factor.key} className={`flex items-center gap-1.5 px-2.5 py-1 rounded text-[11px] font-medium border ${isVerified ? 'bg-green-500/10 text-green-400 border-green-500/20' : 'bg-red-500/10 text-red-400 border-red-500/20'}`}>
-                              {isVerified ? '✓' : '✕'} {factor.label}
+                              {isVerified ? <Check weight="bold" /> : <X weight="bold" />} {factor.label}
                             </div>
                           );
                         })}
@@ -226,50 +241,20 @@ export const SakinahDashboardPage: React.FC = () => {
                 ) : (
                   <motion.div variants={itemVariants} className="sk-card gold-edge flex flex-col items-center justify-center py-10 text-center relative overflow-hidden">
                     <div className="absolute top-0 right-0 p-4 opacity-5 pointer-events-none">
-                      <span className="text-[80px] leading-none text-[var(--sk-gold)]">🛡️</span>
+                      <span className="text-[80px] leading-none text-[var(--sk-gold)]"><ShieldCheck weight="fill" /></span>
                     </div>
-                    <span className="text-[32px] mb-3">🛡️</span>
+                    <span className="text-[32px] mb-3 text-[var(--sk-gold)]"><ShieldCheck weight="fill" /></span>
                     <h3 className="font-serif text-[18px] text-[var(--sk-gold)] mb-1">Trust Score</h3>
                     <p className="text-[13px] text-[var(--sk-ink-dim)] max-w-[320px]">Trust Score will appear when available.</p>
                   </motion.div>
                 )}
 
                 {/* PROFILE ANALYTICS WIDGET */}
-                <motion.div variants={itemVariants} className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  {/* Stats Cards */}
-                  <div className="flex flex-col gap-4">
-                    <div className="sk-card bg-[#111826]/80 flex items-center justify-between group cursor-default hover:border-[rgba(212,168,83,0.4)] transition-colors">
-                      <div>
-                        <div className="text-[12px] text-[var(--sk-ink-faint)] uppercase tracking-wider mb-1">Weekly Views</div>
-                        <div className="font-serif text-[var(--sk-gold)] leading-none">
-                          {analytics ? (
-                            <span className="text-[28px]">{analytics.weeklyViews}</span>
-                          ) : (
-                            <span className="text-[14px] text-[var(--sk-ink-dim)] font-light">No activity available</span>
-                          )}
-                        </div>
-                      </div>
-                      <div className="text-[32px] opacity-20 group-hover:scale-110 transition-transform">📈</div>
-                    </div>
-                    <div className="sk-card bg-[#111826]/80 flex items-center justify-between group cursor-default hover:border-[rgba(212,168,83,0.4)] transition-colors">
-                      <div>
-                        <div className="text-[12px] text-[var(--sk-ink-faint)] uppercase tracking-wider mb-1">Monthly Views</div>
-                        <div className="font-serif text-[var(--sk-gold)] leading-none">
-                          {analytics ? (
-                            <span className="text-[28px]">{analytics.monthlyViews}</span>
-                          ) : (
-                            <span className="text-[14px] text-[var(--sk-ink-dim)] font-light">No profile views available.</span>
-                          )}
-                        </div>
-                      </div>
-                      <div className="text-[32px] opacity-20 group-hover:scale-110 transition-transform">📊</div>
-                    </div>
-                  </div>
-
+                <motion.div variants={itemVariants}>
                   {/* Recent Visitors */}
                   <div className="sk-card bg-[#111826]/80 flex flex-col">
                     <h3 className="font-serif text-[18px] text-[var(--sk-ink)] mb-4 flex items-center gap-2">
-                      <span className="text-[var(--sk-gold)]">👁</span> Recent Visitors
+                      <span className="text-[var(--sk-gold)]"><Eye weight="fill" /></span> Recent Visitors
                     </h3>
                     <div className="flex-1 flex flex-col gap-3 justify-center">
                       {analytics?.recentVisitors && analytics.recentVisitors.length > 0 ? (
@@ -296,7 +281,7 @@ export const SakinahDashboardPage: React.FC = () => {
                 <motion.div variants={itemVariants}>
                   <div className="flex items-center justify-between mb-5 px-2">
                     <h2 className="font-serif text-[24px] text-[var(--sk-ink)] flex items-center gap-2">
-                      <span className="text-[var(--sk-gold)]">✧</span> Recommended Matches
+                      <span className="text-[var(--sk-gold)]"><Sparkle weight="fill" /></span> Recommended Matches
                     </h2>
                     <button onClick={() => navigate('/matrimony/matches')} className="text-[12px] text-[var(--sk-gold)] hover:text-[var(--sk-gold-soft)] transition-colors tracking-widest uppercase font-bold bg-[rgba(212,168,83,0.05)] hover:bg-[rgba(212,168,83,0.1)] px-4 py-2 rounded-full border border-[rgba(212,168,83,0.2)]">
                       View All
@@ -310,7 +295,7 @@ export const SakinahDashboardPage: React.FC = () => {
                           <div className="w-16 h-16 rounded-full bg-gradient-to-br from-[var(--sk-gold)] to-[#8C6D23] flex items-center justify-center text-[#0A0E16] font-serif text-[24px] mb-4">
                             {m.display_name?.[0] || m.name?.[0] || 'C'}
                           </div>
-                          <div className="text-[18px] font-serif text-[var(--sk-ink)] mb-1">
+                          <div className="text-[18px] font-sans font-medium text-[var(--sk-ink)] mb-1">
                             {m.display_name || m.name || 'Candidate'}
                           </div>
                           <div className="text-[12px] text-[var(--sk-ink-dim)] mb-4">
@@ -328,7 +313,7 @@ export const SakinahDashboardPage: React.FC = () => {
                   ) : (
                     <div className="sk-card flex flex-col items-center justify-center py-16 text-center border-dashed border-[rgba(212,168,83,0.3)] bg-[rgba(212,168,83,0.02)] group hover:border-[var(--sk-gold)] transition-colors duration-500">
                       <div className="w-20 h-20 bg-gradient-to-br from-[var(--sk-gold)] to-[#A37B31] rounded-full flex items-center justify-center mb-6 shadow-[0_0_30px_rgba(212,168,83,0.2)] group-hover:scale-110 transition-transform duration-500">
-                        <span className="text-[32px] text-[#0A0E16]">🔍</span>
+                        <span className="text-[32px] text-[#0A0E16]"><MagnifyingGlass weight="duotone" /></span>
                       </div>
                       <h3 className="font-serif text-[24px] text-[var(--sk-ink)] mb-3">No matches available.</h3>
                       <p className="text-[14px] text-[var(--sk-ink-dim)] max-w-[320px] mb-8 leading-relaxed">
@@ -350,15 +335,15 @@ export const SakinahDashboardPage: React.FC = () => {
                 
                 {/* Stats Row */}
                 <motion.div variants={itemVariants} className="grid grid-cols-2 gap-4">
-                  {[
-                    { label: 'Total Views', count: summary ? summary.totalViews : null, icon: '👁️', path: isWaliViewOnly ? '/matrimony/wali-dashboard' : '/matrimony/dashboard' },
-                    { label: 'Interests',   count: summary ? summary.interests  : null, icon: '✦',  path: isWaliViewOnly ? '/matrimony/wali-interests' : '/matrimony/interests' },
-                    { label: 'Messages',    count: summary ? summary.messages   : null, icon: '✉',  path: isWaliViewOnly ? '/matrimony/wali-messages' : '/matrimony/messages' },
-                    { label: 'Saved',       count: summary ? summary.saved      : null, icon: '★',  path: isWaliViewOnly ? '/matrimony/wali-dashboard' : '/matrimony/saved' },
-                  ].map(s => (
-                    <div key={s.label} onClick={() => navigate(s.path)} className="sk-card !p-5 text-center cursor-pointer hover:border-[var(--sk-gold)] hover:shadow-[0_0_20px_rgba(212,168,83,0.15)] transition-all duration-300 group">
-                      <div className="text-[26px] mb-3 group-hover:scale-110 transition-transform duration-300 opacity-80 group-hover:opacity-100">{s.icon}</div>
-                      <div className="text-[28px] font-serif text-[var(--sk-ink)] leading-none mb-2">
+                    {[
+                      { label: 'Total Views', count: summary ? summary.totalViews : null, path: isWaliViewOnly ? '/matrimony/wali-views' : '/matrimony/views' },
+                      { label: 'Interests',   count: summary ? summary.interests  : null, path: isWaliViewOnly ? '/matrimony/wali-interests' : '/matrimony/interests' },
+                      { label: 'Messages',    count: summary ? summary.messages   : null, path: isWaliViewOnly ? '/matrimony/wali-messages' : '/matrimony/messages' },
+                      { label: 'Saved',       count: summary ? summary.saved      : null, path: isWaliViewOnly ? '/matrimony/wali-saved' : '/matrimony/saved' },
+                    ].map((s, idx) => (
+                      <div key={idx} onClick={() => navigate(s.path)} className="sk-card !p-5 text-center cursor-pointer border border-[rgba(255,255,255,0.05)] hover:border-[rgba(212,168,83,0.5)] hover:bg-[rgba(212,168,83,0.05)] transition-all duration-500 group flex flex-col justify-center min-h-[100px] overflow-hidden relative">
+                        <div className="absolute inset-0 bg-gradient-to-b from-[rgba(212,168,83,0.05)] to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+                        <div className="text-[32px] font-serif text-[var(--sk-ink)] group-hover:text-[var(--sk-gold)] group-hover:scale-110 group-hover:drop-shadow-[0_0_15px_rgba(212,168,83,0.4)] leading-none mb-2 transition-all duration-500 relative z-10">
                         {loading ? (
                           <span className="inline-block w-6 h-4 bg-[rgba(255,255,255,0.06)] rounded animate-pulse" />
                         ) : s.count !== null ? (
@@ -367,7 +352,7 @@ export const SakinahDashboardPage: React.FC = () => {
                           <span className="text-[14px] text-[var(--sk-ink-faint)]">—</span>
                         )}
                       </div>
-                      <div className="text-[10px] text-[var(--sk-ink-faint)] uppercase tracking-[0.2em] font-medium">{s.label}</div>
+                      <div className="text-[10px] text-[var(--sk-ink-faint)] group-hover:text-[var(--sk-gold)] transition-colors duration-500 uppercase tracking-[0.2em] font-medium relative z-10">{s.label}</div>
                     </div>
                   ))}
                 </motion.div>
@@ -376,15 +361,15 @@ export const SakinahDashboardPage: React.FC = () => {
                 {!isWaliViewOnly && (
                   <motion.div variants={itemVariants} className="flex flex-col gap-4">
                     <h2 className="font-serif text-[22px] text-[var(--sk-ink)] px-2 mb-1 flex items-center gap-2">
-                      <span className="text-[var(--sk-gold)]">⚡</span> Quick Actions
+                      <span className="text-[var(--sk-gold)]"><Lightning weight="fill" /></span> Quick Actions
                     </h2>
                     <div className="sk-card !p-6 cursor-pointer hover:border-[var(--sk-gold)] hover:bg-[rgba(212,168,83,0.03)] transition-all duration-500 hover:scale-[1.03] hover:shadow-[0_0_20px_rgba(212,168,83,0.2)] group" onClick={() => navigate('/matrimony/profile-creation')}>
-                      <div className="w-12 h-12 rounded-full bg-[rgba(255,255,255,0.03)] border border-[rgba(255,255,255,0.05)] group-hover:border-[var(--sk-gold)] flex items-center justify-center text-[22px] text-[var(--sk-gold)] mb-4 transition-colors duration-500">⚙️</div>
+                      <div className="w-12 h-12 rounded-full bg-[rgba(255,255,255,0.03)] border border-[rgba(255,255,255,0.05)] group-hover:border-[var(--sk-gold)] flex items-center justify-center text-[22px] text-[var(--sk-gold)] mb-4 transition-colors duration-500"><Gear weight="fill" /></div>
                       <div className="text-[17px] font-serif text-[var(--sk-ink)] mb-1.5">Edit Profile</div>
                       <div className="text-[13px] text-[var(--sk-ink-dim)] font-light leading-relaxed">Update your personal information, photos, and background details.</div>
                     </div>
                     <div className="sk-card !p-6 cursor-pointer hover:border-[var(--sk-gold)] hover:bg-[rgba(212,168,83,0.03)] transition-all duration-500 hover:scale-[1.03] hover:shadow-[0_0_20px_rgba(212,168,83,0.2)] group" onClick={() => navigate('/matrimony/preferences')}>
-                      <div className="w-12 h-12 rounded-full bg-[rgba(255,255,255,0.03)] border border-[rgba(255,255,255,0.05)] group-hover:border-[var(--sk-gold)] flex items-center justify-center text-[22px] text-[var(--sk-gold)] mb-4 transition-colors duration-500">✨</div>
+                      <div className="w-12 h-12 rounded-full bg-[rgba(255,255,255,0.03)] border border-[rgba(255,255,255,0.05)] group-hover:border-[var(--sk-gold)] flex items-center justify-center text-[22px] text-[var(--sk-gold)] mb-4 transition-colors duration-500"><Sparkle weight="fill" /></div>
                       <div className="text-[17px] font-serif text-[var(--sk-ink)] mb-1.5">Edit Preferences</div>
                       <div className="text-[13px] text-[var(--sk-ink-dim)] font-light leading-relaxed">Refine your desired partner criteria, dealbreakers, and timeline.</div>
                     </div>
