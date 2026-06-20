@@ -201,6 +201,7 @@ export const SakinahRoleSelectionPage: React.FC = () => {
               </div>
             </div>
           </motion.div>
+        </div>
       </motion.div>
     </div>
   );
