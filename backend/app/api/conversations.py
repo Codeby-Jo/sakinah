@@ -175,6 +175,21 @@ async def send_message(
     
     try:
         new_msg_ref.set(msg_data)
+        
+        # Add notification to the receiver
+        other_uid = c.get("seeker_a_id") if c.get("seeker_a_id") != uid else c.get("seeker_b_id")
+        sender_name = c.get("seeker_b_name") if c.get("seeker_a_id") != uid else c.get("seeker_a_name")
+        
+        db.collection("notifications").document().set({
+            "user_id": other_uid,
+            "title": "New Message",
+            "message": f"{sender_name} has sent you a message.",
+            "type": "NEW_MESSAGE",
+            "is_read": False,
+            "created_at": created_at,
+            "action_url": f"/matrimony/messages?convo={conversation_id}"
+        })
+        
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Failed to send message: {str(e)}")
         

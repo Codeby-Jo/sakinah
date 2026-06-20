@@ -104,7 +104,7 @@ export const SakinahChatPage: React.FC = () => {
     if (isInitial) setMessagesLoading(true);
     try {
       const data: any = await getConversationMessages(convoId);
-      setIsTyping(Math.random() > 0.8);
+      setIsTyping(false);
       
       const loadedMessages = (data.messages ?? []).map((m: any) => ({
         ...m,
@@ -155,6 +155,43 @@ export const SakinahChatPage: React.FC = () => {
     }
   }, []);
 
+  /* ── Auto-poll active conversation ───────────────────────── */
+  useEffect(() => {
+    let interval: NodeJS.Timeout;
+    if (activeConvo) {
+      interval = setInterval(async () => {
+        try {
+          const data: any = await getConversationMessages(activeConvo.conversation_id);
+          const loadedMessages = (data.messages ?? []).map((m: any) => ({
+            ...m,
+            id: m.id.toString(),
+            senderName: m.sender === 'them' ? 'Contact' : 'Me'
+          }));
+
+          setMessages(prev => {
+            if (loadedMessages.length > prev.length) {
+              const latestMsg = loadedMessages[loadedMessages.length - 1];
+              if (latestMsg.sender === 'them') {
+                const audio = new Audio('https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3');
+                audio.play().catch(e => console.log('Audio play failed', e));
+                setTimeout(() => bottomRef.current?.scrollIntoView({ behavior: 'smooth' }), 50);
+              }
+              return loadedMessages;
+            }
+            return prev;
+          });
+          
+          if (data.first_photo_shared_by && !activeConvo.first_photo_shared_by) {
+            setActiveConvo(prev => prev ? { ...prev, first_photo_shared_by: data.first_photo_shared_by } : null);
+          }
+        } catch (e) {
+          // ignore polling errors
+        }
+      }, 3000);
+    }
+    return () => clearInterval(interval);
+  }, [activeConvo]);
+
   /* ── Open conversation ───────────────────────────────────── */
   const executeOpenConvo = (c: ConvoItem) => {
     setActiveConvo(c);
@@ -182,10 +219,42 @@ export const SakinahChatPage: React.FC = () => {
     if (fileInputRef.current) fileInputRef.current.value = '';
 
     setSending(true);
-    const storageRef = ref(storage, `chat_photos/${activeConvo.conversation_id}/${Date.now()}_${file.name}`);
+    
     try {
-      const snapshot = await uploadBytes(storageRef, file);
-      const downloadURL = await getDownloadURL(snapshot.ref);
+      // Compress image using Canvas to fit in Firestore
+      const reader = new FileReader();
+      reader.readAsDataURL(file);
+      await new Promise((resolve) => (reader.onload = resolve));
+      
+      const img = new Image();
+      img.src = reader.result as string;
+      await new Promise((resolve) => (img.onload = resolve));
+      
+      const canvas = document.createElement('canvas');
+      const MAX_WIDTH = 800;
+      const MAX_HEIGHT = 800;
+      let width = img.width;
+      let height = img.height;
+      
+      if (width > height) {
+        if (width > MAX_WIDTH) {
+          height *= MAX_WIDTH / width;
+          width = MAX_WIDTH;
+        }
+      } else {
+        if (height > MAX_HEIGHT) {
+          width *= MAX_HEIGHT / height;
+          height = MAX_HEIGHT;
+        }
+      }
+      
+      canvas.width = width;
+      canvas.height = height;
+      const ctx = canvas.getContext('2d');
+      ctx?.drawImage(img, 0, 0, width, height);
+      
+      // Compress to JPEG format with 0.6 quality (approx 50-100kb)
+      const downloadURL = canvas.toDataURL('image/jpeg', 0.6);
       
       const tempId = `temp-photo-${Date.now()}`;
       const optimisticMsg: Message = {
