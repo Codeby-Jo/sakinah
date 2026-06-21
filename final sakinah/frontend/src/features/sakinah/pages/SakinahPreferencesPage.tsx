@@ -86,7 +86,7 @@ export const SakinahPreferencesPage: React.FC = () => {
     <div className="mb-6 border-b border-[rgba(212,175,55,0.1)] pb-4">
       <div className="flex items-center gap-3 mb-2">
         <Icon size={24} className="text-[#D4AF37]" weight="fill" />
-        <h3 className="text-[#D4AF37] text-xl font-serif">{title}</h3>
+        <h3 className="text-[#D4AF37] text-xl font-serif font-bold">{title}</h3>
       </div>
       <p className="text-white/50 text-[13px]">{description}</p>
     </div>
@@ -140,7 +140,7 @@ export const SakinahPreferencesPage: React.FC = () => {
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -16 }}
             transition={{ delay: 0.1, duration: 0.5 }}
-            className="w-full max-w-3xl mx-auto bg-[#0B1020]/80 border border-[rgba(212,175,55,0.15)] rounded-3xl p-6 md:p-10 backdrop-blur-2xl shadow-[0_20px_60px_rgba(0,0,0,0.4)]"
+            className="w-full max-w-3xl mx-auto bg-[#0B1020]/80 border border-[rgba(212,175,55,0.3)] rounded-3xl p-6 md:p-10 backdrop-blur-2xl shadow-[0_20px_60px_rgba(0,0,0,0.4)]"
           >
             <form onSubmit={handleSubmit(onSubmit)} className={`flex flex-col gap-10`}>
               
@@ -194,17 +194,10 @@ export const SakinahPreferencesPage: React.FC = () => {
 
                 <div>
                   <label className="block text-[11px] text-[#F5D77A]/60 uppercase mb-3 font-medium tracking-widest">Education / Work Preference</label>
-                  <SakinahAnimatedCardGroup
-                    columns={2}
-                    multi={true}
+                  <SakinahMultiSelectChips
+                    options={['Graduate', 'Working Professional', 'Business Owner', 'Student', 'Anything is fine']}
                     value={watch('educationPref') || []}
                     onChange={(v) => setValue('educationPref', v, { shouldValidate: true })}
-                    options={[
-                      { value: 'Graduate', label: 'Graduate' },
-                      { value: 'Working Professional', label: 'Working Professional' },
-                      { value: 'Business', label: 'Business Owner' },
-                      { value: 'Student', label: 'Student' },
-                    ]}
                   />
                   <FieldError error={(errors.educationPref as any)?.message} />
                 </div>
@@ -267,36 +260,36 @@ export const SakinahPreferencesPage: React.FC = () => {
                   description="Find someone whose communication style matches your needs." 
                 />
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                  <div>
-                    <label className="block text-[11px] text-[#F5D77A]/60 uppercase mb-3 font-medium tracking-widest">Communication Style</label>
-                    <SakinahAnimatedCardGroup
-                      columns={1}
-                      value={watch('communicationStyle') || ''}
-                      onChange={(v) => setValue('communicationStyle', v, { shouldValidate: true })}
-                      options={[
-                        { value: 'Calm', label: 'Calm', description: 'Thoughtful and reserved' },
-                        { value: 'Open', label: 'Open', description: 'Shares feelings easily' },
-                        { value: 'Direct', label: 'Direct', description: 'Straight to the point' },
-                        { value: 'Expressive', label: 'Expressive', description: 'Highly emotional and articulate' },
-                      ]}
-                    />
-                    <FieldError error={(errors.communicationStyle as any)?.message} />
-                  </div>
-                  <div>
-                    <label className="block text-[11px] text-[#F5D77A]/60 uppercase mb-3 font-medium tracking-widest">Conflict Repair</label>
-                    <SakinahAnimatedCardGroup
-                      columns={1}
-                      value={watch('repairStyle') || ''}
-                      onChange={(v) => setValue('repairStyle', v, { shouldValidate: true })}
-                      options={[
-                        { value: 'Talk immediately', label: 'Talk Immediately', description: 'Resolve right away' },
-                        { value: 'Needs space first', label: 'Needs Space First', description: 'Cooldown period' },
-                        { value: 'Seek counsel', label: 'Seek Counsel', description: 'Involve a mediator' },
-                      ]}
-                    />
-                    <FieldError error={(errors.repairStyle as any)?.message} />
-                  </div>
+                <div>
+                  <label className="block text-[11px] text-[#F5D77A]/60 uppercase mb-3 font-medium tracking-widest">Communication Style</label>
+                  <SakinahAnimatedCardGroup
+                    columns={2}
+                    value={watch('communicationStyle') || ''}
+                    onChange={(v) => setValue('communicationStyle', v, { shouldValidate: true })}
+                    options={[
+                      { value: 'Calm', label: 'Calm', description: 'Thoughtful and reserved' },
+                      { value: 'Open', label: 'Open', description: 'Shares feelings easily' },
+                      { value: 'Direct', label: 'Direct', description: 'Straight to the point' },
+                      { value: 'Expressive', label: 'Expressive', description: 'Highly emotional and articulate' },
+                    ]}
+                  />
+                  <FieldError error={(errors.communicationStyle as any)?.message} />
+                </div>
+
+                <div>
+                  <label className="block text-[11px] text-[#F5D77A]/60 uppercase mb-3 font-medium tracking-widest">Conflict Repair</label>
+                  <SakinahAnimatedCardGroup
+                    columns={2}
+                    value={watch('repairStyle') || ''}
+                    onChange={(v) => setValue('repairStyle', v, { shouldValidate: true })}
+                    options={[
+                      { value: 'Talk immediately', label: 'Talk Immediately', description: 'Resolve right away' },
+                      { value: 'Needs space first', label: 'Needs Space First', description: 'Cooldown period' },
+                      { value: 'Write it out', label: 'Write It Out', description: 'Text or letter first' },
+                      { value: 'Seek counsel', label: 'Seek Counsel', description: 'Involve a mediator' },
+                    ]}
+                  />
+                  <FieldError error={(errors.repairStyle as any)?.message} />
                 </div>
 
                 <div>

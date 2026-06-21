@@ -175,7 +175,7 @@ export const SakinahMatchesPage: React.FC = () => {
   // Track actions per profile ID
   const [interested, setInterested] = useState<Record<string, boolean>>({});
   const [savedProfiles, setSavedProfiles] = useState<Record<string, boolean>>({});
-  const [reportingProfile, setReportingProfile] = useState<string | null>(null);
+  const [reportingProfile, setReportingProfile] = useState<{id: string, name: string} | null>(null);
 
   // Pagination states
   const [page, setPage] = useState(1);
@@ -295,7 +295,7 @@ export const SakinahMatchesPage: React.FC = () => {
         onPass={() => handlePass(m.id)}
         onInterest={() => handleInterest(m.id)}
         onSave={() => handleSave(m.id)}
-        onReport={() => setReportingProfile(m.id)}
+        onReport={() => setReportingProfile({id: m.id, name: m.name})}
         onView={() => navigate(`/matrimony/candidates/${m.id}`)}
       />
     ));
@@ -395,7 +395,8 @@ export const SakinahMatchesPage: React.FC = () => {
       <SakinahReportModal 
         isOpen={!!reportingProfile} 
         onClose={() => setReportingProfile(null)} 
-        profileName={reportingProfile || ''} 
+        profileName={reportingProfile?.name || ''} 
+        reportedUserId={reportingProfile?.id || ''}
       />
     </SakinahLayout>
   );

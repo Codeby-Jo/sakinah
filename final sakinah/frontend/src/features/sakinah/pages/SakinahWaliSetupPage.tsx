@@ -127,7 +127,7 @@ export const SakinahWaliSetupPage: React.FC = () => {
           initial={{ opacity: 0, y: 30 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.1 }}
-          className="bg-[#0A0D1A]/80 backdrop-blur-2xl border border-[rgba(212,175,55,0.15)] rounded-3xl p-8 md:p-10 shadow-[0_30px_60px_-15px_rgba(0,0,0,0.7)] mb-8"
+          className="bg-[#0A0D1A]/80 backdrop-blur-2xl border border-[rgba(212,175,55,0.3)] rounded-3xl p-8 md:p-10 shadow-[0_30px_60px_-15px_rgba(0,0,0,0.7)] mb-8"
         >
           <AnimatePresence>
             {successMessage && (
@@ -159,7 +159,7 @@ export const SakinahWaliSetupPage: React.FC = () => {
                     if (errors.name) setErrors({ ...errors, name: undefined });
                   }}
                   placeholder="e.g. Abdullah Rahman"
-                  className={`w-full bg-[#050816]/50 border text-white rounded-xl pl-12 pr-4 py-3.5 outline-none transition-all ${errors.name ? 'border-red-500/50 focus:border-red-500 focus:ring-1 focus:ring-red-500/20' : 'border-[rgba(212,175,55,0.15)] focus:border-[#D4AF37]/50 focus:ring-1 focus:ring-[#D4AF37]/20'}`}
+                  className={`w-full bg-[#050816]/50 border text-white rounded-xl pl-12 pr-4 py-3.5 outline-none transition-all ${errors.name ? 'border-red-500/50 focus:border-red-500 focus:ring-1 focus:ring-red-500/20' : 'border-[rgba(212,175,55,0.3)] focus:border-[#D4AF37]/50 focus:ring-1 focus:ring-[#D4AF37]/20'}`}
                 />
               </div>
               {errors.name && <span className="text-red-400 text-[11px] mt-1">{errors.name}</span>}
@@ -180,7 +180,7 @@ export const SakinahWaliSetupPage: React.FC = () => {
                     if (errors.email) setErrors({ ...errors, email: undefined });
                   }}
                   placeholder="wali@example.com"
-                  className={`w-full bg-[#050816]/50 border text-white rounded-xl pl-12 pr-4 py-3.5 outline-none transition-all ${errors.email ? 'border-red-500/50 focus:border-red-500 focus:ring-1 focus:ring-red-500/20' : 'border-[rgba(212,175,55,0.15)] focus:border-[#D4AF37]/50 focus:ring-1 focus:ring-[#D4AF37]/20'}`}
+                  className={`w-full bg-[#050816]/50 border text-white rounded-xl pl-12 pr-4 py-3.5 outline-none transition-all ${errors.email ? 'border-red-500/50 focus:border-red-500 focus:ring-1 focus:ring-red-500/20' : 'border-[rgba(212,175,55,0.3)] focus:border-[#D4AF37]/50 focus:ring-1 focus:ring-[#D4AF37]/20'}`}
                 />
               </div>
               {errors.email && <span className="text-red-400 text-[11px] mt-1">{errors.email}</span>}
@@ -204,7 +204,7 @@ export const SakinahWaliSetupPage: React.FC = () => {
           <motion.div 
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            className="bg-[#0A0D1A]/80 backdrop-blur-2xl border border-[rgba(212,175,55,0.15)] rounded-3xl p-8 md:p-10 shadow-[0_30px_60px_-15px_rgba(0,0,0,0.7)]"
+            className="bg-[#0A0D1A]/80 backdrop-blur-2xl border border-[rgba(212,175,55,0.3)] rounded-3xl p-8 md:p-10 shadow-[0_30px_60px_-15px_rgba(0,0,0,0.7)]"
           >
             <h2 className="text-[#F5D77A] text-xl font-serif mb-6 flex items-center gap-2">
               <Users size={24} className="text-[#D4AF37]" />
@@ -212,7 +212,7 @@ export const SakinahWaliSetupPage: React.FC = () => {
             </h2>
             <div className="space-y-4">
               {walis.map((wali) => (
-                <div key={wali.id || wali.email} className="flex flex-col sm:flex-row sm:items-center justify-between bg-[#050816]/80 border border-[rgba(212,175,55,0.15)] p-5 rounded-2xl gap-4">
+                <div key={wali.id || wali.email} className="flex flex-col sm:flex-row sm:items-center justify-between bg-[#050816]/80 border border-[rgba(212,175,55,0.3)] p-5 rounded-2xl gap-4">
                   <div className="flex flex-col">
                     <span className="text-white font-medium text-[15px]">{wali.fullName}</span>
                     <div className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-4 mt-2">

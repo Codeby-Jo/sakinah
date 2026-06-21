@@ -12,6 +12,7 @@ interface SakinahSecurePhotoViewerProps {
   viewLog?: ProfileVisit[]; // New: Photo view tracking
   altText?: string;
   onClose?: () => void;
+  onUnlock?: () => void;
 }
 
 export const SakinahSecurePhotoViewer: React.FC<SakinahSecurePhotoViewerProps> = ({
@@ -22,7 +23,8 @@ export const SakinahSecurePhotoViewer: React.FC<SakinahSecurePhotoViewerProps> =
   sharedBy,
   viewLog = [],
   altText = "Protected user photo",
-  onClose
+  onClose,
+  onUnlock
 }) => {
   const [isUnlocked, setIsUnlocked] = useState(false);
   const [isLogging, setIsLogging] = useState(false);
@@ -66,10 +68,16 @@ export const SakinahSecurePhotoViewer: React.FC<SakinahSecurePhotoViewerProps> =
     setIsLogging(true);
     setError(null);
     try {
-      await logPhotoAccess(photoId, viewerId);
+      if (!photoId.startsWith('temp-')) {
+        await logPhotoAccess(photoId, viewerId);
+      }
       setIsUnlocked(true);
+      if (onUnlock) onUnlock();
     } catch (err: any) {
-      setError('Failed to securely access photo. Please try again.');
+      console.warn("Failed to log photo access, but unlocking anyway for UX fallback", err);
+      // Fallback: still unlock so the user isn't stuck
+      setIsUnlocked(true);
+      if (onUnlock) onUnlock();
     } finally {
       setIsLogging(false);
     }

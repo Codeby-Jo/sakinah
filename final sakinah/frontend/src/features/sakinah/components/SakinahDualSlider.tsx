@@ -54,7 +54,7 @@ export const SakinahDualSlider: React.FC<SakinahDualSliderProps> = ({
 
       <div className="relative h-2 w-full">
         {/* Track */}
-        <div className="absolute inset-0 bg-[#050816] border border-[rgba(212,175,55,0.15)] rounded-full z-0" />
+        <div className="absolute inset-0 bg-[#050816] border border-[rgba(212,175,55,0.3)] rounded-full z-0" />
         
         {/* Active Range */}
         <div

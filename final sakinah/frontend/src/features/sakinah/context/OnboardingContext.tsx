@@ -12,6 +12,7 @@ export interface SeekerProfile {
   education_occupation: string;
   religious_practice_and_islamic_home: string;
   marriage_readiness: string;
+  profilePhoto?: string;
 }
 
 export interface PartnerPreferences {
@@ -83,7 +84,7 @@ export interface KycData {
 const defaultProfile = (): SeekerProfile => ({
   firstName: '', lastName: '', dateOfBirth: '',
   age: '', gender: '', location: '', marital_status: '',
-  education_occupation: '', religious_practice_and_islamic_home: '', marriage_readiness: ''
+  education_occupation: '', religious_practice_and_islamic_home: '', marriage_readiness: '', profilePhoto: ''
 });
 
 const defaultPreferences = (): PartnerPreferences => ({

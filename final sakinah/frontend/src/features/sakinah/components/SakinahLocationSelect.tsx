@@ -112,7 +112,7 @@ export const SakinahLocationSelect: React.FC<SakinahLocationSelectProps> = ({
   return (
     <div className="relative w-full" ref={containerRef}>
       <div 
-        className={`w-full px-5 py-4 bg-[#050816] border ${error ? 'border-red-500 shadow-[0_0_15px_rgba(239,68,68,0.15)]' : 'border-[rgba(212,175,55,0.15)]'} rounded-xl text-white text-[15px] cursor-pointer flex items-center justify-between transition-all hover:border-[rgba(212,175,55,0.3)]`}
+        className={`w-full px-5 py-4 bg-[#050816] border ${error ? 'border-red-500 shadow-[0_0_15px_rgba(239,68,68,0.15)]' : 'border-[rgba(212,175,55,0.3)]'} rounded-xl text-white text-[15px] cursor-pointer flex items-center justify-between transition-all hover:border-[rgba(212,175,55,0.3)]`}
         onClick={() => setIsOpen(!isOpen)}
       >
         <div className="flex items-center gap-3 overflow-hidden">

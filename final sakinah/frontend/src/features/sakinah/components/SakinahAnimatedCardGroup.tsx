@@ -55,7 +55,7 @@ export const SakinahAnimatedCardGroup: React.FC<SakinahAnimatedCardGroupProps> =
             className={`relative flex flex-col p-4 rounded-xl cursor-pointer transition-all duration-300 border ${
               isSelected
                 ? 'bg-[rgba(212,175,55,0.1)] border-[#D4AF37] shadow-[0_0_15px_rgba(212,175,55,0.2)]'
-                : 'bg-[#050816] border-[rgba(212,175,55,0.15)] hover:border-[rgba(212,175,55,0.4)] hover:bg-[rgba(212,175,55,0.03)]'
+                : 'bg-[#050816] border-[rgba(212,175,55,0.3)] hover:border-[rgba(212,175,55,0.4)] hover:bg-[rgba(212,175,55,0.03)]'
             }`}
           >
             <div className="flex items-center justify-between mb-1">

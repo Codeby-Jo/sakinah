@@ -19,9 +19,12 @@ import {
   BookmarkSimple, 
   Lightning, 
   Gear, 
-  MagnifyingGlass 
+  MagnifyingGlass,
+  Copy,
+  CheckCircle,
+  CaretRight
 } from '@phosphor-icons/react';
-import { getTrustScore, getProfileAnalytics, getAnalyticsSummary, getConsideredFew } from '../services/sakinahApi';
+import { getTrustScore, getProfileAnalytics, getAnalyticsSummary, getConsideredFew, getSakinahProfile } from '../services/sakinahApi';
 import type { TrustScoreData, ProfileAnalytics } from '../types/sakinah.types';
 import { getProgress } from '../services/sakinahProgress';
 import { useOnboarding } from '../context/OnboardingContext';
@@ -62,7 +65,8 @@ export const SakinahDashboardPage: React.FC = () => {
   const isLookingForSomeoneElse = p.role === 'LOOKING_FOR_SOMEONE_ELSE';
   const isWaliViewOnly = p.role === 'WALI_VIEW';
   const { profile } = useOnboarding();
-  const [reportingProfile, setReportingProfile] = useState<string | null>(null);
+  const [reportingProfile, setReportingProfile] = useState<{id: string, name: string} | null>(null);
+  const [copied, setCopied] = useState(false);
   
 
   
@@ -70,6 +74,7 @@ export const SakinahDashboardPage: React.FC = () => {
   const [analytics, setAnalytics] = useState<ProfileAnalytics | null>(null);
   const [summary, setSummary] = useState<{ totalViews: number; interests: number; messages: number; saved: number; } | null>(null);
   const [matches, setMatches] = useState<any[]>([]);
+  const [serverProfile, setServerProfile] = useState<any>(null);
   const [loading, setLoading] = useState(true);
 
 
@@ -117,10 +122,18 @@ export const SakinahDashboardPage: React.FC = () => {
           console.warn('Backend not connected, Matches unavailable.');
         }
 
+        let srvProfile = null;
+        try {
+          srvProfile = await getSakinahProfile();
+        } catch {
+          console.warn('Backend not connected, Server profile unavailable.');
+        }
+
         setTrustScore(scoreData);
         setAnalytics(analyticsData);
         setSummary(summaryData);
         setMatches(matchesData);
+        setServerProfile(srvProfile);
       } finally {
         setLoading(false);
       }
@@ -177,105 +190,67 @@ export const SakinahDashboardPage: React.FC = () => {
               {/* Main Column */}
               <div className="lg:col-span-2 space-y-8">
                 
-                {/* TRUST SCORE WIDGET */}
-                {trustScore ? (
-                  <motion.div variants={itemVariants} className="sk-card gold-edge flex flex-col md:flex-row items-center gap-8 group relative overflow-hidden">
-                    <div className="absolute top-0 right-0 p-4 opacity-10">
-                      <span className="text-[100px] leading-none text-[var(--sk-gold)]"><ShieldCheck weight="fill" /></span>
-                    </div>
-                    
-                    <div className="relative shrink-0 z-10">
-                      <div className="w-32 h-32 relative flex items-center justify-center">
-                        <svg className="w-full h-full transform -rotate-90" viewBox="0 0 100 100">
-                          <circle cx="50" cy="50" r="45" fill="transparent" stroke="rgba(255,255,255,0.05)" strokeWidth="8" />
-                          <motion.circle 
-                            cx="50" cy="50" r="45" fill="transparent" 
-                            stroke="url(#trustGradient)" 
-                            strokeWidth="8" 
-                            strokeDasharray="283" 
-                            initial={{ strokeDashoffset: 283 }}
-                            animate={{ strokeDashoffset: 283 - (283 * ((trustScore?.score ?? 0) / 100)) }}
-                            transition={{ duration: 1.5, ease: "easeOut", delay: 0.2 }}
-                            strokeLinecap="round"
-                          />
-                          <defs>
-                            <linearGradient id="trustGradient" x1="0%" y1="0%" x2="100%" y2="0%">
-                              <stop offset="0%" stopColor="#10B981" />
-                              <stop offset="50%" stopColor="#D4A853" />
-                              <stop offset="100%" stopColor="#10B981" />
-                            </linearGradient>
-                          </defs>
-                        </svg>
-                        <div className="absolute inset-0 flex flex-col items-center justify-center">
-                          <span className="text-[28px] font-serif text-[#EDE7DA] leading-none mb-1">{trustScore?.score}</span>
-                          <span className="text-[10px] text-[var(--sk-ink-dim)] uppercase tracking-widest">/ 100</span>
-                        </div>
-                      </div>
-                    </div>
-                    
-                    <div className="flex-1 text-center md:text-left z-10">
-                      <div className="flex flex-col md:flex-row md:items-center gap-3 mb-2">
-                        <h3 className="font-serif text-[24px] text-[var(--sk-ink)] m-0">Sakinah Trust Score</h3>
-                        <span className="px-3 py-1 bg-gradient-to-r from-[rgba(212,168,83,0.1)] to-transparent border border-[rgba(212,168,83,0.3)] text-[var(--sk-gold)] text-[12px] font-bold tracking-wide rounded-full flex items-center gap-1.5 shadow-[0_0_10px_rgba(212,168,83,0.1)]">
-                          <Star weight="fill" className="text-[14px]" /> {trustScore?.level}
-                        </span>
-                      </div>
-                      <p className="text-[13px] text-[var(--sk-ink-dim)] leading-relaxed max-w-[450px] mb-4">
-                        Your high trust score indicates that your profile is fully verified. Profiles with high trust scores receive up to 4x more mutual interests.
-                      </p>
-                      <div className="flex flex-wrap gap-2 justify-center md:justify-start">
-                        {[
-                          { key: 'kycCompletion', label: 'KYC Verified' },
-                          { key: 'emailVerification', label: 'Email Verified' }
-                        ].map((factor) => {
-                          const isVerified = trustScore?.factors?.[factor.key as keyof typeof trustScore.factors];
-                          return (
-                            <div key={factor.key} className={`flex items-center gap-1.5 px-2.5 py-1 rounded text-[11px] font-medium border ${isVerified ? 'bg-green-500/10 text-green-400 border-green-500/20' : 'bg-red-500/10 text-red-400 border-red-500/20'}`}>
-                              {isVerified ? <Check weight="bold" /> : <X weight="bold" />} {factor.label}
-                            </div>
-                          );
-                        })}
-                      </div>
-                    </div>
-                  </motion.div>
-                ) : (
-                  <motion.div variants={itemVariants} className="sk-card gold-edge flex flex-col items-center justify-center py-10 text-center relative overflow-hidden">
-                    <div className="absolute top-0 right-0 p-4 opacity-5 pointer-events-none">
-                      <span className="text-[80px] leading-none text-[var(--sk-gold)]"><ShieldCheck weight="fill" /></span>
-                    </div>
-                    <span className="text-[32px] mb-3 text-[var(--sk-gold)]"><ShieldCheck weight="fill" /></span>
-                    <h3 className="font-serif text-[18px] text-[var(--sk-gold)] mb-1">Trust Score</h3>
-                    <p className="text-[13px] text-[var(--sk-ink-dim)] max-w-[320px]">Trust Score will appear when available.</p>
-                  </motion.div>
-                )}
-
-                {/* PROFILE ANALYTICS WIDGET */}
-                <motion.div variants={itemVariants}>
-                  {/* Recent Visitors */}
-                  <div className="sk-card bg-[#111826]/80 flex flex-col">
-                    <h3 className="font-serif text-[18px] text-[var(--sk-ink)] mb-4 flex items-center gap-2">
-                      <span className="text-[var(--sk-gold)]"><Eye weight="fill" /></span> Recent Visitors
-                    </h3>
-                    <div className="flex-1 flex flex-col gap-3 justify-center">
-                      {analytics?.recentVisitors && analytics.recentVisitors.length > 0 ? (
-                        analytics.recentVisitors.map((v, i) => (
-                          <div key={i} className="flex items-center gap-3 p-2 rounded-lg hover:bg-[rgba(255,255,255,0.03)] transition-colors cursor-pointer border border-transparent hover:border-[rgba(255,255,255,0.05)]">
-                            <div className="w-10 h-10 rounded-full bg-[rgba(212,168,83,0.1)] flex items-center justify-center text-[var(--sk-gold)] font-serif font-bold text-[14px]">
-                              {v?.visitorName?.charAt(0) || '?'}
-                            </div>
-                            <div className="flex-1">
-                              <div className="text-[13px] font-medium text-[#EDE7DA]">{v?.visitorName || 'Unknown'}</div>
-                              <div className="text-[11px] text-[var(--sk-ink-dim)]">{v?.timeAgo || ''}</div>
-                            </div>
-                            <div className="text-[10px] text-[var(--sk-gold)] bg-[rgba(212,168,83,0.1)] px-2 py-1 rounded">View</div>
-                          </div>
-                        ))
+                {/* USER PROFILE WIDGET */}
+                <motion.div variants={itemVariants} className="sk-card gold-edge flex flex-col md:flex-row items-center gap-8 group relative overflow-hidden">
+                  
+                  <div className="relative shrink-0 z-10">
+                    <div className="w-32 h-32 rounded-full overflow-hidden border-2 border-[#D4AF37] shadow-[0_0_20px_rgba(212,175,55,0.2)]">
+                      {profile?.profilePhoto ? (
+                         <img src={profile.profilePhoto} alt="Profile" className="w-full h-full object-cover" />
                       ) : (
-                        <div className="text-[13px] text-[var(--sk-ink-dim)] text-center py-6">No recent visitors available</div>
+                         <div className="w-full h-full bg-gradient-to-br from-[#D4AF37] to-[#A37B31] flex items-center justify-center text-[#0A0E16] text-[48px] font-serif font-bold">
+                            {profile?.firstName ? profile.firstName.charAt(0).toUpperCase() : (serverProfile?.firstName ? serverProfile.firstName.charAt(0).toUpperCase() : 'S')}
+                         </div>
                       )}
                     </div>
                   </div>
+                  
+                  <div className="flex-1 text-center md:text-left z-10">
+                    <div className="flex flex-col md:flex-row md:items-center gap-3 mb-2">
+                      <h3 className="font-serif text-[28px] text-[#F5D77A] m-0">
+                        {profile?.firstName && profile?.lastName ? `${profile.firstName} ${profile.lastName}` : (serverProfile?.fullName || 'User Profile')}
+                      </h3>
+                      {trustScore?.level === 'VERIFIED' && (
+                        <span className="px-3 py-1 bg-gradient-to-r from-[#D4AF37]/10 to-transparent border border-[#D4AF37]/30 text-[#D4AF37] text-[12px] font-bold tracking-wide rounded-full flex items-center justify-center gap-1.5 shadow-[0_0_10px_rgba(212,175,55,0.1)]">
+                          <CheckCircle weight="fill" className="text-[14px]" /> Verified Profile
+                        </span>
+                      )}
+                    </div>
+                    <p className="text-[13px] text-[var(--sk-ink-dim)] leading-relaxed max-w-[450px] mb-4">
+                      Your premium matrimonial profile is active. Keep your preferences updated to receive the most accurate recommendations.
+                    </p>
+                    <div className="flex flex-wrap gap-2 justify-center md:justify-start">
+                      {[
+                        { key: 'kycCompletion', label: 'KYC Verified' },
+                        { key: 'emailVerification', label: 'Email Verified' }
+                      ].map((factor) => {
+                        const isVerified = trustScore?.factors?.[factor.key as keyof typeof trustScore.factors];
+                        return (
+                          <div key={factor.key} className={`flex items-center gap-1.5 px-2.5 py-1 rounded text-[11px] font-medium border ${isVerified ? 'bg-green-500/10 text-green-400 border-green-500/20' : 'bg-red-500/10 text-red-400 border-red-500/20'}`}>
+                            {isVerified ? <Check weight="bold" /> : <X weight="bold" />} {factor.label}
+                          </div>
+                        );
+                      })}
+                      {/* Sakinah ID with Copy feature */}
+                      <div 
+                        className="flex items-center gap-1.5 px-2.5 py-1 rounded text-[11px] font-medium border bg-[#D4AF37]/10 text-[#D4AF37] border-[#D4AF37]/30 cursor-pointer hover:bg-[#D4AF37]/20 transition-colors"
+                        onClick={() => {
+                          const idToCopy = serverProfile?.sakinah_id || profile?.sakinah_id;
+                          if (idToCopy) {
+                            navigator.clipboard.writeText(idToCopy as string);
+                            setCopied(true);
+                            setTimeout(() => setCopied(false), 2000);
+                          }
+                        }}
+                        title="Click to copy ID"
+                      >
+                        <span>ID: {serverProfile?.sakinah_id || profile?.sakinah_id || 'Pending Generation'}</span>
+                        {copied ? <Check size={14} weight="bold" /> : <Copy size={14} weight="bold" />}
+                      </div>
+                    </div>
+                  </div>
                 </motion.div>
+
 
                 {/* Recommended Matches */}
                 <motion.div variants={itemVariants}>
@@ -291,22 +266,27 @@ export const SakinahDashboardPage: React.FC = () => {
                   {matches.length > 0 ? (
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       {matches.map(m => (
-                        <div key={m.candidate_id || m.id} className="sk-card bg-[#111826]/40 border border-[rgba(212,168,83,0.1)] flex flex-col items-center py-8 group hover:border-[rgba(212,168,83,0.3)] transition-all">
-                          <div className="w-16 h-16 rounded-full bg-gradient-to-br from-[var(--sk-gold)] to-[#8C6D23] flex items-center justify-center text-[#0A0E16] font-serif text-[24px] mb-4">
-                            {m.display_name?.[0] || m.name?.[0] || 'C'}
+                        <div 
+                          key={m.candidate_id || m.id} 
+                          className="group relative overflow-hidden bg-gradient-to-br from-[#111826] to-[#0A0E16] border border-[#2A2E3B] hover:border-[#D4AF37]/50 rounded-2xl p-5 cursor-pointer transition-all duration-500 shadow-lg hover:shadow-[0_0_30px_rgba(212,175,55,0.15)] transform hover:-translate-y-1"
+                          onClick={() => navigate(`/matrimony/candidates/${m.candidate_id || m.id}`)}
+                        >
+                          <div className="absolute right-0 top-0 w-32 h-32 bg-[#D4AF37]/5 rounded-bl-full -mr-8 -mt-8 transition-transform duration-500 group-hover:scale-110"></div>
+                          <div className="flex items-center gap-4 relative z-10">
+                            <div className="w-12 h-12 shrink-0 rounded-full bg-gradient-to-br from-[#D4AF37]/20 to-[#D4AF37]/5 border border-[#D4AF37]/30 flex items-center justify-center text-[20px] font-serif font-bold text-[#D4AF37] shadow-[0_0_15px_rgba(212,175,55,0.2)] group-hover:scale-110 transition-transform duration-500">
+                              {m.display_name?.[0] || m.name?.[0] || 'C'}
+                            </div>
+                            <div className="flex-1">
+                              <h4 className="font-serif text-[16px] text-[#EDE7DA] mb-1 group-hover:text-[#D4AF37] transition-colors">{m.display_name || m.name || 'Candidate'}</h4>
+                              <p className="text-[12px] text-[#8F9BB3] flex items-center gap-1.5">
+                                <span className="w-1.5 h-1.5 rounded-full bg-green-500 shadow-[0_0_5px_#10B981]"></span>
+                                {m.match_percentage || m.confidence_score ? `${Math.round(m.match_percentage || m.confidence_score * 100)}% Match` : 'Strong Match'}
+                              </p>
+                            </div>
+                            <div className="w-8 h-8 shrink-0 rounded-full bg-[#1A2035] flex items-center justify-center text-[#D4AF37] opacity-0 group-hover:opacity-100 transform translate-x-4 group-hover:translate-x-0 transition-all duration-300">
+                              <CaretRight weight="bold" />
+                            </div>
                           </div>
-                          <div className="text-[18px] font-sans font-medium text-[var(--sk-ink)] mb-1">
-                            {m.display_name || m.name || 'Candidate'}
-                          </div>
-                          <div className="text-[12px] text-[var(--sk-ink-dim)] mb-4">
-                            {m.match_percentage || m.confidence_score ? `${Math.round(m.match_percentage || m.confidence_score * 100)}% Match` : 'Strong Match'}
-                          </div>
-                          <button 
-                            onClick={() => navigate(`/matrimony/candidates/${m.candidate_id || m.id}`)}
-                            className="px-6 py-2 text-[12px] font-bold tracking-widest uppercase border border-[rgba(212,168,83,0.3)] text-[var(--sk-gold)] rounded-full hover:bg-[rgba(212,168,83,0.1)] transition-colors"
-                          >
-                            View Profile
-                          </button>
                         </div>
                       ))}
                     </div>
@@ -360,18 +340,46 @@ export const SakinahDashboardPage: React.FC = () => {
                 {/* Quick Actions — hidden in Wali View Mode */}
                 {!isWaliViewOnly && (
                   <motion.div variants={itemVariants} className="flex flex-col gap-4">
-                    <h2 className="font-serif text-[22px] text-[var(--sk-ink)] px-2 mb-1 flex items-center gap-2">
+                    <h2 className="font-serif text-[22px] text-[#EDE7DA] px-2 mb-1 flex items-center gap-2">
                       <span className="text-[var(--sk-gold)]"><Lightning weight="fill" /></span> Quick Actions
                     </h2>
-                    <div className="sk-card !p-6 cursor-pointer hover:border-[var(--sk-gold)] hover:bg-[rgba(212,168,83,0.03)] transition-all duration-500 hover:scale-[1.03] hover:shadow-[0_0_20px_rgba(212,168,83,0.2)] group" onClick={() => navigate('/matrimony/profile-creation')}>
-                      <div className="w-12 h-12 rounded-full bg-[rgba(255,255,255,0.03)] border border-[rgba(255,255,255,0.05)] group-hover:border-[var(--sk-gold)] flex items-center justify-center text-[22px] text-[var(--sk-gold)] mb-4 transition-colors duration-500"><Gear weight="fill" /></div>
-                      <div className="text-[17px] font-serif text-[var(--sk-ink)] mb-1.5">Edit Profile</div>
-                      <div className="text-[13px] text-[var(--sk-ink-dim)] font-light leading-relaxed">Update your personal information, photos, and background details.</div>
+                    
+                    <div 
+                      className="group relative overflow-hidden bg-gradient-to-br from-[#111826] to-[#0A0E16] border border-[#2A2E3B] hover:border-[#D4AF37]/50 rounded-2xl p-5 cursor-pointer transition-all duration-500 shadow-lg hover:shadow-[0_0_30px_rgba(212,175,55,0.15)] transform hover:-translate-y-1"
+                      onClick={() => navigate('/matrimony/profile-creation')}
+                    >
+                      <div className="absolute right-0 top-0 w-32 h-32 bg-[#D4AF37]/5 rounded-bl-full -mr-8 -mt-8 transition-transform duration-500 group-hover:scale-110"></div>
+                      <div className="flex items-center gap-4 relative z-10">
+                        <div className="w-12 h-12 shrink-0 rounded-full bg-gradient-to-br from-[#D4AF37]/20 to-[#D4AF37]/5 border border-[#D4AF37]/30 flex items-center justify-center text-[24px] text-[#D4AF37] shadow-[0_0_15px_rgba(212,175,55,0.2)] group-hover:scale-110 transition-transform duration-500">
+                          <Gear weight="duotone" />
+                        </div>
+                        <div className="flex-1">
+                          <h4 className="font-serif text-[16px] text-[#EDE7DA] mb-1 group-hover:text-[#D4AF37] transition-colors">Edit Profile</h4>
+                          <p className="text-[12px] text-[#8F9BB3] leading-relaxed line-clamp-2">Update your personal information, photos, and background details.</p>
+                        </div>
+                        <div className="w-8 h-8 rounded-full bg-[#1A2035] flex items-center justify-center text-[#D4AF37] opacity-0 group-hover:opacity-100 transform translate-x-4 group-hover:translate-x-0 transition-all duration-300">
+                          <CaretRight weight="bold" />
+                        </div>
+                      </div>
                     </div>
-                    <div className="sk-card !p-6 cursor-pointer hover:border-[var(--sk-gold)] hover:bg-[rgba(212,168,83,0.03)] transition-all duration-500 hover:scale-[1.03] hover:shadow-[0_0_20px_rgba(212,168,83,0.2)] group" onClick={() => navigate('/matrimony/preferences')}>
-                      <div className="w-12 h-12 rounded-full bg-[rgba(255,255,255,0.03)] border border-[rgba(255,255,255,0.05)] group-hover:border-[var(--sk-gold)] flex items-center justify-center text-[22px] text-[var(--sk-gold)] mb-4 transition-colors duration-500"><Sparkle weight="fill" /></div>
-                      <div className="text-[17px] font-serif text-[var(--sk-ink)] mb-1.5">Edit Preferences</div>
-                      <div className="text-[13px] text-[var(--sk-ink-dim)] font-light leading-relaxed">Refine your desired partner criteria, dealbreakers, and timeline.</div>
+
+                    <div 
+                      className="group relative overflow-hidden bg-gradient-to-br from-[#111826] to-[#0A0E16] border border-[#2A2E3B] hover:border-[#D4AF37]/50 rounded-2xl p-5 cursor-pointer transition-all duration-500 shadow-lg hover:shadow-[0_0_30px_rgba(212,175,55,0.15)] transform hover:-translate-y-1"
+                      onClick={() => navigate('/matrimony/preferences')}
+                    >
+                      <div className="absolute right-0 top-0 w-32 h-32 bg-[#D4AF37]/5 rounded-bl-full -mr-8 -mt-8 transition-transform duration-500 group-hover:scale-110"></div>
+                      <div className="flex items-center gap-4 relative z-10">
+                        <div className="w-12 h-12 shrink-0 rounded-full bg-gradient-to-br from-[#D4AF37]/20 to-[#D4AF37]/5 border border-[#D4AF37]/30 flex items-center justify-center text-[24px] text-[#D4AF37] shadow-[0_0_15px_rgba(212,175,55,0.2)] group-hover:scale-110 transition-transform duration-500">
+                          <Sparkle weight="duotone" />
+                        </div>
+                        <div className="flex-1">
+                          <h4 className="font-serif text-[16px] text-[#EDE7DA] mb-1 group-hover:text-[#D4AF37] transition-colors">Edit Preferences</h4>
+                          <p className="text-[12px] text-[#8F9BB3] leading-relaxed line-clamp-2">Refine your desired partner criteria, dealbreakers, and timeline.</p>
+                        </div>
+                        <div className="w-8 h-8 rounded-full bg-[#1A2035] flex items-center justify-center text-[#D4AF37] opacity-0 group-hover:opacity-100 transform translate-x-4 group-hover:translate-x-0 transition-all duration-300">
+                          <CaretRight weight="bold" />
+                        </div>
+                      </div>
                     </div>
                   </motion.div>
                 )}
@@ -381,11 +389,12 @@ export const SakinahDashboardPage: React.FC = () => {
           </motion.div>
         )}
       </div>
-      
+      {/* Report Modal */}
       <SakinahReportModal 
         isOpen={!!reportingProfile} 
         onClose={() => setReportingProfile(null)} 
-        profileName={reportingProfile || ''} 
+        profileName={reportingProfile?.name || ''}
+        reportedUserId={reportingProfile?.id || ''} 
       />
     </SakinahLayout>
   );

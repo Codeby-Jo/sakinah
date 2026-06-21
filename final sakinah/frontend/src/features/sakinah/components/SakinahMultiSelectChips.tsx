@@ -88,7 +88,7 @@ export const SakinahMultiSelectChips: React.FC<SakinahMultiSelectChipsProps> = (
             onChange={(e) => setCustomInput(e.target.value)}
             onKeyDown={handleCustomAdd}
             placeholder="Type and press Enter to add..."
-            className="w-full px-4 py-2.5 bg-[#050816] border border-[rgba(212,175,55,0.15)] rounded-xl text-white text-[13px] focus:border-[#D4AF37]/60 outline-none placeholder-white/30"
+            className="w-full px-4 py-2.5 bg-[#050816] border border-[rgba(212,175,55,0.3)] rounded-xl text-white text-[13px] focus:border-[#D4AF37]/60 outline-none placeholder-white/30"
           />
           <button
             type="button"

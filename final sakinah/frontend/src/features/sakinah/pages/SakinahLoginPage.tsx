@@ -332,7 +332,7 @@ export const SakinahLoginPage: React.FC = () => {
                   value={email}
                   onChange={(e) => { setEmail(e.target.value.trim()); setError(''); }}
                   required
-                  className="w-full bg-[#050816]/40 backdrop-blur-xl border border-[rgba(212,175,55,0.15)] text-white placeholder-white/20 rounded-xl px-4 py-4 text-[15px] outline-none transition-all duration-300 focus:border-[#D4AF37]/60 focus:ring-1 focus:ring-[#D4AF37]/20"
+                  className="w-full bg-[#050816]/40 backdrop-blur-xl border border-[rgba(212,175,55,0.3)] text-white placeholder-white/20 rounded-xl px-4 py-4 text-[15px] outline-none transition-all duration-300 focus:border-[#D4AF37]/60 focus:ring-1 focus:ring-[#D4AF37]/20"
                 />
               </div>
             </div>
@@ -347,7 +347,7 @@ export const SakinahLoginPage: React.FC = () => {
                   onChange={(e) => { setPassword(e.target.value); setError(''); }}
                   required
                   {...({ type: showPassword ? 'text' : 'password' } as any)}
-                  className="w-full bg-[#050816]/40 backdrop-blur-xl border border-[rgba(212,175,55,0.15)] text-white placeholder-white/20 rounded-xl pl-4 pr-12 py-4 text-[15px] outline-none transition-all duration-300 focus:border-[#D4AF37]/60 focus:ring-1 focus:ring-[#D4AF37]/20"
+                  className="w-full bg-[#050816]/40 backdrop-blur-xl border border-[rgba(212,175,55,0.3)] text-white placeholder-white/20 rounded-xl pl-4 pr-12 py-4 text-[15px] outline-none transition-all duration-300 focus:border-[#D4AF37]/60 focus:ring-1 focus:ring-[#D4AF37]/20"
                 />
                 <button 
                   type="button" 
@@ -419,7 +419,7 @@ export const SakinahLoginPage: React.FC = () => {
                       value={email}
                       onChange={(e) => { setEmail(e.target.value.trim()); setError(''); }}
                       required
-                      className="w-full bg-[#050816]/40 backdrop-blur-xl border border-[rgba(212,175,55,0.15)] text-white placeholder-white/20 rounded-xl px-4 py-4 text-[15px] outline-none transition-all duration-300 focus:border-[#D4AF37]/60 focus:ring-1 focus:ring-[#D4AF37]/20"
+                      className="w-full bg-[#050816]/40 backdrop-blur-xl border border-[rgba(212,175,55,0.3)] text-white placeholder-white/20 rounded-xl px-4 py-4 text-[15px] outline-none transition-all duration-300 focus:border-[#D4AF37]/60 focus:ring-1 focus:ring-[#D4AF37]/20"
                     />
                   </div>
                 </div>

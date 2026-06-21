@@ -111,7 +111,7 @@ export const SakinahOnboardingShell: React.FC<Props> = ({ step, children, title,
       </div>
 
       {/* ── Desktop Left Rail ──────────────────────────────────── */}
-      <div className="hidden md:flex flex-col w-[320px] lg:w-[360px] min-h-screen sticky top-0 bg-[#0B1020]/90 backdrop-blur-2xl border-r border-[rgba(212,175,55,0.15)] z-20 shrink-0">
+      <div className="hidden md:flex flex-col w-[320px] lg:w-[360px] min-h-screen sticky top-0 bg-[#0B1020]/90 backdrop-blur-2xl border-r border-[rgba(212,175,55,0.3)] z-20 shrink-0">
         {/* Logo / Brand */}
         <div className="p-8 pb-6">
           <motion.div
@@ -210,7 +210,7 @@ export const SakinahOnboardingShell: React.FC<Props> = ({ step, children, title,
 
       {/* ── Mobile Top Bar ─────────────────────────────────────── */}
       <div className="md:hidden sticky top-0 z-50">
-        <div className="bg-[#0B1020]/95 backdrop-blur-2xl border-b border-[rgba(212,175,55,0.15)] px-5 py-4 flex items-center justify-between">
+        <div className="bg-[#0B1020]/95 backdrop-blur-2xl border-b border-[rgba(212,175,55,0.3)] px-5 py-4 flex items-center justify-between">
           <div className="text-center w-full relative">
             <div className="text-[16px] font-serif text-[#F5D77A]">{currentStep?.label}</div>
             <div className="text-[10px] text-white/50 uppercase tracking-widest mt-0.5">Step {step} of 5</div>

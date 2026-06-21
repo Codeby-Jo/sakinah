@@ -176,10 +176,15 @@ export async function getConversationMessages(conversationId: string) {
   return fetchNisApi(`/conversations/${conversationId}/messages`);
 }
 
-export async function sendMessage(conversationId: string, text: string, msg_type = 'text', photo_url?: string) {
+export async function sendMessage(conversationId: string, text: string, msg_type = 'text', photo_url?: string, audio_url?: string) {
   return fetchNisApi(`/conversations/${conversationId}/messages`, {
     method: 'POST',
-    body: JSON.stringify({ text, msg_type, photo_url })
+    body: JSON.stringify({
+      text,
+      msg_type,
+      ...(photo_url && { photo_url }),
+      ...(audio_url && { audio_url })
+    })
   });
 }
 

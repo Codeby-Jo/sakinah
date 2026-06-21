@@ -47,11 +47,18 @@ async def register_user(user_in: UserCreate):
             detail="A user with this email already exists"
         )
         
-    uid = f"user_{str(uuid.uuid4())[:8]}"
+    import random
+    import string
+    
+    # Generate SAK-XXXXXX format as the primary unique identifier
+    random_suffix = ''.join(random.choices(string.ascii_uppercase + string.digits, k=6))
+    uid = f"SAK-{random_suffix}"
+    
     hashed_pwd = hash_password(user_in.password)
     
     user_data = {
         "uid": uid,
+        "sak_id": uid, # Kept for backwards compatibility if any frontend code specifically expects it
         "email": user_in.email,
         "name": user_in.name,
         "hashed_password": hashed_pwd,
@@ -61,6 +68,16 @@ async def register_user(user_in: UserCreate):
     
     try:
         users_ref.document(uid).set(user_data)
+        
+        # Create a stub in the 'profiles' collection as well so sak_id is globally available
+        db.collection("profiles").document(uid).set({
+            "uid": uid,
+            "sak_id": uid,
+            "email": user_in.email,
+            "fullName": user_in.name,
+            "created_at": datetime.utcnow().isoformat()
+        }, merge=True)
+        
     except Exception as e:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
@@ -70,6 +87,7 @@ async def register_user(user_in: UserCreate):
     # Generate token so user is automatically logged in after registration
     token_payload = {
         "uid": uid,
+        "sak_id": uid,
         "email": user_in.email
     }
     token = create_access_token(token_payload)
@@ -78,6 +96,7 @@ async def register_user(user_in: UserCreate):
         "access_token": token,
         "token_type": "bearer",
         "id": uid,
+        "sak_id": uid,
         "email": user_in.email,
         "name": user_in.name,
         "is_active": True
@@ -108,6 +127,7 @@ async def login_user(user_in: UserLogin):
     # Generate token
     token_payload = {
         "uid": user_data["uid"],
+        "sak_id": user_data.get("sak_id"),
         "email": user_data["email"]
     }
     token = create_access_token(token_payload)
@@ -115,7 +135,8 @@ async def login_user(user_in: UserLogin):
     return {
         "access_token": token,
         "token_type": "bearer",
-        "uid": user_data["uid"]
+        "uid": user_data["uid"],
+        "sak_id": user_data.get("sak_id")
     }
 
 @router.post("/forgot-password")

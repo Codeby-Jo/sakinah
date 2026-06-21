@@ -38,15 +38,94 @@ interface ConvoItem {
 interface Message {
   id: string;
   text: string;
-  msg_type: 'text' | 'system' | 'photo';
+  msg_type: string;
   sender: 'me' | 'them';
   senderName?: string; // New for group/family chat
   senderRole?: string; // New
   time: string;
   photo_url?: string;
+  audio_url?: string;
   status?: 'sent' | 'delivered' | 'read';
   reaction?: string; // New
 }
+
+const SakinahVoiceMessage: React.FC<{ audioUrl: string, sender: 'me' | 'them' }> = ({ audioUrl, sender }) => {
+  const [isPlaying, setIsPlaying] = useState(false);
+  const [progress, setProgress] = useState(0);
+  const [duration, setDuration] = useState(0);
+  const audioRef = useRef<HTMLAudioElement>(null);
+
+  useEffect(() => {
+    const audio = audioRef.current;
+    if (!audio) return;
+
+    const setAudioData = () => {
+      setDuration(audio.duration);
+    };
+
+    const setAudioTime = () => {
+      setProgress((audio.currentTime / audio.duration) * 100);
+    };
+
+    const handleEnded = () => {
+      setIsPlaying(false);
+      setProgress(0);
+    };
+
+    audio.addEventListener('loadeddata', setAudioData);
+    audio.addEventListener('timeupdate', setAudioTime);
+    audio.addEventListener('ended', handleEnded);
+
+    return () => {
+      audio.removeEventListener('loadeddata', setAudioData);
+      audio.removeEventListener('timeupdate', setAudioTime);
+      audio.removeEventListener('ended', handleEnded);
+    };
+  }, []);
+
+  const togglePlay = () => {
+    if (!audioRef.current) return;
+    if (isPlaying) {
+      audioRef.current.pause();
+    } else {
+      audioRef.current.play();
+    }
+    setIsPlaying(!isPlaying);
+  };
+
+  const formatTime = (time: number) => {
+    if (isNaN(time)) return '0:00';
+    const minutes = Math.floor(time / 60);
+    const seconds = Math.floor(time % 60);
+    return `${minutes}:${seconds.toString().padStart(2, '0')}`;
+  };
+
+  return (
+    <div className="flex items-center gap-3 w-48 md:w-56">
+      <audio ref={audioRef} src={audioUrl} preload="metadata" />
+      <button 
+        onClick={togglePlay}
+        className={`w-10 h-10 rounded-full flex items-center justify-center shrink-0 transition-transform hover:scale-105 ${sender === 'me' ? 'bg-black/10 text-[#0A0E16] shadow-inner border border-black/5' : 'bg-[var(--sk-gold)] text-[#0A0E16] shadow-md'}`}
+      >
+        <span className={`text-[18px] ${isPlaying ? '' : 'ml-1'}`}>{isPlaying ? '⏸' : '▶'}</span>
+      </button>
+      <div className="flex-1 flex flex-col justify-center">
+        <div className={`h-1.5 rounded-full w-full relative overflow-hidden ${sender === 'me' ? 'bg-black/10' : 'bg-[#0A0E16]/40'}`}>
+          <div 
+            className={`absolute top-0 left-0 h-full rounded-full transition-all duration-75 ${sender === 'me' ? 'bg-[#0A0E16]/80' : 'bg-[var(--sk-gold)]'}`} 
+            style={{ width: `${progress}%` }}
+          ></div>
+        </div>
+        <div className="flex justify-between items-center mt-1.5">
+          <div className={`text-[10px] font-medium tracking-wide ${sender === 'me' ? 'text-[#0A0E16]/70' : 'text-[#EDE7DA]/50'}`}>Voice Note</div>
+          <div className={`text-[10px] font-medium ${sender === 'me' ? 'text-[#0A0E16]/70' : 'text-[#EDE7DA]/50'}`}>
+            {formatTime(audioRef.current?.currentTime || 0)}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
 
 export const SakinahChatPage: React.FC = () => {
   const { auth } = useOnboarding();
@@ -63,10 +142,18 @@ export const SakinahChatPage: React.FC = () => {
   const [messagesLoading, setMessagesLoading] = useState(false);
   const [sending, setSending]             = useState(false);
   
-  const [viewingPhotoUrl, setViewingPhotoUrl] = useState<string | null>(null);
-  const [reportingProfile, setReportingProfile] = useState<string | null>(null);
+  const [viewingPhoto, setViewingPhoto] = useState<{url: string, id: string} | null>(null);
+  const [reportingProfile, setReportingProfile] = useState<{id: string, name: string} | null>(null);
   const [isTyping, setIsTyping]           = useState(false);
   const [hoveredMsgId, setHoveredMsgId]   = useState<string | null>(null);
+  const [unlockedPhotoIds, setUnlockedPhotoIds] = useState<Record<string, boolean>>({});
+
+  // Voice recording states
+  const [isRecording, setIsRecording] = useState(false);
+  const [recordingDuration, setRecordingDuration] = useState(0);
+  const mediaRecorderRef = useRef<MediaRecorder | null>(null);
+  const audioChunksRef = useRef<Blob[]>([]);
+  const recordingTimerRef = useRef<NodeJS.Timeout | null>(null);
 
   // New SOP states
   const [currentTopicIndex, setCurrentTopicIndex] = useState(0);
@@ -210,6 +297,94 @@ export const SakinahChatPage: React.FC = () => {
     executeOpenConvo(c);
   };
 
+  /* ── Voice Recording ─────────────────────────────────────── */
+  const startRecording = async () => {
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      const mediaRecorder = new MediaRecorder(stream);
+      mediaRecorderRef.current = mediaRecorder;
+      audioChunksRef.current = [];
+
+      mediaRecorder.ondataavailable = (event) => {
+        if (event.data.size > 0) {
+          audioChunksRef.current.push(event.data);
+        }
+      };
+
+      mediaRecorder.start();
+      setIsRecording(true);
+      setRecordingDuration(0);
+
+      recordingTimerRef.current = setInterval(() => {
+        setRecordingDuration((prev) => prev + 1);
+      }, 1000);
+    } catch (err) {
+      console.error("Microphone access denied or error:", err);
+      alert("Microphone access is required to send voice messages.");
+    }
+  };
+
+  const cancelRecording = () => {
+    if (mediaRecorderRef.current && isRecording) {
+      mediaRecorderRef.current.stop();
+      mediaRecorderRef.current.stream.getTracks().forEach(track => track.stop());
+    }
+    setIsRecording(false);
+    setRecordingDuration(0);
+    if (recordingTimerRef.current) clearInterval(recordingTimerRef.current);
+  };
+
+  const stopRecording = async () => {
+    if (!mediaRecorderRef.current || !isRecording || !activeConvo) return;
+
+    return new Promise<void>((resolve) => {
+      mediaRecorderRef.current!.onstop = async () => {
+        setIsRecording(false);
+        if (recordingTimerRef.current) clearInterval(recordingTimerRef.current);
+
+        const audioBlob = new Blob(audioChunksRef.current, { type: 'audio/webm' });
+        mediaRecorderRef.current!.stream.getTracks().forEach(track => track.stop());
+
+        // We convert Blob to Base64 to send it safely over the JSON API for this prototype
+        const reader = new FileReader();
+        reader.readAsDataURL(audioBlob);
+        reader.onloadend = async () => {
+          const base64Audio = reader.result as string;
+          
+          setSending(true);
+          const tempId = `temp-audio-${Date.now()}`;
+          const optimisticMsg: Message = {
+            id: tempId,
+            text: '',
+            msg_type: 'audio',
+            sender: 'me',
+            senderName: auth?.email?.split('@')[0] || 'Me',
+            time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+            status: 'sent',
+            audio_url: base64Audio
+          };
+          
+          setMessages(prev => [...prev, optimisticMsg]);
+          setTimeout(() => bottomRef.current?.scrollIntoView({ behavior: 'smooth' }), 50);
+
+          try {
+            const msg: any = await sendMessage(activeConvo.conversation_id, '', 'audio', undefined, base64Audio);
+            setMessages(prev => prev.map(m => m.id === tempId ? { ...msg, id: msg.id.toString(), status: 'delivered' } : m));
+          } catch (err) {
+            console.error('Audio send failed:', err);
+            setMessages(prev => prev.filter(m => m.id !== tempId));
+          } finally {
+            setSending(false);
+            setRecordingDuration(0);
+            resolve();
+          }
+        };
+      };
+
+      mediaRecorderRef.current!.stop();
+    });
+  };
+
   /* ── Send message ────────────────────────────────────────── */
   const handlePhotoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -313,6 +488,35 @@ export const SakinahChatPage: React.FC = () => {
       console.error(e.message ?? 'Send failed');
       setMessages(prev => prev.filter(m => m.id !== tempId));
       setInput(messageText);
+      setSending(false);
+    }
+  };
+
+  const handleDecision = async (decisionType: string, messageText: string) => {
+    if (!activeConvo || sending) return;
+    setSending(true);
+    setShowDecisionModal(false);
+
+    const tempId = `temp-${Date.now()}`;
+    const optimisticMsg: Message = {
+      id: tempId,
+      text: messageText,
+      msg_type: decisionType,
+      sender: 'me',
+      senderName: auth?.email?.split('@')[0] || 'Me',
+      time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+      status: 'sent'
+    };
+    
+    setMessages(prev => [...prev, optimisticMsg]);
+    setTimeout(() => bottomRef.current?.scrollIntoView({ behavior: 'smooth' }), 50);
+
+    try {
+      const msg: any = await sendMessage(activeConvo.conversation_id, messageText, decisionType);
+      setMessages(prev => prev.map(m => m.id === tempId ? { ...msg, id: msg.id.toString(), status: 'delivered' } : m));
+    } catch (e: any) {
+      console.error(e.message ?? 'Decision send failed');
+      setMessages(prev => prev.filter(m => m.id !== tempId));
     } finally {
       setSending(false);
     }
@@ -449,7 +653,7 @@ export const SakinahChatPage: React.FC = () => {
                         Decision
                       </button>
                     )}
-                    <button onClick={() => setReportingProfile(activeConvo.other_user?.name ?? '')} className="text-[var(--sk-ink-dim)] hover:text-white px-2">⋮</button>
+                    <button onClick={() => setReportingProfile({id: activeConvo.other_user?.id ?? '', name: activeConvo.other_user?.name ?? ''})} className="text-[var(--sk-ink-dim)] hover:text-white px-2">⋮</button>
                   </div>
                 </div>
 
@@ -470,9 +674,22 @@ export const SakinahChatPage: React.FC = () => {
                       </div>
                     ))}
                     {/* Locked Intimacy Topic */}
-                    <div className="px-3 py-1 text-[11px] font-medium rounded-full bg-[#111826] border border-red-500/20 text-red-400/70 ml-2 flex items-center gap-1 cursor-not-allowed" title="Closeness/intimacy is an after-nikah topic only.">
+                    <button 
+                      className="px-3 py-1 text-[11px] font-medium rounded-full bg-[#111826] border border-red-500/20 text-red-400/70 ml-2 flex items-center gap-1 cursor-not-allowed hover:bg-red-500/5 transition-colors"
+                      onClick={() => {
+                        if (!activeConvo) return;
+                        setMessages(prev => [...prev, {
+                          id: `temp-warning-${Date.now()}`,
+                          text: "🔒 To maintain Islamic modesty, discussions regarding closeness and intimacy are strictly locked until after Nikah. Please focus on the provided topics.",
+                          msg_type: 'system',
+                          sender: 'them',
+                          time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+                        }]);
+                        setTimeout(() => bottomRef.current?.scrollIntoView({ behavior: 'smooth' }), 50);
+                      }}
+                    >
                       🔒 Closeness (Post-Nikah)
-                    </div>
+                    </button>
                   </div>
                 </div>
                 
@@ -492,12 +709,7 @@ export const SakinahChatPage: React.FC = () => {
 
               {/* Messages Area */}
               <div className="flex-1 overflow-y-auto p-4 md:p-6 custom-scrollbar flex flex-col gap-4 relative">
-                {/* Photo Watermark */}
-                {activeConvo?.first_photo_shared_by && (
-                  <div className="w-full text-center py-2 bg-[rgba(212,168,83,0.05)] border-y border-[rgba(212,168,83,0.15)] text-[10px] text-[var(--sk-gold)] tracking-[0.2em] uppercase font-bold sticky top-0 z-30 backdrop-blur-md shadow-sm">
-                    First Photo Shared by {activeConvo.first_photo_shared_by}
-                  </div>
-                )}
+                {/* Sticky Watermark replaced by inline system message */}
 
                 {messagesLoading ? (
                   <div className="flex-1 flex items-center justify-center"><span className="text-[var(--sk-gold)] animate-spin text-2xl">⚙</span></div>
@@ -514,11 +726,48 @@ export const SakinahChatPage: React.FC = () => {
                       const isPinned = pinnedMessages.some(p => p.id === msg.id);
 
                       return (
-                        <motion.div key={msg.id} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}
-                          className={`flex ${msg.sender === 'me' ? 'justify-end' : 'justify-start'} w-full relative z-10 group`}
-                          onMouseEnter={() => setHoveredMsgId(msg.id)}
-                          onMouseLeave={() => setHoveredMsgId(null)}
-                        >
+                        <React.Fragment key={msg.id}>
+                          {msg.msg_type === 'system' || msg.msg_type.startsWith('decision_') ? (
+                            <motion.div initial={{ opacity: 0, scale: 0.8, y: 20 }} animate={{ opacity: 1, scale: 1, y: 0 }} transition={{ type: 'spring', damping: 20, stiffness: 100 }} className="w-full flex justify-center my-8 relative z-20">
+                              <div className={`relative w-full px-8 py-6 rounded-[24px] text-[14px] tracking-wide font-medium text-center max-w-[85%] md:max-w-[400px] leading-relaxed shadow-2xl flex flex-col items-center gap-3 backdrop-blur-xl border ${
+                                msg.msg_type === 'decision_proceed' ? 'bg-gradient-to-b from-[#161D2C]/80 to-[#111826]/90 border-[rgba(212,168,83,0.4)] text-[var(--sk-gold)] shadow-[0_10px_40px_rgba(212,168,83,0.15)]' :
+                                msg.msg_type === 'decision_pause' ? 'bg-[#161D2C]/80 border-[rgba(255,255,255,0.1)] text-[#EDE7DA] shadow-[0_10px_30px_rgba(0,0,0,0.5)]' :
+                                msg.msg_type === 'decision_close' ? 'bg-[#161D2C]/80 border-[rgba(239,68,68,0.2)] text-red-400 shadow-[0_10px_30px_rgba(239,68,68,0.1)]' :
+                                'bg-[rgba(212,168,83,0.05)] border-[rgba(212,168,83,0.2)] text-[var(--sk-gold)] uppercase text-[11px] py-3 rounded-full shadow-md'
+                              }`}>
+                                {/* Animated Icons */}
+                                {msg.msg_type === 'decision_proceed' && (
+                                  <motion.div animate={{ scale: [1, 1.1, 1], rotate: [0, -5, 5, 0] }} transition={{ repeat: Infinity, duration: 4, ease: "easeInOut" }} className="relative mb-2">
+                                    <div className="absolute inset-0 bg-[var(--sk-gold)] blur-[20px] opacity-30 rounded-full"></div>
+                                    <span className="text-[36px] relative z-10 drop-shadow-[0_0_15px_rgba(212,168,83,0.5)]">💍</span>
+                                  </motion.div>
+                                )}
+                                {msg.msg_type === 'decision_pause' && (
+                                  <motion.div animate={{ opacity: [0.7, 1, 0.7] }} transition={{ repeat: Infinity, duration: 3, ease: "easeInOut" }} className="mb-2">
+                                    <span className="text-[32px] opacity-80">⏸</span>
+                                  </motion.div>
+                                )}
+                                {msg.msg_type === 'decision_close' && (
+                                  <motion.div animate={{ y: [0, -4, 0] }} transition={{ repeat: Infinity, duration: 5, ease: "easeInOut" }} className="mb-2">
+                                    <span className="text-[32px] opacity-80">🕊</span>
+                                  </motion.div>
+                                )}
+                                
+                                <span className={msg.msg_type === 'system' ? '' : 'font-serif text-[15px]'}>
+                                  {msg.text.replace('[SENDER]', msg.sender === 'me' ? 'You' : (msg.senderName || 'They'))}
+                                </span>
+                                
+                                {msg.msg_type === 'decision_proceed' && (
+                                  <div className="absolute top-0 left-1/2 -translate-x-1/2 w-1/2 h-[1px] bg-gradient-to-r from-transparent via-[var(--sk-gold)] to-transparent opacity-50"></div>
+                                )}
+                              </div>
+                            </motion.div>
+                          ) : (
+                            <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}
+                              className={`flex ${msg.sender === 'me' ? 'justify-end' : 'justify-start'} w-full relative z-10 group`}
+                              onMouseEnter={() => setHoveredMsgId(msg.id)}
+                              onMouseLeave={() => setHoveredMsgId(null)}
+                            >
                           <div className={`flex items-end gap-2 max-w-[85%] md:max-w-[70%] ${msg.sender === 'me' ? 'flex-row-reverse' : 'flex-row'}`}>
                             {msg.sender === 'them' && (
                               <div className={`w-8 h-8 rounded-full bg-gradient-to-br from-[#D4A853] to-[#A37B31] flex items-center justify-center text-[12px] font-serif font-bold text-[#0A0E16] shrink-0 mb-5 ${showAvatar ? 'opacity-100' : 'opacity-0'}`}>
@@ -544,16 +793,22 @@ export const SakinahChatPage: React.FC = () => {
                                   <div className="flex flex-col gap-2">
                                     <div 
                                       className="relative w-full max-w-[200px] aspect-[3/4] rounded-lg overflow-hidden cursor-pointer group/photo border border-[rgba(255,255,255,0.1)]"
-                                      onClick={() => setViewingPhotoUrl(msg.photo_url || 'https://images.unsplash.com/photo-1542204165-65bf26472b9b?auto=format&fit=crop&q=80&w=800')}
+                                      onClick={() => setViewingPhoto({url: msg.photo_url || 'https://images.unsplash.com/photo-1542204165-65bf26472b9b?auto=format&fit=crop&q=80&w=800', id: msg.id})}
                                     >
-                                      <div className="absolute inset-0 bg-black/40 backdrop-blur-md z-10 flex flex-col items-center justify-center transition-opacity group-hover/photo:opacity-80">
-                                        <span className="text-[32px] text-[var(--sk-gold)] mb-2">🔐</span>
-                                        <span className="text-[10px] font-bold text-white uppercase tracking-wider">Tap to unlock</span>
-                                      </div>
-                                      <img src={msg.photo_url || 'https://images.unsplash.com/photo-1542204165-65bf26472b9b?auto=format&fit=crop&q=80&w=800'} alt="Secure Photo" className="w-full h-full object-cover blur-[10px]" />
+                                      {!unlockedPhotoIds[msg.id] && (
+                                        <div className="absolute inset-0 bg-black/40 backdrop-blur-md z-10 flex flex-col items-center justify-center transition-opacity group-hover/photo:opacity-80">
+                                          <span className="text-[32px] text-[var(--sk-gold)] mb-2">🔐</span>
+                                          <span className="text-[10px] font-bold text-white uppercase tracking-wider">Tap to unlock</span>
+                                        </div>
+                                      )}
+                                      <img src={msg.photo_url || 'https://images.unsplash.com/photo-1542204165-65bf26472b9b?auto=format&fit=crop&q=80&w=800'} alt="Secure Photo" className={`w-full h-full object-cover ${!unlockedPhotoIds[msg.id] ? 'blur-[10px]' : ''}`} />
                                     </div>
-                                    <span className="text-[12px] opacity-80">{msg.text || 'Secure photo shared'}</span>
+                                    <div className="text-[10px] text-[var(--sk-gold)] font-bold uppercase tracking-widest text-center mt-1 bg-[#111826]/50 rounded px-2 py-1 border border-[rgba(212,168,83,0.2)]">
+                                      {msg.text || 'Secure photo shared'}
+                                    </div>
                                   </div>
+                                ) : msg.msg_type === 'audio' ? (
+                                  <SakinahVoiceMessage audioUrl={msg.audio_url || ''} sender={msg.sender} />
                                 ) : (
                                   msg.text
                                 )}
@@ -577,6 +832,8 @@ export const SakinahChatPage: React.FC = () => {
                             </div>
                           </div>
                         </motion.div>
+                          )}
+                        </React.Fragment>
                       );
                     })}
                   </AnimatePresence>
@@ -602,27 +859,43 @@ export const SakinahChatPage: React.FC = () => {
               {/* Composer */}
               {!isWaliViewOnly ? (
                 <div className="p-4 md:p-6 bg-[#0A0E16] border-t border-[rgba(255,255,255,0.05)] z-20">
-                    <form onSubmit={handleSend} className="flex items-end gap-3 max-w-4xl mx-auto">
-                      <div className="flex-1 bg-[#111826] border border-[rgba(255,255,255,0.08)] focus-within:border-[rgba(212,168,83,0.5)] focus-within:shadow-[0_0_15px_rgba(212,168,83,0.1)] rounded-[20px] p-2 flex items-end transition-all">
-                        <input 
-                          type="file" 
-                          ref={fileInputRef} 
-                          className="hidden" 
-                          accept="image/jpeg, image/png, image/webp" 
-                          onChange={handlePhotoUpload} 
-                        />
-                        <button 
-                          type="button" 
-                          className="p-2.5 text-[var(--sk-ink-dim)] hover:text-[var(--sk-gold)] hover:bg-[rgba(255,255,255,0.05)] rounded-full transition-colors shrink-0 relative group"
-                          onClick={() => fileInputRef.current?.click()}
-                        >
-                          📎
-                        </button>
-                        <textarea value={input} onChange={e => setInput(e.target.value)} onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleSend(); } }} placeholder="Write your message..." className="flex-1 bg-transparent border-none outline-none text-[15px] text-[#EDE7DA] py-2.5 px-2 max-h-[120px] resize-none custom-scrollbar" rows={1} style={{ minHeight: '44px' }} />
-                        <button type="button" className="p-2.5 text-[var(--sk-ink-dim)] hover:text-[var(--sk-gold)] hover:bg-[rgba(255,255,255,0.05)] rounded-full transition-colors shrink-0">🎤</button>
+                    <form onSubmit={handleSend} className="flex items-end gap-3 max-w-4xl mx-auto w-full">
+                      <div className="flex-1 bg-[#111826] border border-[rgba(255,255,255,0.05)] rounded-[24px] flex items-center p-1 pl-3 transition-colors focus-within:border-[rgba(212,168,83,0.3)] shadow-inner">
+                        {isRecording ? (
+                          <div className="flex-1 flex items-center justify-between py-2.5 px-3">
+                            <div className="flex items-center gap-3">
+                              <span className="w-2.5 h-2.5 rounded-full bg-red-500 animate-pulse"></span>
+                              <span className="text-red-400 font-mono font-medium text-[14px]">
+                                {Math.floor(recordingDuration / 60)}:{(recordingDuration % 60).toString().padStart(2, '0')}
+                              </span>
+                            </div>
+                            <button type="button" onClick={cancelRecording} className="text-[var(--sk-ink-dim)] hover:text-red-400 font-bold px-3 transition-colors">
+                              Cancel
+                            </button>
+                          </div>
+                        ) : (
+                          <>
+                            <input 
+                              type="file" 
+                              accept="image/*"
+                              ref={fileInputRef} 
+                              onChange={handlePhotoUpload}
+                              className="hidden" 
+                            />
+                            <button 
+                              type="button" 
+                              className="p-2.5 text-[var(--sk-ink-dim)] hover:text-[var(--sk-gold)] hover:bg-[rgba(255,255,255,0.05)] rounded-full transition-colors shrink-0 relative group"
+                              onClick={() => fileInputRef.current?.click()}
+                            >
+                              📎
+                            </button>
+                            <textarea value={input} onChange={e => setInput(e.target.value)} onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleSend(); } }} placeholder="Write your message..." className="flex-1 bg-transparent border-none outline-none text-[15px] text-[#EDE7DA] py-2.5 px-2 max-h-[120px] resize-none custom-scrollbar" rows={1} style={{ minHeight: '44px' }} />
+                            <button type="button" onClick={startRecording} className="p-2.5 text-[var(--sk-ink-dim)] hover:text-[var(--sk-gold)] hover:bg-[rgba(255,255,255,0.05)] rounded-full transition-colors shrink-0">🎤</button>
+                          </>
+                        )}
                       </div>
-                      <button type="submit" disabled={!input.trim() || sending} className="w-[52px] h-[52px] shrink-0 flex items-center justify-center bg-gradient-to-br from-[#D4AF37] to-[#B8942B] text-[#0A0E16] rounded-full disabled:opacity-50 transition-all shadow-[0_4px_15px_rgba(212,175,55,0.2)] hover:scale-105">
-                        {sending ? <span className="animate-spin">⚙</span> : <span className="text-[20px] ml-1">➤</span>}
+                      <button type="button" onClick={isRecording ? stopRecording : handleSend} disabled={(!input.trim() && !isRecording) || sending} className="w-[52px] h-[52px] shrink-0 flex items-center justify-center bg-gradient-to-br from-[#D4AF37] to-[#B8942B] text-[#0A0E16] rounded-full disabled:opacity-50 transition-all shadow-[0_4px_15px_rgba(212,175,55,0.2)] hover:scale-105">
+                        {sending ? <span className="animate-spin">⚙</span> : (isRecording ? <span className="text-[20px]">✓</span> : <span className="text-[20px] ml-1">➤</span>)}
                       </button>
                     </form>
                 </div>
@@ -638,7 +911,18 @@ export const SakinahChatPage: React.FC = () => {
       
       {/* Photo Viewer */}
       <AnimatePresence>
-        {viewingPhotoUrl && <SakinahSecurePhotoViewer photoUrl={viewingPhotoUrl} onClose={() => setViewingPhotoUrl(null)} viewerId={auth?.email} viewerName={auth?.email?.split('@')[0] || 'Viewer'} photoId={viewingPhotoUrl} />}
+        {viewingPhoto && (
+          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 z-[100] flex items-center justify-center bg-black/90 backdrop-blur-md p-4">
+            <SakinahSecurePhotoViewer 
+              photoUrl={viewingPhoto.url} 
+              onClose={() => setViewingPhoto(null)} 
+              viewerId={auth?.email || 'viewer'} 
+              viewerName={auth?.email?.split('@')[0] || 'Viewer'} 
+              photoId={viewingPhoto.id}
+              onUnlock={() => setUnlockedPhotoIds(prev => ({...prev, [viewingPhoto.id]: true}))}
+            />
+          </motion.div>
+        )}
       </AnimatePresence>
 
       {/* SOP Decision Modal */}
@@ -652,7 +936,7 @@ export const SakinahChatPage: React.FC = () => {
               
               <div className="space-y-3">
                 <button 
-                  onClick={() => { setShowDecisionModal(false); }}
+                  onClick={() => handleDecision('decision_proceed', `[SENDER] expressed serious interest and would like to proceed.`)}
                   className="w-full text-left p-4 rounded-xl border border-[rgba(212,168,83,0.3)] bg-gradient-to-r from-[rgba(212,168,83,0.05)] to-transparent hover:bg-[rgba(212,168,83,0.1)] transition-colors group"
                 >
                   <div className="text-[15px] font-bold text-[var(--sk-gold)] flex items-center justify-between">Proceed <span className="opacity-0 group-hover:opacity-100 transition-opacity">→</span></div>
@@ -660,7 +944,7 @@ export const SakinahChatPage: React.FC = () => {
                 </button>
 
                 <button 
-                  onClick={() => { setShowDecisionModal(false); }}
+                  onClick={() => handleDecision('decision_pause', `[SENDER] requested some time for reflection and Istikhara.`)}
                   className="w-full text-left p-4 rounded-xl border border-[rgba(255,255,255,0.05)] bg-[rgba(255,255,255,0.02)] hover:bg-[rgba(255,255,255,0.05)] transition-colors group"
                 >
                   <div className="text-[15px] font-bold text-[#EDE7DA] flex items-center justify-between">Pause <span className="opacity-0 group-hover:opacity-100 transition-opacity">⏸</span></div>
@@ -668,7 +952,7 @@ export const SakinahChatPage: React.FC = () => {
                 </button>
 
                 <button 
-                  onClick={() => { setShowDecisionModal(false); }}
+                  onClick={() => handleDecision('decision_close', `[SENDER] respectfully closed the conversation.`)}
                   className="w-full text-left p-4 rounded-xl border border-red-500/20 bg-red-500/5 hover:bg-red-500/10 transition-colors group"
                 >
                   <div className="text-[15px] font-bold text-red-400 flex items-center justify-between">Close <span className="opacity-0 group-hover:opacity-100 transition-opacity">✕</span></div>
@@ -679,7 +963,12 @@ export const SakinahChatPage: React.FC = () => {
           </div>
         )}
       </AnimatePresence>
-      <SakinahReportModal isOpen={!!reportingProfile} onClose={() => setReportingProfile(null)} profileName={reportingProfile ?? ''} />
+      <SakinahReportModal 
+        isOpen={!!reportingProfile} 
+        onClose={() => setReportingProfile(null)} 
+        profileName={reportingProfile?.name || ''}
+        reportedUserId={reportingProfile?.id || ''} 
+      />
       
       {/* Etiquette Modal */}
       <AnimatePresence>

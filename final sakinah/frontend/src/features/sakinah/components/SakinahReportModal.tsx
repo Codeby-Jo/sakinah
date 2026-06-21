@@ -122,20 +122,29 @@ export const SakinahReportModal: React.FC<SakinahReportModalProps> = ({
       formData.append('timestamp',        new Date().toISOString());
 
       evidenceFiles.forEach((ev) => {
-        formData.append(`evidence_files`, ev.file, ev.file.name);
+        formData.append(`evidence_file`, ev.file, ev.file.name);
       });
 
-      // Send to backend — fire-and-forget in demo mode (backend may not exist yet)
+      // Send to backend
       try {
         const token = localStorage.getItem('sakinah_token');
-        await fetch('/api/v1/nis/moderation/reports', {
+        const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:8000';
+        const res = await fetch(`${apiUrl}/api/v1/nis/moderation/reports`, {
           method: 'POST',
           headers: token ? { Authorization: `Bearer ${token}` } : {},
           body: formData,
         });
-      } catch {
-        // Backend not connected — proceed to success in demo mode
-        console.warn('[SakinahReport] Backend unavailable — report stored locally for demo.');
+        
+        if (!res.ok) {
+           const err = await res.json();
+           setFormError(err.detail || 'Failed to submit report.');
+           setIsSubmitting(false);
+           return;
+        }
+      } catch (e) {
+        setFormError('Network error connecting to backend.');
+        setIsSubmitting(false);
+        return;
       }
 
       setStep('success');

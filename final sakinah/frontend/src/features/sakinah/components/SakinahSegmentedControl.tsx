@@ -13,7 +13,7 @@ export const SakinahSegmentedControl: React.FC<SakinahSegmentedControlProps> = (
   onChange,
 }) => {
   return (
-    <div className="relative flex p-1 bg-[#050816] rounded-xl border border-[rgba(212,175,55,0.15)]">
+    <div className="relative flex p-1 bg-[#050816] rounded-xl border border-[rgba(212,175,55,0.3)]">
       {options.map((opt) => {
         const isSelected = value === opt.value;
         return (

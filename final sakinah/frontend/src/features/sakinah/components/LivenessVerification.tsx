@@ -1,5 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { Camera, WarningCircle, CheckCircle, ArrowUUpLeft } from '@phosphor-icons/react';
+import { Camera, WarningCircle, CheckCircle, ArrowUUpLeft, SpinnerGap } from '@phosphor-icons/react';
+import { useLivenessDetection } from '../hooks/useLivenessDetection';
 
 export type LivenessStep = 'START' | 'CAMERA' | 'CAPTURED';
 
@@ -18,6 +19,15 @@ export const LivenessVerification: React.FC<Props> = ({ onSuccess, onError }) =>
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const streamRef = useRef<MediaStream | null>(null);
 
+  const { livenessState, isComplete, isModelLoaded, error: livenessError, resetLiveness } = useLivenessDetection(videoRef);
+
+  useEffect(() => {
+    if (livenessError) {
+      setErrorMsg(livenessError);
+      if (onError) onError(livenessError);
+    }
+  }, [livenessError, onError]);
+
   const stopCamera = () => {
     if (streamRef.current) {
       streamRef.current.getTracks().forEach(track => track.stop());
@@ -31,6 +41,7 @@ export const LivenessVerification: React.FC<Props> = ({ onSuccess, onError }) =>
 
   const startCamera = async () => {
     setErrorMsg('');
+    resetLiveness();
     setStep('CAMERA');
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ 
@@ -45,8 +56,8 @@ export const LivenessVerification: React.FC<Props> = ({ onSuccess, onError }) =>
       }
     } catch (err) {
       console.error('Camera permission denied', err);
-      setErrorMsg('Camera permission denied');
-      if (onError) onError('Camera permission denied');
+      setErrorMsg('Camera permission denied. Please allow access.');
+      if (onError) onError('Camera permission denied. Please allow access.');
       setStep('START');
     }
   };
@@ -78,6 +89,16 @@ export const LivenessVerification: React.FC<Props> = ({ onSuccess, onError }) =>
     }
   };
 
+  useEffect(() => {
+    if (isComplete && step === 'CAMERA') {
+      // Small delay to let user realize they succeeded before capturing
+      const t = setTimeout(() => {
+        capturePhoto();
+      }, 500);
+      return () => clearTimeout(t);
+    }
+  }, [isComplete, step]);
+
   const retakePhoto = () => {
     setCapturedImage(null);
     setCapturedFile(null);
@@ -97,15 +118,15 @@ export const LivenessVerification: React.FC<Props> = ({ onSuccess, onError }) =>
           <div className="w-16 h-16 rounded-full bg-[#D4AF37]/10 flex items-center justify-center mb-4">
             <Camera size={32} className="text-[#D4AF37]" weight="duotone" />
           </div>
-          <h4 className="text-white text-lg font-medium mb-2">Take Profile Photo</h4>
+          <h4 className="text-white text-lg font-medium mb-2">Liveness Verification</h4>
           <p className="text-sm text-white/60 text-center mb-6 max-w-sm">
-            Please allow camera access to take a clear picture of your face for verification.
+            Please allow camera access. You will be asked to perform a few actions to verify you are a real person before your photo is automatically captured.
           </p>
           <button
             onClick={startCamera}
             className="px-6 py-3 bg-gradient-to-r from-[#D4AF37] to-[#F5D77A] text-[#050816] font-semibold rounded-xl hover:shadow-[0_0_20px_rgba(212,175,55,0.4)] transition-all"
           >
-            Open Camera
+            Start Verification
           </button>
           {errorMsg && (
             <div className="mt-4 p-3 bg-red-500/10 border border-red-500/20 text-red-400 text-sm rounded-lg flex gap-2 items-center">
@@ -116,23 +137,52 @@ export const LivenessVerification: React.FC<Props> = ({ onSuccess, onError }) =>
       )}
 
       {step === 'CAMERA' && (
-        <div className="relative overflow-hidden rounded-[24px] border-2 border-[#D4AF37]/40 bg-black aspect-video sm:aspect-[4/3] md:aspect-video flex flex-col items-center justify-center shadow-[0_0_30px_rgba(212,175,55,0.15)] group">
-          <video
-            ref={videoRef}
-            playsInline
-            muted
-            className="w-full h-full object-cover scale-x-[-1]"
-          />
-          <canvas ref={canvasRef} className="hidden" />
-          
-          <div className="absolute bottom-6 flex justify-center w-full">
-            <button
-              onClick={capturePhoto}
-              className="w-16 h-16 rounded-full bg-white/20 border-4 border-white backdrop-blur-md hover:bg-white/40 transition-colors shadow-lg flex items-center justify-center group-hover:scale-105"
-            >
-              <div className="w-12 h-12 bg-white rounded-full transition-transform hover:scale-95"></div>
-            </button>
+        <div className="flex flex-col gap-4">
+          <div className="relative overflow-hidden rounded-[24px] border-2 border-[#D4AF37]/40 bg-black aspect-video sm:aspect-[4/3] md:aspect-video flex flex-col items-center justify-center shadow-[0_0_30px_rgba(212,175,55,0.15)] group">
+            <video
+              ref={videoRef}
+              autoPlay
+              playsInline
+              muted
+              className="w-full h-full object-cover scale-x-[-1]"
+            />
+            <canvas ref={canvasRef} className="hidden" />
+            
+            {!isModelLoaded && (
+              <div className="absolute inset-0 bg-black/60 flex flex-col items-center justify-center backdrop-blur-sm z-10">
+                <SpinnerGap className="animate-spin text-[#D4AF37] mb-2" size={32} />
+                <p className="text-[#D4AF37] text-sm font-medium">Loading Liveness Model...</p>
+              </div>
+            )}
           </div>
+          
+          {/* Liveness Status UI */}
+          {isModelLoaded && (
+            <div className="bg-[#050816]/80 border border-[#D4AF37]/30 rounded-[16px] p-4 text-sm">
+              <h4 className="text-[#F5D77A] font-medium mb-3 uppercase tracking-wider text-xs">Verification Steps</h4>
+              <div className="grid grid-cols-2 gap-3 sm:grid-cols-4 text-xs font-medium">
+                <div className={`flex items-center gap-2 ${livenessState.faceDetected ? 'text-[#4BB543]' : 'text-white/40'}`}>
+                  {livenessState.faceDetected ? <CheckCircle size={16} weight="fill" /> : <div className="w-4 h-4 rounded-full border border-white/40" />}
+                  <span>Face visible</span>
+                </div>
+                <div className={`flex items-center gap-2 ${livenessState.blinkDetected ? 'text-[#4BB543]' : 'text-white/40'}`}>
+                  {livenessState.blinkDetected ? <CheckCircle size={16} weight="fill" /> : <div className="w-4 h-4 rounded-full border border-white/40" />}
+                  <span>Blink</span>
+                </div>
+                <div className={`flex items-center gap-2 ${livenessState.turnLeftDetected && livenessState.turnRightDetected ? 'text-[#4BB543]' : 'text-white/40'}`}>
+                  {livenessState.turnLeftDetected && livenessState.turnRightDetected ? <CheckCircle size={16} weight="fill" /> : <div className="w-4 h-4 rounded-full border border-white/40" />}
+                  <span>Turn L/R</span>
+                </div>
+                <div className={`flex items-center gap-2 ${livenessState.lookStraightDetected ? 'text-[#4BB543]' : 'text-white/40'}`}>
+                  {livenessState.lookStraightDetected ? <CheckCircle size={16} weight="fill" /> : <div className="w-4 h-4 rounded-full border border-white/40" />}
+                  <span>Look straight</span>
+                </div>
+              </div>
+              <div className="mt-3 text-center text-[#D4AF37] font-semibold text-xs h-4">
+                {isComplete ? 'Verification successful! Capturing...' : 'Please complete the steps above.'}
+              </div>
+            </div>
+          )}
         </div>
       )}
 
@@ -143,6 +193,9 @@ export const LivenessVerification: React.FC<Props> = ({ onSuccess, onError }) =>
             <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent pointer-events-none" />
             <div className="absolute top-4 right-4 bg-[#4BB543]/20 backdrop-blur-md p-2 rounded-full border border-[#4BB543]/50">
               <CheckCircle size={28} weight="fill" className="text-[#4BB543]" />
+            </div>
+            <div className="absolute top-4 left-4 bg-black/60 backdrop-blur-md px-3 py-1 rounded-full border border-white/10">
+               <span className="text-white text-xs font-semibold">Liveness Verified</span>
             </div>
           </div>
           
@@ -167,3 +220,4 @@ export const LivenessVerification: React.FC<Props> = ({ onSuccess, onError }) =>
 };
 
 export default LivenessVerification;
+

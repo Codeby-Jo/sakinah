@@ -96,7 +96,7 @@ export const SakinahMultiLocationSelect: React.FC<SakinahMultiLocationSelectProp
   return (
     <div className="relative w-full" ref={containerRef}>
       <div 
-        className={`w-full min-h-[56px] px-3 py-3 bg-[#050816] border ${error ? 'border-red-500 shadow-[0_0_15px_rgba(239,68,68,0.15)]' : 'border-[rgba(212,175,55,0.15)]'} rounded-xl text-white text-[15px] cursor-pointer flex flex-wrap gap-2 items-center transition-all hover:border-[rgba(212,175,55,0.3)]`}
+        className={`w-full min-h-[56px] px-3 py-3 bg-[#050816] border ${error ? 'border-red-500 shadow-[0_0_15px_rgba(239,68,68,0.15)]' : 'border-[rgba(212,175,55,0.3)]'} rounded-xl text-white text-[15px] cursor-pointer flex flex-wrap gap-2 items-center transition-all hover:border-[rgba(212,175,55,0.3)]`}
         onClick={() => setIsOpen(!isOpen)}
       >
         <MapPin size={18} className="text-[#D4AF37] shrink-0 ml-2" weight="fill" />

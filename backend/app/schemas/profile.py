@@ -19,6 +19,7 @@ class ProfileCreate(BaseModel):
 
 class ProfileResponse(ProfileCreate):
     uid: str
+    sakinah_id: Optional[str] = None
     kyc_verified: bool = False
     is_active: bool = True
 

@@ -44,7 +44,7 @@ export const SakinahTimelineCards: React.FC<SakinahTimelineCardsProps> = ({
               className={`flex-1 p-4 rounded-xl border transition-all duration-300 ml-4 ${
                 isSelected
                   ? 'bg-gradient-to-br from-[rgba(212,175,55,0.1)] to-[rgba(140,98,32,0.05)] border-[#D4AF37] shadow-[0_0_15px_rgba(212,175,55,0.15)]'
-                  : 'bg-[#050816] border-[rgba(212,175,55,0.15)] hover:border-[rgba(212,175,55,0.3)]'
+                  : 'bg-[#050816] border-[rgba(212,175,55,0.3)] hover:border-[rgba(212,175,55,0.3)]'
               }`}
             >
               <div className={`text-[15px] font-medium mb-1 transition-colors ${isSelected ? 'text-[#F5D77A]' : 'text-white/80 group-hover:text-white'}`}>

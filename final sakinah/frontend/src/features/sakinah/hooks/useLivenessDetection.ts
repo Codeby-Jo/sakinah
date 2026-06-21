@@ -98,7 +98,16 @@ export const useLivenessDetection = (videoRef: React.RefObject<HTMLVideoElement 
   }, []);
 
   const processVideo = useCallback(() => {
-    if (!videoRef.current || !faceLandmarkerRef.current) return;
+    const scheduleNext = () => {
+      if (!stateRef.current.lookStraightDetected) {
+        requestRef.current = requestAnimationFrame(processVideo);
+      }
+    };
+
+    if (!videoRef.current || !faceLandmarkerRef.current) {
+      scheduleNext();
+      return;
+    }
 
     const video = videoRef.current;
     
@@ -180,16 +189,22 @@ export const useLivenessDetection = (videoRef: React.RefObject<HTMLVideoElement 
       }
     }
 
-    // Continue loop if not complete
-    if (!stateRef.current.lookStraightDetected) {
-      requestRef.current = requestAnimationFrame(processVideo);
-    }
+    scheduleNext();
   }, [videoRef]);
 
-  // Start processing when model is loaded and video is available
+
+  // Start processing when model is loaded
   useEffect(() => {
-    if (isModelLoaded && videoRef.current) {
-      requestRef.current = requestAnimationFrame(processVideo);
+    if (isModelLoaded) {
+      const loop = () => {
+        if (videoRef.current && videoRef.current.readyState >= 2) {
+          processVideo();
+        } else {
+          // Keep looping until video is ready
+          requestRef.current = requestAnimationFrame(loop);
+        }
+      };
+      requestRef.current = requestAnimationFrame(loop);
     }
     
     return () => {
@@ -198,6 +213,7 @@ export const useLivenessDetection = (videoRef: React.RefObject<HTMLVideoElement 
       }
     };
   }, [isModelLoaded, videoRef, processVideo]);
+
 
   // Initialize model on mount
   useEffect(() => {

@@ -60,7 +60,7 @@ const Field = React.forwardRef<HTMLInputElement, FieldProps>(
               setIsFocused(false);
               props.onBlur?.(e);
             }}
-            className={`w-full bg-[#050816]/40 backdrop-blur-xl border border-[rgba(212,175,55,0.15)] text-white placeholder-white/20 rounded-xl pl-11 pr-[42px] py-4 text-[15px] outline-none transition-all duration-300 ${
+            className={`w-full bg-[#050816]/40 backdrop-blur-xl border border-[rgba(212,175,55,0.3)] text-white placeholder-white/20 rounded-xl pl-11 pr-[42px] py-4 text-[15px] outline-none transition-all duration-300 ${
               error
                 ? 'border-red-500/50 focus:border-red-500/80 focus:ring-1 focus:ring-red-500/20'
                 : 'focus:border-[#D4AF37]/60 focus:ring-1 focus:ring-[#D4AF37]/20 hover:border-[rgba(212,175,55,0.3)]'

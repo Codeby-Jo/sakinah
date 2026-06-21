@@ -9,8 +9,9 @@ router = APIRouter()
 
 class SendMessageRequest(BaseModel):
     text: str = ""
-    msg_type: str = "text"  # text | system | photo
+    msg_type: str = "text"  # text | system | photo | audio
     photo_url: Optional[str] = None
+    audio_url: Optional[str] = None
 
 @router.get("/")
 async def get_my_conversations(current_user: dict = Depends(get_current_user)):
@@ -111,7 +112,8 @@ async def get_messages(
             "sender": "me" if mdata.get("sender_id") == uid else ("system" if mdata.get("sender_id") == "system" else "them"),
             "sender_id": mdata.get("sender_id"),
             "time": time_str,
-            "photo_url": mdata.get("photo_url")
+            "photo_url": mdata.get("photo_url"),
+            "audio_url": mdata.get("audio_url")
         })
         
     return {
@@ -157,10 +159,12 @@ async def send_message(
     }
     if req.photo_url:
         msg_data["photo_url"] = req.photo_url
+    if req.audio_url:
+        msg_data["audio_url"] = req.audio_url
         
     # Handle first photo watermark logic
     first_photo_shared_by = c.get("first_photo_shared_by")
-    if req.msg_type == "photo" and not first_photo_shared_by:
+    if req.msg_type == "photo":
         # Get sender's name
         profile_doc = db.collection("profiles").document(uid).get()
         sender_name = "User"
@@ -168,11 +172,25 @@ async def send_message(
             pdata = profile_doc.to_dict()
             sender_name = pdata.get("fullName") or pdata.get("first_name") or "User"
             
-        convo_doc.reference.update({
-            "first_photo_shared_by": sender_name
-        })
-        first_photo_shared_by = sender_name
-    
+        if not first_photo_shared_by:
+            convo_doc.reference.update({
+                "first_photo_shared_by": sender_name
+            })
+            first_photo_shared_by = sender_name
+            # Inject watermark text directly below the first photo
+            msg_data["text"] = f"First Photo Shared by {sender_name}"
+        else:
+            msg_data["text"] = f"Photo Shared by {sender_name}"
+            
+    # Resolve [SENDER] placeholder in text for decision messages
+    if "[SENDER]" in req.text:
+        profile_doc = db.collection("profiles").document(uid).get()
+        s_name = "User"
+        if profile_doc.exists:
+            pdata = profile_doc.to_dict()
+            s_name = pdata.get("fullName") or pdata.get("first_name") or "User"
+        msg_data["text"] = req.text.replace("[SENDER]", s_name)
+            
     try:
         new_msg_ref.set(msg_data)
         
@@ -204,6 +222,7 @@ async def send_message(
         "text": req.text,
         "msg_type": req.msg_type,
         "photo_url": req.photo_url,
+        "audio_url": req.audio_url,
         "sender": "me",
         "time": time_str,
         "first_photo_shared_by": first_photo_shared_by if req.msg_type == "photo" else c.get("first_photo_shared_by")
