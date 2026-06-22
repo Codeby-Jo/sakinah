@@ -252,7 +252,7 @@ async def verify_wali(payload: WaliVerifyPayload):
     """
     db = get_db()
 
-    from app.core.security import create_access_token
+    from app.api.auth import create_access_token
     from datetime import timedelta
 
     profiles = db.collection("profiles").where("wali_email", "==", payload.email.lower()).get()
@@ -261,10 +261,13 @@ async def verify_wali(payload: WaliVerifyPayload):
         raise HTTPException(status_code=401, detail="Unauthorized: No seeker linked to this email.")
 
     seeker_uid = profiles[0].id
-    access_token_expires = timedelta(minutes=60*24*7)
-    access_token = create_access_token(
-        data={"sub": seeker_uid}, expires_delta=access_token_expires
-    )
+    
+    # create_access_token in auth.py expects a dictionary payload, not expires_delta
+    token_payload = {
+        "uid": seeker_uid,
+        "email": payload.email.lower()
+    }
+    access_token = create_access_token(token_payload)
 
     return {
         "success": True,
