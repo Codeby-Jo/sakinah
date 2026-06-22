@@ -147,6 +147,9 @@ export const SakinahChatPage: React.FC = () => {
   const [viewingPhoto, setViewingPhoto] = useState<{url: string, id: string} | null>(null);
   const [reportingProfile, setReportingProfile] = useState<{id: string, name: string} | null>(null);
   const [isTyping, setIsTyping]           = useState(false);
+  const [closedConvos, setClosedConvos]   = useState<Record<string, boolean>>({});
+
+  const isConvoClosed = activeConvo ? closedConvos[activeConvo.conversation_id] : false;
   const [hoveredMsgId, setHoveredMsgId]   = useState<string | null>(null);
   const [replyingTo, setReplyingTo]       = useState<Message | null>(null);
   const [unlockedPhotoIds, setUnlockedPhotoIds] = useState<Record<string, boolean>>({});
@@ -462,15 +465,27 @@ export const SakinahChatPage: React.FC = () => {
     }
   };
 
-  // Simulate real-time read receipts for demo
+  // Simulate real-time read receipts and typing indicator for demo
   useEffect(() => {
     if (!activeConvo) return;
+    
+    // Read receipts
     const deliveredMsgs = messages.filter(m => m.sender === 'me' && m.status === 'delivered');
     if (deliveredMsgs.length > 0) {
       const timer = setTimeout(() => {
         setMessages(prev => prev.map(m => m.sender === 'me' && m.status === 'delivered' ? { ...m, status: 'read' } : m));
-      }, 3000); // Mark delivered as read after 3 seconds for active conversation
+      }, 3000); 
       return () => clearTimeout(timer);
+    }
+
+    // Typing indicator simulation after I send a message
+    const lastMsg = messages[messages.length - 1];
+    if (lastMsg && lastMsg.sender === 'me') {
+      const typingTimer1 = setTimeout(() => setIsTyping(true), 1500);
+      const typingTimer2 = setTimeout(() => setIsTyping(false), 5000);
+      return () => { clearTimeout(typingTimer1); clearTimeout(typingTimer2); };
+    } else {
+      setIsTyping(false);
     }
   }, [messages, activeConvo]);
 
@@ -536,9 +551,27 @@ export const SakinahChatPage: React.FC = () => {
     try {
       const msg: any = await sendMessage(activeConvo.conversation_id, messageText, decisionType);
       setMessages(prev => prev.map(m => m.id === tempId ? { ...msg, id: msg.id.toString(), status: 'delivered' } : m));
+      
+      if (decisionType === 'decision_close') {
+        setClosedConvos(prev => ({ ...prev, [activeConvo.conversation_id]: true }));
+      }
     } catch (e: any) {
       console.error(e.message ?? 'Decision send failed');
       setMessages(prev => prev.filter(m => m.id !== tempId));
+    } finally {
+      setSending(false);
+    }
+  };
+
+  const handleReopenConvo = async () => {
+    if (!activeConvo || sending) return;
+    setSending(true);
+    try {
+      const msg: any = await sendMessage(activeConvo.conversation_id, "Conversation reopened.", "decision_reopen");
+      setMessages(prev => [...prev, { ...msg, id: msg.id.toString(), status: 'delivered', sender: 'me', msg_type: 'decision_reopen' }]);
+      setClosedConvos(prev => ({ ...prev, [activeConvo.conversation_id]: false }));
+    } catch (e: any) {
+      console.error('Reopen failed');
     } finally {
       setSending(false);
     }
@@ -950,6 +983,17 @@ export const SakinahChatPage: React.FC = () => {
                         {sending ? <span className="animate-spin">⚙</span> : (isRecording ? <span className="text-[20px]">✓</span> : <span className="text-[20px] ml-1">➤</span>)}
                       </button>
                     </form>
+                </div>
+              ) : isConvoClosed ? (
+                <div className="p-6 bg-[#0A0E16] border-t border-[rgba(255,255,255,0.05)] z-20 flex flex-col items-center justify-center text-center">
+                  <p className="text-[14px] text-[var(--sk-ink-dim)] mb-4">This conversation has been closed.</p>
+                  <button 
+                    onClick={handleReopenConvo} 
+                    disabled={sending}
+                    className="px-6 py-2.5 rounded-xl border border-[var(--sk-gold)] text-[var(--sk-gold)] text-[13px] font-bold tracking-wider uppercase hover:bg-[var(--sk-gold)] hover:text-[#0A0E16] transition-colors disabled:opacity-50"
+                  >
+                    {sending ? 'Reopening...' : 'Reopen Conversation'}
+                  </button>
                 </div>
               ) : (
                 <div className="p-4 md:p-6 bg-[#0A0E16] border-t border-[rgba(255,255,255,0.05)] z-20 text-center">
