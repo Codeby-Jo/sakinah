@@ -45,7 +45,8 @@ def map_candidate_to_summary(candidate_id: str, data: dict) -> dict:
         "prayerFrequency": data.get("prayerStatus") or "5_daily",
         "bioSnippet": (data.get("bio") or "")[:120] + ("..." if len(data.get("bio") or "") > 120 else ""),
         "resonance": res_list,
-        "match_reasons": res_list
+        "match_reasons": res_list,
+        "photoUrl": data.get("photo_url") or data.get("photoUrl") or ""
     }
 
 @router.get("/considered-few")
@@ -265,7 +266,10 @@ async def get_considered_few(current_user: dict = Depends(get_current_user)):
         candidate_names[cid] = c_name
         
         if c_doc.exists:
-            candidates_list.append(map_candidate_to_summary(cid, c_doc.to_dict()))
+            summary = map_candidate_to_summary(cid, c_doc.to_dict())
+            summary["mutual_interest"] = False # Not mutual in considered few yet
+            summary["photoUrl"] = "https://images.unsplash.com/photo-1542204165-65bf26472b9b?auto=format&fit=crop&q=80&w=800" # Security: dummy photo
+            candidates_list.append(summary)
             
     # Save considered set — full metadata required by integration guide
     if candidate_ids:
@@ -290,11 +294,27 @@ async def get_considered_few(current_user: dict = Depends(get_current_user)):
 @router.get("/candidates/{candidate_id}")
 async def get_candidate(candidate_id: str, current_user: dict = Depends(get_current_user)):
     db = get_db()
+    uid = current_user.get("uid")
     c_doc = db.collection("profiles").document(candidate_id).get()
     if not c_doc.exists:
         raise HTTPException(status_code=404, detail="Candidate not found")
         
-    return map_candidate_to_summary(candidate_id, c_doc.to_dict())
+    cand_int = db.collection("candidate_interactions").document(f"{candidate_id}_{uid}").get()
+    seek_int = db.collection("candidate_interactions").document(f"{uid}_{candidate_id}").get()
+    
+    is_mutual = False
+    if cand_int.exists and seek_int.exists:
+        if cand_int.to_dict().get("status") == "INTEREST" and seek_int.to_dict().get("status") == "INTEREST":
+            is_mutual = True
+            
+    summary = map_candidate_to_summary(candidate_id, c_doc.to_dict())
+    summary["mutualInterest"] = is_mutual
+    
+    # Security: Send dummy photo if not mutual
+    if not is_mutual:
+        summary["photoUrl"] = "https://images.unsplash.com/photo-1542204165-65bf26472b9b?auto=format&fit=crop&q=80&w=800"
+        
+    return summary
 
 @router.post("/candidates/{candidate_id}/pass")
 async def pass_candidate(candidate_id: str, current_user: dict = Depends(get_current_user)):

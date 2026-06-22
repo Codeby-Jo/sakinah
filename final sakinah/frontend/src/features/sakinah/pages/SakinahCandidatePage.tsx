@@ -31,7 +31,9 @@ export const SakinahCandidatePage: React.FC = () => {
           profession: res.profession || 'Professional',
           sect: res.sect || 'Sunni',
           prayerFrequency: res.prayer_frequency || res.prayerFrequency || 'Always prays',
-          bioSnippet: res.bio || 'A candidate focused on deen and family.'
+          bioSnippet: res.bio || 'A candidate focused on deen and family.',
+          photoUrl: res.photoUrl || res.photo_url || '',
+          mutualInterest: res.mutualInterest || res.mutual_interest || false
         });
       })
       .catch(err => {

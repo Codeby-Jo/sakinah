@@ -28,6 +28,8 @@ export interface CandidateSummary {
   sect: string;
   prayerFrequency: string;
   bioSnippet: string;
+  photoUrl?: string;
+  mutualInterest?: boolean;
 }
 
 export interface ConsideredFewResponse {
