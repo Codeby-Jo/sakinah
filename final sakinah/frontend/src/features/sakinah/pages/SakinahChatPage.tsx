@@ -147,9 +147,21 @@ export const SakinahChatPage: React.FC = () => {
   const [viewingPhoto, setViewingPhoto] = useState<{url: string, id: string} | null>(null);
   const [reportingProfile, setReportingProfile] = useState<{id: string, name: string} | null>(null);
   const [isTyping, setIsTyping]           = useState(false);
-  const [closedConvos, setClosedConvos]   = useState<Record<string, boolean>>({});
 
-  const isConvoClosed = activeConvo ? closedConvos[activeConvo.conversation_id] : false;
+  const isConvoClosed = (() => {
+    if (!messages) return false;
+    const decisions = messages.filter(m => m.msg_type === 'decision_close' || m.msg_type === 'decision_reopen');
+    if (decisions.length === 0) return false;
+    return decisions[decisions.length - 1].msg_type === 'decision_close';
+  })();
+
+  const closedByMe = (() => {
+    if (!messages) return false;
+    const decisions = messages.filter(m => m.msg_type === 'decision_close' || m.msg_type === 'decision_reopen');
+    if (decisions.length === 0) return false;
+    const last = decisions[decisions.length - 1];
+    return last.msg_type === 'decision_close' && last.sender === 'me';
+  })();
   const [hoveredMsgId, setHoveredMsgId]   = useState<string | null>(null);
   const [replyingTo, setReplyingTo]       = useState<Message | null>(null);
   const [unlockedPhotoIds, setUnlockedPhotoIds] = useState<Record<string, boolean>>({});
@@ -551,10 +563,6 @@ export const SakinahChatPage: React.FC = () => {
     try {
       const msg: any = await sendMessage(activeConvo.conversation_id, messageText, decisionType);
       setMessages(prev => prev.map(m => m.id === tempId ? { ...msg, id: msg.id.toString(), status: 'delivered' } : m));
-      
-      if (decisionType === 'decision_close') {
-        setClosedConvos(prev => ({ ...prev, [activeConvo.conversation_id]: true }));
-      }
     } catch (e: any) {
       console.error(e.message ?? 'Decision send failed');
       setMessages(prev => prev.filter(m => m.id !== tempId));
@@ -569,7 +577,6 @@ export const SakinahChatPage: React.FC = () => {
     try {
       const msg: any = await sendMessage(activeConvo.conversation_id, "Conversation reopened.", "decision_reopen");
       setMessages(prev => [...prev, { ...msg, id: msg.id.toString(), status: 'delivered', sender: 'me', msg_type: 'decision_reopen' }]);
-      setClosedConvos(prev => ({ ...prev, [activeConvo.conversation_id]: false }));
     } catch (e: any) {
       console.error('Reopen failed');
     } finally {
@@ -788,12 +795,15 @@ export const SakinahChatPage: React.FC = () => {
                         <React.Fragment key={msg.id}>
                           {msg.msg_type === 'system' || msg.msg_type.startsWith('decision_') ? (
                             <motion.div initial={{ opacity: 0, scale: 0.8, y: 20 }} animate={{ opacity: 1, scale: 1, y: 0 }} transition={{ type: 'spring', damping: 20, stiffness: 100 }} className="w-full flex justify-center my-8 relative z-20">
-                              <div className={`relative w-full px-8 py-6 rounded-[24px] text-[14px] tracking-wide font-medium text-center max-w-[85%] md:max-w-[400px] leading-relaxed shadow-2xl flex flex-col items-center gap-3 backdrop-blur-xl border ${
+                              <div className={`relative w-full px-8 py-6 rounded-[24px] text-[14px] tracking-wide font-medium text-center max-w-[85%] md:max-w-[400px] leading-relaxed shadow-2xl flex flex-col items-center gap-3 backdrop-blur-xl border group transition-all ${
                                 msg.msg_type === 'decision_proceed' ? 'bg-gradient-to-b from-[#161D2C]/80 to-[#111826]/90 border-[rgba(212,168,83,0.4)] text-[var(--sk-gold)] shadow-[0_10px_40px_rgba(212,168,83,0.15)]' :
                                 msg.msg_type === 'decision_pause' ? 'bg-[#161D2C]/80 border-[rgba(255,255,255,0.1)] text-[#EDE7DA] shadow-[0_10px_30px_rgba(0,0,0,0.5)]' :
-                                msg.msg_type === 'decision_close' ? 'bg-[#161D2C]/80 border-[rgba(239,68,68,0.2)] text-red-400 shadow-[0_10px_30px_rgba(239,68,68,0.1)]' :
+                                msg.msg_type === 'decision_close' ? 'bg-[#161D2C]/80 border-[rgba(239,68,68,0.2)] text-red-400 shadow-[0_10px_30px_rgba(239,68,68,0.1)] hover:border-red-500/50' :
                                 'bg-[rgba(212,168,83,0.05)] border-[rgba(212,168,83,0.2)] text-[var(--sk-gold)] uppercase text-[11px] py-3 rounded-full shadow-md'
-                              }`}>
+                              }`}
+                                onMouseEnter={() => setHoveredMsgId(msg.id)}
+                                onMouseLeave={() => setHoveredMsgId(null)}
+                              >
                                 {/* Animated Icons */}
                                 {msg.msg_type === 'decision_proceed' && (
                                   <motion.div animate={{ scale: [1, 1.1, 1], rotate: [0, -5, 5, 0] }} transition={{ repeat: Infinity, duration: 4, ease: "easeInOut" }} className="relative mb-2">
@@ -818,6 +828,17 @@ export const SakinahChatPage: React.FC = () => {
                                 
                                 {msg.msg_type === 'decision_proceed' && (
                                   <div className="absolute top-0 left-1/2 -translate-x-1/2 w-1/2 h-[1px] bg-gradient-to-r from-transparent via-[var(--sk-gold)] to-transparent opacity-50"></div>
+                                )}
+
+                                {/* Hover Remove Option for Close Decision */}
+                                {msg.msg_type === 'decision_close' && msg.sender === 'me' && isConvoClosed && hoveredMsgId === msg.id && (
+                                  <button 
+                                    onClick={handleReopenConvo} 
+                                    className="absolute -top-3 -right-3 bg-[#0A0E16] border border-red-500/50 text-red-400 rounded-full w-8 h-8 flex items-center justify-center shadow-lg hover:scale-110 hover:bg-red-500 hover:text-white transition-all z-30"
+                                    title="Undo decision and reopen chat"
+                                  >
+                                    ✕
+                                  </button>
                                 )}
                               </div>
                             </motion.div>
@@ -987,13 +1008,19 @@ export const SakinahChatPage: React.FC = () => {
               ) : isConvoClosed ? (
                 <div className="p-6 bg-[#0A0E16] border-t border-[rgba(255,255,255,0.05)] z-20 flex flex-col items-center justify-center text-center">
                   <p className="text-[14px] text-[var(--sk-ink-dim)] mb-4">This conversation has been closed.</p>
-                  <button 
-                    onClick={handleReopenConvo} 
-                    disabled={sending}
-                    className="px-6 py-2.5 rounded-xl border border-[var(--sk-gold)] text-[var(--sk-gold)] text-[13px] font-bold tracking-wider uppercase hover:bg-[var(--sk-gold)] hover:text-[#0A0E16] transition-colors disabled:opacity-50"
-                  >
-                    {sending ? 'Reopening...' : 'Reopen Conversation'}
-                  </button>
+                  {closedByMe ? (
+                    <button 
+                      onClick={handleReopenConvo} 
+                      disabled={sending}
+                      className="px-6 py-2.5 rounded-xl border border-[var(--sk-gold)] text-[var(--sk-gold)] text-[13px] font-bold tracking-wider uppercase hover:bg-[var(--sk-gold)] hover:text-[#0A0E16] transition-colors disabled:opacity-50"
+                    >
+                      {sending ? 'Reopening...' : 'Reopen Conversation'}
+                    </button>
+                  ) : (
+                    <span className="px-6 py-2.5 rounded-xl border border-red-500/20 text-red-400 text-[13px] font-bold tracking-wider uppercase bg-[#111826]">
+                      Waiting for them to reopen
+                    </span>
+                  )}
                 </div>
               ) : (
                 <div className="p-4 md:p-6 bg-[#0A0E16] border-t border-[rgba(255,255,255,0.05)] z-20 text-center">
