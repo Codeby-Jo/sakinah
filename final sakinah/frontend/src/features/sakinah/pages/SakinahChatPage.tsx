@@ -462,6 +462,18 @@ export const SakinahChatPage: React.FC = () => {
     }
   };
 
+  // Simulate real-time read receipts for demo
+  useEffect(() => {
+    if (!activeConvo) return;
+    const deliveredMsgs = messages.filter(m => m.sender === 'me' && m.status === 'delivered');
+    if (deliveredMsgs.length > 0) {
+      const timer = setTimeout(() => {
+        setMessages(prev => prev.map(m => m.sender === 'me' && m.status === 'delivered' ? { ...m, status: 'read' } : m));
+      }, 3000); // Mark delivered as read after 3 seconds for active conversation
+      return () => clearTimeout(timer);
+    }
+  }, [messages, activeConvo]);
+
   const handleSend = async (e?: React.FormEvent) => {
     if (e) e.preventDefault();
     if (!input.trim() || !activeConvo || sending) return;
@@ -645,6 +657,10 @@ export const SakinahChatPage: React.FC = () => {
                           </span>
                         )}
                       </h3>
+                      <div className="text-[11px] text-[var(--sk-gold)] flex items-center gap-1.5 opacity-80 font-medium">
+                        <span className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse shadow-[0_0_8px_#10B981]"></span>
+                        Online • Last seen today at {new Date(Date.now() - 1000 * 60 * 15).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                      </div>
                       <div className="flex items-center gap-2 mt-1">
                         {activeConvo?.participants?.map((p, i) => (
                           <span key={i} className={`text-[10px] px-1.5 py-0.5 rounded font-medium ${p.role === 'Wali' ? 'bg-purple-500/10 text-purple-400 border border-purple-500/20' : 'bg-blue-500/10 text-blue-400 border border-blue-500/20'}`}>
@@ -844,9 +860,13 @@ export const SakinahChatPage: React.FC = () => {
                                 </AnimatePresence>
                               </div>
 
-                              <div className={`flex items-center gap-1.5 text-[10px] text-[var(--sk-ink-dim)] px-1 ${msg.sender === 'me' ? 'justify-end' : 'justify-start'}`}>
+                              <div className={`flex items-center gap-1.5 text-[10px] text-[var(--sk-ink-dim)] px-1 mt-1 ${msg.sender === 'me' ? 'justify-end' : 'justify-start'}`}>
                                 <span>{msg.time}</span>
-                                {msg.sender === 'me' && <span className="text-[12px]">{msg.status === 'sent' ? '✓' : msg.status === 'delivered' ? '✓✓' : '✓✓'}</span>}
+                                {msg.sender === 'me' && (
+                                  <span className={`text-[12px] font-bold ${msg.status === 'read' ? 'text-blue-400' : 'text-[rgba(255,255,255,0.4)]'}`} title={msg.status}>
+                                    {msg.status === 'sent' ? '✓' : '✓✓'}
+                                  </span>
+                                )}
                               </div>
                             </div>
                           </div>
