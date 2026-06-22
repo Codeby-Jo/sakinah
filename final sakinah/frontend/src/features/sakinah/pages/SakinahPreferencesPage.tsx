@@ -30,6 +30,8 @@ const prefSchema = z.object({
   locationPref: z.array(z.string()),
   maritalStatus: z.string().min(1, 'Please select a marital status preference'),
   educationPref: z.array(z.string()),
+  castePref: z.array(z.string()).optional(),
+  openToAllCastes: z.boolean().optional(),
   religiousPracticePref: z.string().min(1, 'Please select religious alignment'),
   familyInvolvement: z.string().min(1, 'Please select family involvement'),
   dealbreakers: z.array(z.string()),
@@ -53,6 +55,8 @@ export const SakinahPreferencesPage: React.FC = () => {
       maxAge: preferences.maxAge || '35',
       locationPref: Array.isArray(preferences.locationPref) ? preferences.locationPref : [],
       educationPref: Array.isArray(preferences.educationPref) ? preferences.educationPref : [],
+      castePref: Array.isArray(preferences.castePref) ? preferences.castePref : [],
+      openToAllCastes: preferences.openToAllCastes || false,
       dealbreakers: Array.isArray(preferences.dealbreakers) ? preferences.dealbreakers : [],
       maritalStatus: preferences.maritalStatus || '',
       religiousPracticePref: preferences.religiousPracticePref || '',
@@ -200,6 +204,38 @@ export const SakinahPreferencesPage: React.FC = () => {
                     onChange={(v) => setValue('educationPref', v, { shouldValidate: true })}
                   />
                   <FieldError error={(errors.educationPref as any)?.message} />
+                </div>
+
+                <div>
+                  <label className="block text-[11px] text-[#F5D77A]/60 uppercase mb-3 font-medium tracking-widest">Caste / Sect Preference</label>
+                  <SakinahMultiSelectChips
+                    options={['Syed', 'Pathan', 'Shaikh', 'Ansari', 'Qureshi', 'Memon', 'Rajput', 'Other']}
+                    value={watch('castePref') || []}
+                    onChange={(v) => {
+                      setValue('castePref', v, { shouldValidate: true });
+                      if (v.length > 0) {
+                        setValue('openToAllCastes', false, { shouldValidate: true });
+                      }
+                    }}
+                  />
+                  <div className="mt-4 flex items-center gap-3">
+                    <input 
+                      type="checkbox" 
+                      id="openToAllCastes"
+                      checked={watch('openToAllCastes')}
+                      onChange={(e) => {
+                        const checked = e.target.checked;
+                        setValue('openToAllCastes', checked, { shouldValidate: true });
+                        if (checked) {
+                          setValue('castePref', [], { shouldValidate: true });
+                        }
+                      }}
+                      className="accent-[#D4AF37] w-4 h-4 bg-[#050816] border border-[#D4AF37]/50 rounded cursor-pointer"
+                    />
+                    <label htmlFor="openToAllCastes" className="text-sm text-white/80 cursor-pointer">
+                      Open to all castes (Select this to receive matches from any caste)
+                    </label>
+                  </div>
                 </div>
               </div>
 

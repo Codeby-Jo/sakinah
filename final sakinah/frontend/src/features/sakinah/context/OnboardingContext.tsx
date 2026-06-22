@@ -47,6 +47,8 @@ export interface PartnerPreferences {
   financialDecisionResponse: string;
   dealbreakersText: string;
   dealbreakers: string[];
+  castePref: string[];
+  openToAllCastes: boolean;
   strictAge: boolean;
   strictLocation: boolean;
   strictTradition: boolean;
@@ -94,6 +96,7 @@ const defaultPreferences = (): PartnerPreferences => ({
   communicationStyle: '', repairStyle: '', angerLevel: '', boundaryStrength: '', boundarySafety: '',
   emotionalSteadiness: '', financialResp: '', lifestyle: '', lifestyleFinances: '', disagreementResponse: '', familyPressureResponse: '',
   accountabilityResponse: '', personalSpaceResponse: '', financialDecisionResponse: '', dealbreakersText: '', dealbreakers: [],
+  castePref: [], openToAllCastes: false,
   strictAge: false, strictLocation: false, strictTradition: false, strictMarital: false, noMatchConfirmed: false
 });
 

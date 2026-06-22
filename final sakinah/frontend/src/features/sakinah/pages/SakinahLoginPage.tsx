@@ -10,6 +10,8 @@ import {
 } from '../components';
 import { loginSakinah, verifyWaliAccess, notifyWaliLogin } from '../services/sakinahApi';
 import { setProgress, getProgress } from '../services/sakinahProgress';
+import { sendPasswordResetEmail } from 'firebase/auth';
+import { auth as firebaseAuth } from '../../../config/firebase.config';
 
 // Strict email regex: no spaces, proper format
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -90,10 +92,17 @@ export const SakinahLoginPage: React.FC = () => {
         }
       } else {
         // Normal Seeker Login
-        const res = await loginSakinah(email, password);
-        if (res?.access_token) {
-          localStorage.setItem('sakinah_token', res.access_token);
+        try {
+          const res = await loginSakinah(email, password);
+          if (res?.access_token) {
+            localStorage.setItem('sakinah_token', res.access_token);
+          }
+        } catch (err: any) {
+          // If login fails (wrong password, user doesn't exist, etc.), throw the error
+          // so the user sees it on the screen instead of bypassing.
+          throw err;
         }
+
         setProgress({
           role: currentRole ?? 'SEEKER',
           account_completed: true,
@@ -427,17 +436,25 @@ export const SakinahLoginPage: React.FC = () => {
                 <div className="flex flex-col gap-3 mt-4">
                   <button 
                     type="button" 
-                    onClick={() => {
+                    onClick={async () => {
                       if (!email || !EMAIL_REGEX.test(email)) {
                         setError('Please enter a valid email address.');
                         return;
                       }
-                      // Simulate API call to send reset email
+                      
                       setIsPending(true);
-                      setTimeout(() => {
-                        setIsPending(false);
+                      try {
+                        // Actually send the real password reset email via Firebase Auth
+                        await sendPasswordResetEmail(firebaseAuth, email);
                         setResetSent(true);
-                      }, 1200);
+                      } catch (err: any) {
+                        console.error('Password reset error:', err);
+                        // If user doesn't exist, we usually still pretend it worked to prevent email enumeration,
+                        // but if Firebase complains, we can log it. For now, show success to match standard security practices.
+                        setResetSent(true);
+                      } finally {
+                        setIsPending(false);
+                      }
                     }}
                     disabled={isPending}
                     className="w-full py-4 bg-gradient-to-r from-[#D4AF37] to-[#F5D77A] hover:from-[#F5D77A] hover:to-[#D4AF37] text-[#050816] shadow-[0_0_20px_rgba(212,175,55,0.3)] transition-all font-bold rounded-xl text-[15px] tracking-wide"

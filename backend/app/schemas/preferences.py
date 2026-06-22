@@ -9,6 +9,8 @@ class MatchPreferenceCreate(BaseModel):
     maritalStatus: str = ""
     prefHeightOrPhysical: str = ""
     educationPref: List[str] = Field(default_factory=list)
+    castePref: List[str] = Field(default_factory=list)
+    openToAllCastes: bool = False
     religiousPracticePref: str = ""
     familyInvolvement: str = ""
     marriageTimeline: str = ""

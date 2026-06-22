@@ -46,6 +46,11 @@ async function fetchNisApi(endpoint: string, options: RequestInit = {}) {
       const isWali = !!localStorage.getItem('sakinah_wali_session');
       
       if (!isWali) {
+        // Prevent redirect loop in development when using the fallback mock token
+        if (import.meta.env.DEV && token === 'local_demo_token') {
+          throw new Error('Dev bypass token rejected by real backend. Suppressing redirect.');
+        }
+
         localStorage.removeItem('sakinah_token');
         window.location.href = '/matrimony/login';
         throw new Error('Session expired. Please log in again.');

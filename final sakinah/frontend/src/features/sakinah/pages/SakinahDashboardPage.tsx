@@ -127,6 +127,14 @@ export const SakinahDashboardPage: React.FC = () => {
           srvProfile = await getSakinahProfile();
         } catch {
           console.warn('Backend not connected, Server profile unavailable.');
+          if (import.meta.env.DEV) {
+             const demoEmail = localStorage.getItem('sakinah_demo_email') || 'User';
+             const name = demoEmail.split('@')[0];
+             srvProfile = {
+                firstName: name.charAt(0).toUpperCase() + name.slice(1),
+                sakinah_id: 'SAK-DEMO' + Math.floor(Math.random() * 9000 + 1000)
+             };
+          }
         }
 
         setTrustScore(scoreData);
@@ -199,7 +207,7 @@ export const SakinahDashboardPage: React.FC = () => {
                          <img src={profile.profilePhoto} alt="Profile" className="w-full h-full object-cover" />
                       ) : (
                          <div className="w-full h-full bg-gradient-to-br from-[#D4AF37] to-[#A37B31] flex items-center justify-center text-[#0A0E16] text-[48px] font-serif font-bold">
-                            {profile?.firstName ? profile.firstName.charAt(0).toUpperCase() : (serverProfile?.firstName ? serverProfile.firstName.charAt(0).toUpperCase() : 'S')}
+                            {profile?.firstName ? profile.firstName.charAt(0).toUpperCase() : (serverProfile?.first_name ? serverProfile.first_name.charAt(0).toUpperCase() : (serverProfile?.fullName ? serverProfile.fullName.charAt(0).toUpperCase() : 'S'))}
                          </div>
                       )}
                     </div>

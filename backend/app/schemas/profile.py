@@ -22,6 +22,9 @@ class ProfileResponse(ProfileCreate):
     sakinah_id: Optional[str] = None
     kyc_verified: bool = False
     is_active: bool = True
+    fullName: Optional[str] = None
+    first_name: Optional[str] = None
+    email: Optional[str] = None
 
     class Config:
         from_attributes = True

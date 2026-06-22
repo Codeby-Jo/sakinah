@@ -88,16 +88,20 @@ export const SakinahReviewPage: React.FC = () => {
   };
 
   const SectionHeader = ({ title, editPath, icon: Icon }: any) => (
-    <div className="flex justify-between items-center mb-4 border-b border-[#D4AF37]/10 pb-3">
-      <h3 className="text-[#F5D77A] text-lg font-serif font-bold flex items-center gap-2">
-        <Icon size={20} className="text-[#D4AF37]" weight="fill" />
-        {title}
-      </h3>
+    <div className="flex justify-between items-center mb-6 border-b border-[#D4AF37]/10 pb-4">
+      <div className="flex items-center gap-3">
+        <div className="w-10 h-10 rounded-full bg-gradient-to-br from-[#D4AF37]/20 to-[#D4AF37]/5 flex items-center justify-center border border-[#D4AF37]/30 shadow-[0_0_15px_rgba(212,175,55,0.1)]">
+          <Icon size={20} className="text-[#F5D77A]" weight="fill" />
+        </div>
+        <h3 className="text-[#F5D77A] text-[22px] font-serif font-bold tracking-wide">
+          {title}
+        </h3>
+      </div>
       <button 
         onClick={() => navigate(editPath)}
-        className="text-[#D4AF37]/60 hover:text-[#D4AF37] transition-colors p-2 rounded-lg hover:bg-[#D4AF37]/10 flex items-center gap-1 text-[11px] uppercase tracking-wider font-medium"
+        className="text-[#D4AF37] hover:text-[#050816] hover:bg-[#D4AF37] transition-all px-4 py-2 rounded-full border border-[#D4AF37]/50 flex items-center gap-2 text-[11px] uppercase tracking-wider font-bold shadow-[0_0_10px_rgba(212,175,55,0.1)]"
       >
-        <PencilSimple size={14} /> Edit
+        <PencilSimple size={14} weight="bold" /> Edit
       </button>
     </div>
   );
@@ -108,9 +112,9 @@ export const SakinahReviewPage: React.FC = () => {
     if (value === true) displayValue = 'Yes';
 
     return (
-      <div className="flex flex-col">
-        <span className="text-[10px] text-[#F5D77A]/50 uppercase tracking-widest mb-1 font-medium">{label}</span>
-        <span className="text-[14px] text-white/90 truncate">{displayValue}</span>
+      <div className="flex flex-col bg-[#050816]/80 rounded-xl p-4 md:p-5 border border-[rgba(212,175,55,0.08)] shadow-[inset_0_0_15px_rgba(0,0,0,0.3)] hover:border-[rgba(212,175,55,0.3)] hover:shadow-[0_0_15px_rgba(212,175,55,0.05)] transition-all">
+        <span className="text-[10px] text-[#F5D77A]/70 uppercase tracking-widest mb-1.5 font-bold">{label}</span>
+        <span className="text-[15px] font-medium text-white/95 leading-snug">{displayValue}</span>
       </div>
     );
   };
@@ -118,11 +122,11 @@ export const SakinahReviewPage: React.FC = () => {
   const ChipList = ({ label, items }: { label: string, items: string[] }) => {
     if (!items || items.length === 0) return null;
     return (
-      <div className="flex flex-col md:col-span-2 mt-2">
-        <span className="text-[10px] text-[#F5D77A]/50 uppercase tracking-widest mb-2 font-medium">{label}</span>
-        <div className="flex flex-wrap gap-2">
+      <div className="flex flex-col md:col-span-2 lg:col-span-3 bg-[#050816]/80 rounded-xl p-5 border border-[rgba(212,175,55,0.08)] shadow-[inset_0_0_15px_rgba(0,0,0,0.3)] mt-2 hover:border-[rgba(212,175,55,0.3)] hover:shadow-[0_0_15px_rgba(212,175,55,0.05)] transition-all">
+        <span className="text-[10px] text-[#F5D77A]/70 uppercase tracking-widest mb-3 font-bold">{label}</span>
+        <div className="flex flex-wrap gap-2.5">
           {items.map(item => (
-             <span key={item} className="px-3 py-1 bg-[#D4AF37]/10 border border-[#D4AF37]/20 text-[#F5D77A] rounded-full text-[12px] font-medium">
+             <span key={item} className="px-3.5 py-1.5 bg-gradient-to-r from-[#D4AF37]/10 to-[#D4AF37]/5 border border-[#D4AF37]/20 text-[#F5D77A] rounded-full text-[13px] font-semibold shadow-[0_2px_10px_rgba(0,0,0,0.1)]">
                {item}
              </span>
           ))}
@@ -208,7 +212,7 @@ export const SakinahReviewPage: React.FC = () => {
                    </div>
                    <div>
                      <div className="text-[10px] text-[#F5D77A]/50 uppercase tracking-widest font-medium">Email Address</div>
-                     <div className="text-[14px] text-white/90">{userEmail || 'Not provided'}</div>
+                     <div className="text-[14px] text-white/90">{userEmail || contextAuth?.email || 'Not provided'}</div>
                    </div>
                 </div>
                 <div className="col-span-1 sm:col-span-2 pt-4 mt-2 border-t border-white/5">
@@ -233,7 +237,7 @@ export const SakinahReviewPage: React.FC = () => {
           <div className="bg-[#0B1020]/80 border border-[rgba(212,175,55,0.3)] rounded-3xl p-6 md:p-8 relative overflow-hidden backdrop-blur-xl">
              <div className="absolute top-0 left-0 w-1 h-full bg-gradient-to-b from-[#D4AF37] to-[#F5D77A] opacity-50" />
              <SectionHeader title="Your Profile Basics" icon={User} editPath="/matrimony/profile-creation" />
-             <div className="grid grid-cols-2 md:grid-cols-3 gap-y-6 gap-x-4 mt-4">
+             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mt-6">
                 <DataItem label="Full Name" value={`${profile.firstName || ''} ${profile.lastName || ''}`.trim() || kyc.aadhaarName || 'Not provided'} />
                 <DataItem label="Date of Birth" value={profile.dateOfBirth} />
                 <DataItem label="Age" value={profile.age} />
@@ -250,7 +254,7 @@ export const SakinahReviewPage: React.FC = () => {
              <div className="absolute top-0 left-0 w-1 h-full bg-gradient-to-b from-[#D4AF37] to-[#F5D77A] opacity-50" />
              <SectionHeader title="Match Preferences" icon={Heart} editPath="/matrimony/preferences" />
              
-             <div className="grid grid-cols-1 md:grid-cols-2 gap-y-6 gap-x-4 mt-4">
+             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mt-6">
                 {/* Highlights */}
                 <DataItem label="Preferred Age Range" value={preferences.minAge && preferences.maxAge ? `${preferences.minAge} - ${preferences.maxAge} years` : undefined} />
                 <DataItem label="Marital Status" value={preferences.maritalStatus} />
@@ -261,6 +265,10 @@ export const SakinahReviewPage: React.FC = () => {
                 {/* Arrays as Chips */}
                 <ChipList label="Preferred Locations" items={preferences.locationPref} />
                 <ChipList label="Education / Work Preferences" items={preferences.educationPref} />
+                <ChipList 
+                   label="Caste / Sect Preference" 
+                   items={preferences.openToAllCastes ? ['Open to all castes'] : preferences.castePref} 
+                />
                 <ChipList label="Strict Dealbreakers" items={preferences.dealbreakers} />
              </div>
           </div>
