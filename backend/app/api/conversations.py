@@ -61,11 +61,15 @@ async def get_my_conversations(current_user: dict = Depends(get_current_user)):
                 "is_mine": mdata.get("sender_id") == uid
             }
             
+        seen_cel = c.get("seen_celebration", {})
+        show_celebration = not seen_cel.get(uid, True) if isinstance(seen_cel, dict) else False
+
         result.append({
             "conversation_id": convo_id,
             "status": c.get("status", "ACTIVE"),
             "matchflow_step": c.get("matchflow_step", "CONVERSATION_OPEN"),
             "photo_unlocked": c.get("photo_unlocked", False),
+            "show_celebration": show_celebration,
             "created_at": c.get("created_at"),
             "other_user": other_user,
             "last_message": last_msg
@@ -247,6 +251,26 @@ async def pin_message(
         raise HTTPException(status_code=404, detail="Message not found")
     msg_ref.update({"pinned": True, "pinned_by": uid, "pinned_at": datetime.utcnow().isoformat()})
     return {"status": "pinned"}
+
+# ---------------------------------------------------------------------------
+# Seen Celebration
+# ---------------------------------------------------------------------------
+@router.post("/{conversation_id}/seen_celebration")
+async def mark_celebration_seen(
+    conversation_id: str,
+    current_user: dict = Depends(get_current_user)
+):
+    uid = current_user.get("uid")
+    db = get_db()
+    
+    convo_ref = db.collection("conversations").document(conversation_id)
+    if not convo_ref.get().exists:
+        raise HTTPException(status_code=404, detail="Conversation not found")
+        
+    convo_ref.update({
+        f"seen_celebration.{uid}": True
+    })
+    return {"status": "success"}
 
 
 @router.post("/{conversation_id}/messages/{message_id}/unpin")

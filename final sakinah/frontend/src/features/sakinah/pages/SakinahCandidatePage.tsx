@@ -10,8 +10,11 @@ import {
 import { getCandidateDetail, expressInterest, silentPass } from '../services/sakinahApi';
 import type { CandidateSummary } from '../types/sakinah.types';
 
+import { useOnboarding } from '../context/OnboardingContext';
+
 export const SakinahCandidatePage: React.FC = () => {
   const navigate = useNavigate();
+  const { auth, profile } = useOnboarding();
   const { candidateId } = useParams();
   const [candidate, setCandidate] = useState<CandidateSummary | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -88,6 +91,7 @@ export const SakinahCandidatePage: React.FC = () => {
       <SakinahMutualMatchCelebration
         matchedUserName={candidate.displayName}
         matchedUserInitial={candidate.displayName.charAt(0)}
+        myInitial={profile?.firstName?.charAt(0).toUpperCase() || auth?.email?.charAt(0).toUpperCase() || 'M'}
         onStartConversation={() => navigate('/matrimony/messages')}
       />
     );

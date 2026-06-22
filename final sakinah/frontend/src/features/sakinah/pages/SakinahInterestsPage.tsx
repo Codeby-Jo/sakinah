@@ -12,7 +12,7 @@ import { getInterests, silentPass, expressInterest } from '../services/sakinahAp
 
 export const SakinahInterestsPage: React.FC = () => {
   const navigate = useNavigate();
-  const { isWaliViewOnly } = useOnboarding();
+  const { isWaliViewOnly, profile, auth } = useOnboarding();
   const [activeTab, setActiveTab] = useState<TabType>('Received');
   const [items, setItems] = useState<Array<{ id: string, name: string, age: number, city: string, date: string, initial: string }>>([]);
   const [dataCache, setDataCache] = useState<{ sent: any[], received: any[], accepted: any[], pending: any[], rejected: any[] }>({ sent: [], received: [], accepted: [], pending: [], rejected: [] });
@@ -84,6 +84,7 @@ export const SakinahInterestsPage: React.FC = () => {
       <SakinahMutualMatchCelebration
         matchedUserName={mutualMatchCandidate.name}
         matchedUserInitial={mutualMatchCandidate.initial}
+        myInitial={profile?.firstName?.charAt(0).toUpperCase() || auth?.email?.charAt(0).toUpperCase() || 'M'}
         onStartConversation={() => navigate('/matrimony/messages')}
       />
     );

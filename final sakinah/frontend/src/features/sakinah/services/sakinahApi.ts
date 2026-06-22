@@ -181,6 +181,10 @@ export async function getConversationMessages(conversationId: string) {
   return fetchNisApi(`/conversations/${conversationId}/messages`);
 }
 
+export async function markCelebrationSeen(conversationId: string) {
+  return fetchNisApi(`/conversations/${conversationId}/seen_celebration`, { method: 'POST' });
+}
+
 export async function sendMessage(conversationId: string, text: string, msg_type = 'text', photo_url?: string, audio_url?: string, reply_to_text?: string, reply_to_sender?: string) {
   return fetchNisApi(`/conversations/${conversationId}/messages`, {
     method: 'POST',

@@ -166,6 +166,7 @@ const MatchCard = React.memo(({
 
 export const SakinahMatchesPage: React.FC = () => {
   const navigate = useNavigate();
+  const { auth, profile } = useOnboarding();
   const isWali = getProgress().role === 'LOOKING_FOR_SOMEONE_ELSE' || getProgress().role === 'WALI_VIEW';
   const [matches, setMatches] = useState<MatchItem[]>([]);
   const [mutualMatchCandidate, setMutualMatchCandidate] = useState<{name: string, initial: string} | null>(null);
@@ -306,6 +307,7 @@ export const SakinahMatchesPage: React.FC = () => {
       <SakinahMutualMatchCelebration
         matchedUserName={mutualMatchCandidate.name}
         matchedUserInitial={mutualMatchCandidate.initial}
+        myInitial={profile?.firstName?.charAt(0).toUpperCase() || auth?.email?.charAt(0).toUpperCase() || 'M'}
         onStartConversation={() => navigate('/matrimony/messages')}
       />
     );

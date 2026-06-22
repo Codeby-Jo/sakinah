@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { useOnboarding } from '../context/OnboardingContext';
 import { getProgress } from '../services/sakinahProgress';
 import { SakinahLayout, SakinahReportModal, SakinahSecurePhotoViewer } from '../components';
-import { getMyConversations, getConversationMessages, sendMessage, pinMessage, unpinMessage } from '../services/sakinahApi';
+import { getMyConversations, getConversationMessages, sendMessage, pinMessage, unpinMessage, markCelebrationSeen } from '../services/sakinahApi';
 import type { PinnedMessage, FamilyMember } from '../types/sakinah.types';
 import { storage } from '@/config/firebase.config';
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
@@ -26,8 +26,10 @@ interface LastMessage {
 
 interface ConvoItem {
   conversation_id: string;
-  status: string;
-  matchflow_step: string;
+  status?: 'ACTIVE' | 'closed';
+  photo_unlocked?: boolean;
+  show_celebration?: boolean;
+  matchflow_step?: string;
   unread_count?: number;
   other_user: OtherUser | null;
   last_message: LastMessage | null;
@@ -130,7 +132,8 @@ const SakinahVoiceMessage: React.FC<{ audioUrl: string, sender: 'me' | 'them' }>
 };
 
 export const SakinahChatPage: React.FC = () => {
-  const { auth } = useOnboarding();
+  const { auth, profile } = useOnboarding();
+  const myInitial = profile?.firstName?.charAt(0).toUpperCase() || auth?.email?.charAt(0).toUpperCase() || 'M';
   const isWaliViewOnly = getProgress().role === 'WALI_VIEW';
 
   const [conversations, setConversations] = useState<ConvoItem[]>([]);
@@ -666,6 +669,24 @@ export const SakinahChatPage: React.FC = () => {
             </AnimatePresence>
           </div>
         </div>
+
+        {/* Mutual Match Celebration */}
+        <AnimatePresence>
+          {activeConvo && activeConvo.show_celebration && (
+            <SakinahMutualMatchCelebration
+              matchedUserName={activeConvo.other_user?.name || 'Candidate'}
+              matchedUserInitial={activeConvo.other_user?.initial || 'C'}
+              myInitial={myInitial}
+              onStartConversation={async () => {
+                try {
+                  await markCelebrationSeen(activeConvo.conversation_id);
+                } catch(e) { console.error(e); }
+                setActiveConvo(prev => prev ? { ...prev, show_celebration: false } : null);
+                setConversations(prev => prev.map(c => c.conversation_id === activeConvo.conversation_id ? { ...c, show_celebration: false } : c));
+              }}
+            />
+          )}
+        </AnimatePresence>
 
         {/* Main Area */}
         <div className={`flex-1 flex flex-col bg-[#0A0E16] relative z-0 ${!activeConvo ? 'hidden md:flex' : 'flex'}`}>

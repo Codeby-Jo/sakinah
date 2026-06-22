@@ -436,6 +436,7 @@ async def express_interest(candidate_id: str, current_user: dict = Depends(get_c
             "status": "ACTIVE",
             "matchflow_step": "CONVERSATION_OPEN",
             "photo_unlocked": False,
+            "seen_celebration": {uid: True, candidate_id: False},
             "created_at": datetime.utcnow().isoformat()
         })
         
