@@ -601,7 +601,7 @@ export const router = createBrowserRouter([
   // action that needs an account to signup.
   {
     index: true,
-    element: <Navigate to="/raya-gateway" replace />,
+    element: <Navigate to="/matrimony" replace />,
   },
 
   // Raya gateway — the home + full chat surface. Public-facing: guests see it
