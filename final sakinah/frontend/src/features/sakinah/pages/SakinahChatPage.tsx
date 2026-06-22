@@ -208,7 +208,7 @@ export const SakinahChatPage: React.FC = () => {
   useEffect(() => { loadConversations(); }, [loadConversations]);
 
   /* ── Load messages for active convo ─────────────────────── */
-  const loadMessages = useCallback(async (convoId: string, isInitial = false) => {
+  const loadMessages = useCallback(async (convoId: string, otherUserName: string, isInitial = false) => {
     if (isInitial) setMessagesLoading(true);
     try {
       const data: any = await getConversationMessages(convoId);
@@ -217,8 +217,8 @@ export const SakinahChatPage: React.FC = () => {
       const loadedMessages = (data.messages ?? []).map((m: any) => ({
         ...m,
         id: m.id.toString(),
-        senderRole: m.sender === 'them' && Math.random() > 0.8 ? 'Wali' : undefined,
-        senderName: m.sender === 'them' ? 'Contact' : 'Me'
+        senderRole: undefined,
+        senderName: m.sender === 'them' ? otherUserName : 'Me'
       }));
 
       // SOP: Inject Raya guided message if chat is empty
@@ -273,7 +273,7 @@ export const SakinahChatPage: React.FC = () => {
           const loadedMessages = (data.messages ?? []).map((m: any) => ({
             ...m,
             id: m.id.toString(),
-            senderName: m.sender === 'them' ? 'Contact' : 'Me'
+            senderName: m.sender === 'them' ? (activeConvo.other_user?.name || 'Candidate') : 'Me'
           }));
 
           setMessages(prev => {
@@ -304,7 +304,7 @@ export const SakinahChatPage: React.FC = () => {
   const executeOpenConvo = (c: ConvoItem) => {
     setActiveConvo(c);
     setMessages([]);
-    loadMessages(c.conversation_id, true);
+    loadMessages(c.conversation_id, c.other_user?.name || 'Candidate', true);
     setConversations(prev => prev.map(conv => conv.conversation_id === c.conversation_id ? { ...conv, unread_count: 0 } : conv));
   };
 
@@ -879,7 +879,7 @@ export const SakinahChatPage: React.FC = () => {
                             <div className="flex flex-col gap-1 relative">
                               {/* Sender Role Label (Family Chat feature) */}
                               {msg.sender === 'them' && (
-                                <div className="text-[10px] text-purple-400 mb-0.5 ml-1">{msg.senderName} ({msg.senderRole})</div>
+                                <div className="text-[10px] text-purple-400 mb-0.5 ml-1">{msg.senderName} {msg.senderRole && `(${msg.senderRole})`}</div>
                               )}
                               
                               {/* Pin Indicator */}
