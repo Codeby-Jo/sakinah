@@ -70,7 +70,16 @@ export const SakinahLoginPage: React.FC = () => {
           // Send notification to Seeker
           await notifyWaliLogin(email);
 
-          // Create secure wali session
+          // Clear any old seeker tokens to prevent fetching random/cached profiles
+          localStorage.removeItem('sakinah_token');
+
+          // Store the JWT returned by verifyWaliAccess as the auth token
+          // so all API calls on the Wali Dashboard fetch the correct seeker's data
+          if (response.token || response.access_token) {
+            localStorage.setItem('sakinah_token', response.access_token || response.token);
+          }
+
+          // Create secure wali session marker
           localStorage.setItem('sakinah_wali_session', JSON.stringify({
             token: response.token || `session_${Date.now()}`,
             email,
