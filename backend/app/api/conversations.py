@@ -12,15 +12,14 @@ class SendMessageRequest(BaseModel):
     msg_type: str = "text"  # text | system | photo | audio
     photo_url: Optional[str] = None
     audio_url: Optional[str] = None
+    reply_to_text: Optional[str] = None
+    reply_to_sender: Optional[str] = None
 
 @router.get("/")
 async def get_my_conversations(current_user: dict = Depends(get_current_user)):
     uid = current_user.get("uid")
     db = get_db()
     
-    # Query conversations where current user is seeker_a or seeker_b
-    # Firestore does not support logical OR in where directly across fields easily unless we query twice or use a users array
-    # Let's query where seeker_a_id == uid
     convs_a = db.collection("conversations").where("seeker_a_id", "==", uid).where("status", "==", "ACTIVE").get()
     convs_b = db.collection("conversations").where("seeker_b_id", "==", uid).where("status", "==", "ACTIVE").get()
     
@@ -31,7 +30,6 @@ async def get_my_conversations(current_user: dict = Depends(get_current_user)):
         c = doc.to_dict()
         convo_id = c.get("conversation_id")
         
-        # Identify other user
         other_id = c.get("seeker_b_id") if c.get("seeker_a_id") == uid else c.get("seeker_a_id")
         other_doc = db.collection("profiles").document(other_id).get()
         
@@ -47,7 +45,6 @@ async def get_my_conversations(current_user: dict = Depends(get_current_user)):
                 "occupation": odata.get("occupation") or "Private"
             }
             
-        # Get last message
         msgs_query = db.collection("conversations").document(convo_id).collection("messages").order_by("created_at", direction="DESCENDING").limit(1).get()
         last_msg = None
         if msgs_query:
@@ -89,11 +86,9 @@ async def get_messages(
         raise HTTPException(status_code=404, detail="Conversation not found")
         
     c = convo_doc.to_dict()
-    # Check if participant
     if c.get("seeker_a_id") != uid and c.get("seeker_b_id") != uid:
         raise HTTPException(status_code=403, detail="Not a participant in this conversation")
         
-    # Get messages
     msgs_docs = db.collection("conversations").document(conversation_id).collection("messages").order_by("created_at", direction="ASCENDING").get()
     
     messages = []
@@ -113,7 +108,9 @@ async def get_messages(
             "sender_id": mdata.get("sender_id"),
             "time": time_str,
             "photo_url": mdata.get("photo_url"),
-            "audio_url": mdata.get("audio_url")
+            "audio_url": mdata.get("audio_url"),
+            "reply_to_text": mdata.get("reply_to_text"),
+            "reply_to_sender": mdata.get("reply_to_sender")
         })
         
     return {
@@ -139,7 +136,6 @@ async def send_message(
         raise HTTPException(status_code=404, detail="Conversation not found")
         
     c = convo_doc.to_dict()
-    # Check if participant
     if c.get("seeker_a_id") != uid and c.get("seeker_b_id") != uid:
         raise HTTPException(status_code=403, detail="Not a participant in this conversation")
         
@@ -161,6 +157,10 @@ async def send_message(
         msg_data["photo_url"] = req.photo_url
     if req.audio_url:
         msg_data["audio_url"] = req.audio_url
+    if req.reply_to_text:
+        msg_data["reply_to_text"] = req.reply_to_text
+    if req.reply_to_sender:
+        msg_data["reply_to_sender"] = req.reply_to_sender
         
     # Handle first photo watermark logic
     first_photo_shared_by = c.get("first_photo_shared_by")
@@ -223,6 +223,8 @@ async def send_message(
         "msg_type": req.msg_type,
         "photo_url": req.photo_url,
         "audio_url": req.audio_url,
+        "reply_to_text": req.reply_to_text,
+        "reply_to_sender": req.reply_to_sender,
         "sender": "me",
         "time": time_str,
         "first_photo_shared_by": first_photo_shared_by if req.msg_type == "photo" else c.get("first_photo_shared_by")

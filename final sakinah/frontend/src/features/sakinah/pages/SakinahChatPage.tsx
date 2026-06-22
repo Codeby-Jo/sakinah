@@ -39,12 +39,14 @@ interface Message {
   id: string;
   text: string;
   msg_type: string;
-  sender: 'me' | 'them';
-  senderName?: string; // New for group/family chat
-  senderRole?: string; // New
+  sender: 'me' | 'them' | 'system';
+  senderName?: string;
+  senderRole?: string; // e.g., "Wali"
   time: string;
   photo_url?: string;
   audio_url?: string;
+  reply_to_text?: string;
+  reply_to_sender?: string;
   status?: 'sent' | 'delivered' | 'read';
   reaction?: string; // New
 }
@@ -146,6 +148,7 @@ export const SakinahChatPage: React.FC = () => {
   const [reportingProfile, setReportingProfile] = useState<{id: string, name: string} | null>(null);
   const [isTyping, setIsTyping]           = useState(false);
   const [hoveredMsgId, setHoveredMsgId]   = useState<string | null>(null);
+  const [replyingTo, setReplyingTo]       = useState<Message | null>(null);
   const [unlockedPhotoIds, setUnlockedPhotoIds] = useState<Record<string, boolean>>({});
 
   // Voice recording states
@@ -467,6 +470,10 @@ export const SakinahChatPage: React.FC = () => {
     setInput(''); 
     setSending(true);
     
+    const replyText = replyingTo?.text;
+    const replySender = replyingTo?.senderName || (replyingTo?.sender === 'them' ? activeConvo.other_user?.name : 'Me');
+    setReplyingTo(null);
+
     const tempId = `temp-${Date.now()}`;
     const optimisticMsg: Message = {
       id: tempId,
@@ -475,19 +482,22 @@ export const SakinahChatPage: React.FC = () => {
       sender: 'me',
       senderName: auth?.email?.split('@')[0] || 'Me',
       time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-      status: 'sent'
+      status: 'sent',
+      reply_to_text: replyText,
+      reply_to_sender: replySender
     };
     
     setMessages(prev => [...prev, optimisticMsg]);
     setTimeout(() => bottomRef.current?.scrollIntoView({ behavior: 'smooth' }), 50);
 
     try {
-      const msg: any = await sendMessage(activeConvo.conversation_id, messageText);
+      const msg: any = await sendMessage(activeConvo.conversation_id, messageText, 'text', undefined, undefined, replyText, replySender);
       setMessages(prev => prev.map(m => m.id === tempId ? { ...msg, id: msg.id.toString(), status: 'delivered' } : m));
     } catch (e: any) {
       console.error(e.message ?? 'Send failed');
       setMessages(prev => prev.filter(m => m.id !== tempId));
       setInput(messageText);
+    } finally {
       setSending(false);
     }
   };
@@ -789,6 +799,14 @@ export const SakinahChatPage: React.FC = () => {
                                   ? 'bg-gradient-to-br from-[#D4AF37] to-[#C19825] text-[#0A0E16] rounded-[20px] rounded-br-[4px]'
                                   : 'bg-[#161D2C] border border-[rgba(255,255,255,0.05)] text-[#EDE7DA] rounded-[20px] rounded-bl-[4px]'
                               }`}>
+                                  {/* Reply Preview */}
+                                  {msg.reply_to_text && (
+                                    <div className={`mb-2 pl-2 border-l-2 text-[12px] opacity-80 overflow-hidden ${msg.sender === 'me' ? 'border-[#0A0E16]/40 text-[#0A0E16]' : 'border-[var(--sk-gold)] text-[#EDE7DA]'}`}>
+                                      <div className="font-bold text-[10px] uppercase mb-0.5 truncate">{msg.reply_to_sender}</div>
+                                      <div className="truncate">{msg.reply_to_text}</div>
+                                    </div>
+                                  )}
+
                                 {msg.msg_type === 'photo' ? (
                                   <div className="flex flex-col gap-2">
                                     <div 
@@ -819,6 +837,7 @@ export const SakinahChatPage: React.FC = () => {
                                     <motion.div initial={{ opacity: 0, scale: 0.8 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.8 }} 
                                       className={`absolute top-0 -translate-y-1/2 flex items-center gap-1 bg-[#111826] border border-[rgba(255,255,255,0.1)] rounded-full p-1 shadow-lg ${msg.sender === 'me' ? '-left-16' : '-right-16'}`}>
                                       <button onClick={() => togglePin(msg)} className="w-6 h-6 flex items-center justify-center rounded-full hover:bg-[rgba(255,255,255,0.1)] text-[12px]" title="Pin">📌</button>
+                                      <button onClick={() => setReplyingTo(msg)} className="w-6 h-6 flex items-center justify-center rounded-full hover:bg-[rgba(255,255,255,0.1)] text-[12px]" title="Reply">↩️</button>
                                       <button className="w-6 h-6 flex items-center justify-center rounded-full hover:bg-[rgba(255,255,255,0.1)] text-[12px]" title="React">❤️</button>
                                     </motion.div>
                                   )}
@@ -858,7 +877,20 @@ export const SakinahChatPage: React.FC = () => {
 
               {/* Composer */}
               {!isWaliViewOnly ? (
-                <div className="p-4 md:p-6 bg-[#0A0E16] border-t border-[rgba(255,255,255,0.05)] z-20">
+                <div className="p-4 md:p-6 bg-[#0A0E16] border-t border-[rgba(255,255,255,0.05)] z-20 flex flex-col gap-2">
+                    {/* Reply Preview Banner */}
+                    <AnimatePresence>
+                      {replyingTo && (
+                        <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }} exit={{ opacity: 0, height: 0 }} className="flex items-center justify-between bg-[#111826] border-l-2 border-[var(--sk-gold)] px-3 py-2 rounded-lg rounded-bl-none max-w-4xl mx-auto w-full">
+                          <div className="flex-1 overflow-hidden">
+                            <div className="text-[10px] text-[var(--sk-gold)] font-bold uppercase">Replying to {replyingTo.senderName || (replyingTo.sender === 'them' ? activeConvo.other_user?.name : 'Me')}</div>
+                            <div className="text-[12px] text-[#EDE7DA] truncate">{replyingTo.text || 'Attachment'}</div>
+                          </div>
+                          <button onClick={() => setReplyingTo(null)} className="text-[var(--sk-ink-dim)] hover:text-red-400 p-1">✕</button>
+                        </motion.div>
+                      )}
+                    </AnimatePresence>
+                    
                     <form onSubmit={handleSend} className="flex items-end gap-3 max-w-4xl mx-auto w-full">
                       <div className="flex-1 bg-[#111826] border border-[rgba(255,255,255,0.05)] rounded-[24px] flex items-center p-1 pl-3 transition-colors focus-within:border-[rgba(212,168,83,0.3)] shadow-inner">
                         {isRecording ? (
