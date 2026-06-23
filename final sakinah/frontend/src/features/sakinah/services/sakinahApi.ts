@@ -496,3 +496,18 @@ export async function notifyWaliLogin(email: string) {
     // Non-blocking — login still proceeds; admin logs this separately
   }
 }
+
+export const setTypingStatus = async (conversationId: string) => {
+  const token = localStorage.getItem('sakinah_token');
+  if (!token) return;
+
+  try {
+    await fetch(`${API_BASE}/conversations/${conversationId}/typing`, {
+      method: 'POST',
+      headers: { 'Authorization': `Bearer ${token}` }
+    });
+  } catch (err) {
+    console.error('Failed to update typing status', err);
+  }
+};
+

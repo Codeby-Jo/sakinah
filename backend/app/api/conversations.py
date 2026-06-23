@@ -95,6 +95,23 @@ async def get_my_conversations(current_user: dict = Depends(get_current_user)):
         
     return {"conversations": result}
 
+@router.post("/{conversation_id}/typing")
+async def update_typing_status(
+    conversation_id: str,
+    current_user: dict = Depends(get_current_user)
+):
+    uid = current_user.get("uid")
+    # In a real app we'd use Redis, but for this prototype we'll use our memory cache 
+    # to avoid spamming Firestore with typing indicators
+    if not hasattr(update_typing_status, "cache"):
+        update_typing_status.cache = {}
+        
+    if conversation_id not in update_typing_status.cache:
+        update_typing_status.cache[conversation_id] = {}
+        
+    update_typing_status.cache[conversation_id][uid] = time.time()
+    return {"status": "success"}
+
 @router.get("/{conversation_id}/messages")
 async def get_messages(
     conversation_id: str,
@@ -112,6 +129,16 @@ async def get_messages(
     if c.get("seeker_a_id") != uid and c.get("seeker_b_id") != uid:
         raise HTTPException(status_code=403, detail="Not a participant in this conversation")
         
+    other_uid = c.get("seeker_b_id") if c.get("seeker_a_id") == uid else c.get("seeker_a_id")
+    
+    # Check typing status
+    is_typing = False
+    if hasattr(update_typing_status, "cache"):
+        convo_cache = update_typing_status.cache.get(conversation_id, {})
+        last_typing_time = convo_cache.get(other_uid, 0)
+        if time.time() - last_typing_time < 5: # 5 seconds window
+            is_typing = True
+            
     msgs_docs = db.collection("conversations").document(conversation_id).collection("messages").order_by("created_at", direction="ASCENDING").get()
     
     messages = []
@@ -142,6 +169,7 @@ async def get_messages(
         "matchflow_step": c.get("matchflow_step", "CONVERSATION_OPEN"),
         "photo_unlocked": c.get("photo_unlocked", False),
         "first_photo_shared_by": c.get("first_photo_shared_by"),
+        "is_typing": is_typing,
         "messages": messages
     }
 

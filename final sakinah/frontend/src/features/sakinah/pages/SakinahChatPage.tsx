@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { useOnboarding } from '../context/OnboardingContext';
 import { getProgress } from '../services/sakinahProgress';
 import { SakinahLayout, SakinahReportModal, SakinahSecurePhotoViewer, SakinahMutualMatchCelebration } from '../components';
-import { getMyConversations, getConversationMessages, sendMessage, pinMessage, unpinMessage, markCelebrationSeen, submitDecision } from '../services/sakinahApi';
+import { getMyConversations, getConversationMessages, sendMessage, pinMessage, unpinMessage, markCelebrationSeen, submitDecision, setTypingStatus } from '../services/sakinahApi';
 import type { PinnedMessage, FamilyMember } from '../types/sakinah.types';
 import { storage } from '@/config/firebase.config';
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
@@ -230,7 +230,7 @@ export const SakinahChatPage: React.FC = () => {
     if (isInitial) setMessagesLoading(true);
     try {
       const data: any = await getConversationMessages(convoId);
-      setIsTyping(false);
+      setIsTyping(data.is_typing ?? false);
       
       const loadedMessages = (data.messages ?? []).map((m: any) => ({
         ...m,
@@ -288,6 +288,7 @@ export const SakinahChatPage: React.FC = () => {
       interval = setInterval(async () => {
         try {
           const data: any = await getConversationMessages(activeConvo.conversation_id);
+          setIsTyping(data.is_typing ?? false);
           const loadedMessages = (data.messages ?? []).map((m: any) => ({
             ...m,
             id: m.id.toString(),
@@ -510,17 +511,17 @@ export const SakinahChatPage: React.FC = () => {
       }, 3000); 
       return () => clearTimeout(timer);
     }
-
-    // Typing indicator simulation after I send a message
-    const lastMsg = messages[messages.length - 1];
-    if (lastMsg && lastMsg.sender === 'me') {
-      const typingTimer1 = setTimeout(() => setIsTyping(true), 1500);
-      const typingTimer2 = setTimeout(() => setIsTyping(false), 5000);
-      return () => { clearTimeout(typingTimer1); clearTimeout(typingTimer2); };
-    } else {
-      setIsTyping(false);
-    }
   }, [messages, activeConvo]);
+
+  const lastTypingTimeRef = useRef<number>(0);
+  const handleTyping = useCallback(() => {
+    if (!activeConvo) return;
+    const now = Date.now();
+    if (now - lastTypingTimeRef.current > 3000) {
+      lastTypingTimeRef.current = now;
+      setTypingStatus(activeConvo.conversation_id).catch(() => {});
+    }
+  }, [activeConvo]);
 
   const handleSend = async (e?: React.FormEvent) => {
     if (e) e.preventDefault();
@@ -1075,7 +1076,7 @@ export const SakinahChatPage: React.FC = () => {
                             >
                               📎
                             </button>
-                            <textarea value={input} onChange={e => setInput(e.target.value)} onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleSend(); } }} placeholder="Write your message..." className="flex-1 bg-transparent border-none outline-none text-[15px] text-[#EDE7DA] py-2.5 px-2 max-h-[120px] resize-none custom-scrollbar" rows={1} style={{ minHeight: '44px' }} />
+                            <textarea value={input} onChange={e => { setInput(e.target.value); handleTyping(); }} onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleSend(); } }} placeholder="Write your message..." className="flex-1 bg-transparent border-none outline-none text-[15px] text-[#EDE7DA] py-2.5 px-2 max-h-[120px] resize-none custom-scrollbar" rows={1} style={{ minHeight: '44px' }} />
                             <button type="button" onClick={startRecording} className="p-2.5 text-[var(--sk-ink-dim)] hover:text-[var(--sk-gold)] hover:bg-[rgba(255,255,255,0.05)] rounded-full transition-colors shrink-0">🎤</button>
                           </>
                         )}
