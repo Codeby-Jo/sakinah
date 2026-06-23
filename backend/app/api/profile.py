@@ -27,7 +27,11 @@ async def create_or_update_profile(
     # Prepare data from Pydantic
     profile_data = profile_in.model_dump()
     profile_data["uid"] = uid
-    profile_data["kyc_verified"] = False  # KYC is a separate flow
+    if existing_profile.exists and "kyc_verified" in existing_profile.to_dict():
+        profile_data["kyc_verified"] = existing_profile.to_dict()["kyc_verified"]
+    else:
+        profile_data["kyc_verified"] = False  # KYC is a separate flow
+        
     profile_data["is_active"] = True
     profile_data["is_banned"] = False
 
