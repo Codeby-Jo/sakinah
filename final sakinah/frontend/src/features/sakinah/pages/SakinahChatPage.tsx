@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { useOnboarding } from '../context/OnboardingContext';
 import { getProgress } from '../services/sakinahProgress';
 import { SakinahLayout, SakinahReportModal, SakinahSecurePhotoViewer } from '../components';
-import { getMyConversations, getConversationMessages, sendMessage, pinMessage, unpinMessage, markCelebrationSeen } from '../services/sakinahApi';
+import { getMyConversations, getConversationMessages, sendMessage, pinMessage, unpinMessage, markCelebrationSeen, submitDecision } from '../services/sakinahApi';
 import type { PinnedMessage, FamilyMember } from '../types/sakinah.types';
 import { storage } from '@/config/firebase.config';
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
@@ -559,16 +559,29 @@ export const SakinahChatPage: React.FC = () => {
       time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
       status: 'sent'
     };
-    
+
     setMessages(prev => [...prev, optimisticMsg]);
     setTimeout(() => bottomRef.current?.scrollIntoView({ behavior: 'smooth' }), 50);
 
     try {
+      // 1. Record the decision as a message in the conversation
       const msg: any = await sendMessage(activeConvo.conversation_id, messageText, decisionType);
       setMessages(prev => prev.map(m => m.id === tempId ? { ...msg, id: msg.id.toString(), status: 'delivered' } : m));
+
+      // 2. Also update the matchflow state on the server
+      const outcomeMap: Record<string, 'PROCEED' | 'PAUSE' | 'CLOSE'> = {
+        decision_proceed: 'PROCEED',
+        decision_pause: 'PAUSE',
+        decision_close: 'CLOSE',
+      };
+      const outcome = outcomeMap[decisionType];
+      if (outcome) {
+        await submitDecision(activeConvo.conversation_id, outcome);
+      }
     } catch (e: any) {
-      console.error(e.message ?? 'Decision send failed');
+      // Remove optimistic message and show real error to user
       setMessages(prev => prev.filter(m => m.id !== tempId));
+      setToast({ message: e.message || 'Failed to send decision. Please try again.', type: 'error' });
     } finally {
       setSending(false);
     }
@@ -580,8 +593,9 @@ export const SakinahChatPage: React.FC = () => {
     try {
       const msg: any = await sendMessage(activeConvo.conversation_id, "Conversation reopened.", "decision_reopen");
       setMessages(prev => [...prev, { ...msg, id: msg.id.toString(), status: 'delivered', sender: 'me', msg_type: 'decision_reopen' }]);
+      await submitDecision(activeConvo.conversation_id, 'PROCEED');
     } catch (e: any) {
-      console.error('Reopen failed');
+      setToast({ message: e.message || 'Failed to reopen conversation. Please try again.', type: 'error' });
     } finally {
       setSending(false);
     }

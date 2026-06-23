@@ -59,11 +59,13 @@ export const SakinahCandidatePage: React.FC = () => {
           setTimeout(() => navigate('/matrimony/matches'), 3000);
         }
       }
-    } catch (err) {
-      console.warn('Backend offline or failed', err);
-      // Assume success for demo if offline
-      setMatchStatus('sent');
-      setTimeout(() => navigate('/matrimony/matches'), 3000);
+    } catch (err: any) {
+      // Show real error — do NOT assume success
+      setErrorFallback(
+        err?.message?.includes('fetch')
+          ? 'Could not connect to the server. Please check your internet and try again.'
+          : (err?.message || 'Failed to express interest. Please try again.')
+      );
     } finally {
       setIsPending(false);
     }
@@ -77,10 +79,12 @@ export const SakinahCandidatePage: React.FC = () => {
         await silentPass(candidate.candidateId);
         navigate('/matrimony/matches');
       }
-    } catch (err) {
-      console.warn('Backend offline or failed', err);
-      setErrorFallback('Backend unreachable.');
-      setTimeout(() => navigate('/matrimony/matches'), 1000);
+    } catch (err: any) {
+      setErrorFallback(
+        err?.message?.includes('fetch')
+          ? 'Could not connect to the server. Please check your internet and try again.'
+          : (err?.message || 'Failed to pass. Please try again.')
+      );
     } finally {
       setIsPending(false);
     }

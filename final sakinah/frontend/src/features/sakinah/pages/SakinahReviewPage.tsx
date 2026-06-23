@@ -52,36 +52,37 @@ export const SakinahReviewPage: React.FC = () => {
   const handleSubmit = async () => {
     setLoading(true);
     setError(null);
-    
-    // ── CRITICAL: Mark onboarding complete in localStorage FIRST ─────────
-    // This must happen before navigate() so that SakinahProgressGuard
-    // sees isOnboardingComplete() === true and lets the user through.
-    setOnboardingComplete(true);
-    setProgress({ 
-      account_completed: true,
-      kyc_completed: true,
-      profile_completed: true,
-      preferences_completed: true,
-      review_completed: true 
-    });
-    // Navigate immediately — don't wait for API calls
-    navigate('/matrimony/dashboard');
-    // ─────────────────────────────────────────────────────────────────────
-    
-    // Fire-and-forget: sync data to backend in background (non-blocking)
+
     try {
-      const { updateSakinahProfile, updateSakinahPreferences, submitKycSandbox } = await import('../services/sakinahApi');
-      
+      const { updateSakinahProfile, updateSakinahPreferences } = await import('../services/sakinahApi');
+
+      // 1. Save profile to server — AWAIT before doing anything else
       await updateSakinahProfile({
         ...profile,
         firstName: profile.firstName || kyc.aadhaarName?.split(' ')[0] || '',
         lastName: profile.lastName || kyc.aadhaarName?.split(' ').slice(1).join(' ') || ''
       });
+
+      // 2. Save preferences to server — AWAIT
       await updateSakinahPreferences(preferences);
-      await submitKycSandbox({ outcome: 'sandbox_pass' });
+
+      // 3. Only mark complete and navigate AFTER both succeed
+      setOnboardingComplete(true);
+      setProgress({
+        account_completed: true,
+        kyc_completed: true,
+        profile_completed: true,
+        preferences_completed: true,
+        review_completed: true
+      });
+
+      navigate('/matrimony/dashboard');
     } catch (err: any) {
-      // Backend sync failed — OK, user is already on dashboard
-      console.warn('Background sync failed (non-critical):', err.message);
+      // Save failed — stay on page, show real error to user
+      const msg = err?.message?.includes('fetch')
+        ? 'Could not connect to the server. Please check your internet and try again.'
+        : (err?.message || 'Failed to save your profile. Please try again.');
+      setError(msg);
     } finally {
       setLoading(false);
     }

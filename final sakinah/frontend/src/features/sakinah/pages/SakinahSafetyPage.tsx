@@ -1,9 +1,8 @@
 import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { 
   SakinahJourneyFrame, 
   SakinahHeader, 
-  DevFallbackBadge, 
   SakinahButton, 
   SakinahSelect, 
   SakinahTextarea 
@@ -12,22 +11,30 @@ import { submitReport } from '../services/sakinahApi';
 
 export const SakinahSafetyPage: React.FC = () => {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  // Real reported user UID comes from URL: /matrimony/safety?uid=USER_ID&name=User+Name
+  const reportedUid = searchParams.get('uid') || '';
+  const reportedName = searchParams.get('name') || 'this user';
+
   const [isPending, setIsPending] = useState(false);
-  const [reportStatus, setReportStatus] = useState<'IDLE' | 'SUCCESS' | 'FALLBACK'>('IDLE');
-  
+  const [reportStatus, setReportStatus] = useState<'IDLE' | 'SUCCESS'>('IDLE');
   const [reasonType, setReasonType] = useState('');
   const [details, setDetails] = useState('');
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
-  const [errorFallback, setErrorFallback] = useState('');
+  const [submitError, setSubmitError] = useState('');
 
   const handleReport = async (e: React.FormEvent) => {
     e.preventDefault();
     setFieldErrors({});
-    setErrorFallback('');
+    setSubmitError('');
 
     const errors: Record<string, string> = {};
     if (!reasonType) errors.reasonType = 'Required';
     if (!details.trim()) errors.details = 'Required';
+    if (!reportedUid) {
+      setSubmitError('No user selected to report. Please go back and try again from their profile.');
+      return;
+    }
 
     if (Object.keys(errors).length > 0) {
       setFieldErrors(errors);
@@ -35,17 +42,19 @@ export const SakinahSafetyPage: React.FC = () => {
     }
 
     setIsPending(true);
-    setReportStatus('IDLE');
     try {
-      await submitReport('mock_target', reasonType, 'HIGH', details);
+      // Use real reportedUid — NOT 'mock_target'
+      await submitReport(reportedUid, reasonType, 'HIGH', details);
       setReportStatus('SUCCESS');
       setReasonType('');
       setDetails('');
-    } catch (err) {
-      console.warn('Backend offline, using dev fallback for submitReport', err);
-      setReportStatus('FALLBACK');
-      setReasonType('');
-      setDetails('');
+    } catch (err: any) {
+      // Show real error — do NOT silently show "success"
+      setSubmitError(
+        err?.message?.includes('fetch')
+          ? 'Could not connect to the server. Please check your internet and try again.'
+          : (err?.message || 'Failed to submit report. Please try again.')
+      );
     } finally {
       setIsPending(false);
     }
@@ -78,19 +87,24 @@ export const SakinahSafetyPage: React.FC = () => {
       </div>
       
       <form className="bg-[rgba(255,255,255,0.02)] border border-[rgba(255,255,255,0.06)] rounded-[13px] p-[16px] space-y-[16px] sk-fx sk-d4" onSubmit={handleReport} noValidate>
-        <h3 className="font-serif text-[18px] text-[#e79a9a] mb-1">Report an Incident</h3>
-        
-        {errorFallback && <DevFallbackBadge message={errorFallback} />}
-        
-        {reportStatus === 'SUCCESS' && (
-          <div className="bg-green-500/10 border border-green-500/30 rounded-[12px] p-3 text-center text-[12px] text-green-400">
-            Report submitted successfully. Our safety team will review this immediately.
+        <h3 className="font-serif text-[18px] text-[#e79a9a] mb-1">
+          Report an Incident{reportedUid ? ` — ${reportedName}` : ''}
+        </h3>
+
+        {/* Real error shown to user */}
+        {submitError && (
+          <div className="bg-red-500/10 border border-red-500/30 rounded-[12px] p-3 text-[13px] text-red-400 flex items-start gap-2">
+            <span>⚠️</span>
+            <div>
+              <div className="font-bold mb-0.5">Submission Failed</div>
+              <div>{submitError}</div>
+            </div>
           </div>
         )}
 
-        {reportStatus === 'FALLBACK' && (
-          <div className="mb-2">
-            <DevFallbackBadge message="Development Preview Mode: Backend unreachable. Report mock processed securely." />
+        {reportStatus === 'SUCCESS' && (
+          <div className="bg-green-500/10 border border-green-500/30 rounded-[12px] p-3 text-center text-[12px] text-green-400">
+            Report submitted successfully. Our safety team will review this immediately.
           </div>
         )}
 

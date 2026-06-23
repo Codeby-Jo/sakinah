@@ -5,6 +5,7 @@ import { CheckCircle, ShieldCheck, SpinnerGap, FilePlus } from '@phosphor-icons/
 import { useOnboarding } from '../context/OnboardingContext';
 import { SakinahButton, SakinahOnboardingShell, SakinahToast, LivenessVerification } from '../components';
 import { setProgress, getProgress } from '../services/sakinahProgress';
+import { submitKycSandbox } from '../services/sakinahApi';
 
 const ALLOWED_EXTENSIONS = ['jpg', 'jpeg', 'png', 'pdf'];
 const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10 MB
@@ -13,7 +14,8 @@ export const SakinahKycPage: React.FC = () => {
   const navigate = useNavigate();
   const { updateKyc, setKycCompleted } = useOnboarding();
   
-  const [kycState, setKycState] = useState<'IDLE' | 'PROCESSING' | 'VERIFIED'>('IDLE');
+  const [kycState, setKycState] = useState<'IDLE' | 'PROCESSING' | 'VERIFIED' | 'ERROR'>('IDLE');
+  const [kycError, setKycError] = useState('');
   
   const currentRole = getProgress().role;
   const isLookingForSomeoneElse = currentRole === 'LOOKING_FOR_SOMEONE_ELSE';
@@ -130,13 +132,25 @@ export const SakinahKycPage: React.FC = () => {
     if (hasError) return;
 
     setKycState('PROCESSING');
-    
-    // Simulate Backend API call
-    await new Promise(r => setTimeout(r, 2000));
-    setKycState('VERIFIED');
-    
+    setKycError('');
+
     try {
-      updateKyc('aadhaarNumber', idNumber); 
+      // Call the real backend KYC endpoint
+      const result = await submitKycSandbox({ outcome: 'sandbox_pass' });
+
+      if (!result || result.status !== 'verified') {
+        // Server returned a non-verified status — show error, don't proceed
+        setKycState('ERROR');
+        setKycError(
+          result?.status === 'rejected'
+            ? 'Your identity could not be verified. Please check your documents and try again.'
+            : 'Verification is under review. You will be notified once approved.'
+        );
+        return;
+      }
+
+      // Real verification passed — update local context
+      updateKyc('aadhaarNumber', idNumber);
       const primaryDoc = dlFile || passportFile || voterIdFile;
       if (primaryDoc && primaryDoc instanceof File) {
         updateKyc('frontImage', URL.createObjectURL(primaryDoc));
@@ -144,23 +158,30 @@ export const SakinahKycPage: React.FC = () => {
       if (profilePhoto && profilePhoto instanceof File) {
         updateKyc('selfieImage', URL.createObjectURL(profilePhoto));
       }
-    } catch (err) {
-      console.error("Non-fatal error creating object URL:", err);
+
+      setKycState('VERIFIED');
+      setKycCompleted(true);
+      const currentRole = getProgress().role || 'SEEKER';
+      setProgress({
+        role: currentRole,
+        account_completed: true,
+        kyc_completed: true,
+        profile_completed: false,
+        preferences_completed: false,
+        review_completed: false
+      });
+
+      // Brief pause to show the verified badge, then proceed
+      setTimeout(() => navigate('/matrimony/profile-creation'), 1200);
+    } catch (err: any) {
+      // Network/server error — show to user clearly
+      setKycState('ERROR');
+      setKycError(
+        err?.message?.includes('fetch')
+          ? 'Could not connect to the server. Please check your internet and try again.'
+          : (err?.message || 'Verification failed. Please try again.')
+      );
     }
-    
-    await new Promise(r => setTimeout(r, 1500));
-    
-    setKycCompleted(true);
-    const currentRole = getProgress().role || 'SEEKER';
-    setProgress({ 
-      role: currentRole, 
-      account_completed: true, 
-      kyc_completed: true, 
-      profile_completed: false, 
-      preferences_completed: false, 
-      review_completed: false 
-    });
-    navigate('/matrimony/profile-creation');
   };
 
   const FileUpload = ({ label, file, error, onChange, required = false, disabled = false }: any) => {
@@ -298,7 +319,22 @@ export const SakinahKycPage: React.FC = () => {
               </div>
 
               <div className="pt-6 mt-4">
-                {kycState === 'IDLE' && (
+                {/* Error banner — shown when backend rejects or network fails */}
+                {kycState === 'ERROR' && (
+                  <motion.div
+                    initial={{ opacity: 0, y: -8 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    className="mb-4 bg-red-500/10 border border-red-500/30 text-red-400 text-[13px] px-4 py-3 rounded-xl flex items-start gap-3"
+                  >
+                    <span className="text-[18px] shrink-0">⚠️</span>
+                    <div>
+                      <div className="font-bold mb-0.5">Verification Failed</div>
+                      <div>{kycError}</div>
+                    </div>
+                  </motion.div>
+                )}
+
+                {(kycState === 'IDLE' || kycState === 'ERROR') && (
                   <SakinahButton
                     type="button"
                     variant="primary"
@@ -306,18 +342,18 @@ export const SakinahKycPage: React.FC = () => {
                     disabled={isLocked}
                     className={`w-full md:w-auto md:min-w-[280px] py-[18px] text-[15px] font-semibold transition-all rounded-[16px] ${isLocked ? 'bg-gray-600 text-gray-400 cursor-not-allowed' : 'bg-gradient-to-r from-[#D4AF37] to-[#F5D77A] text-[#050816] shadow-[0_0_20px_rgba(212,175,55,0.3)] hover:shadow-[0_0_40px_rgba(212,175,55,0.5)]'} border-0 float-right`}
                   >
-                    Submit for Verification →
+                    {kycState === 'ERROR' ? 'Retry Verification →' : 'Submit for Verification →'}
                   </SakinahButton>
                 )}
                 {kycState === 'PROCESSING' && (
                   <div className="w-full md:w-auto md:min-w-[280px] py-[18px] bg-gradient-to-r from-[#D4AF37]/10 to-[#F5D77A]/10 border border-[#D4AF37]/30 rounded-[16px] flex items-center justify-center gap-3 text-[#F5D77A] text-[15px] font-medium float-right">
                     <SpinnerGap className="animate-spin" size={20} />
-                    Validating...
+                    Verifying with server...
                   </div>
                 )}
                 {kycState === 'VERIFIED' && (
                   <div className="w-full md:w-auto md:min-w-[280px] py-[18px] bg-[#4BB543]/10 border border-[#4BB543]/30 rounded-[16px] flex items-center justify-center gap-2 text-[#4BB543] text-[15px] font-bold float-right shadow-[0_0_20px_rgba(75,181,67,0.2)]">
-                    <CheckCircle size={22} weight="fill" /> Verification Complete!
+                    <CheckCircle size={22} weight="fill" /> Verified! Redirecting...
                   </div>
                 )}
                 <div className="clear-both"></div>
