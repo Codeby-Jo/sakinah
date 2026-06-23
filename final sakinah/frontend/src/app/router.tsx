@@ -191,10 +191,9 @@ const SakinahNotificationsPage = lazy(() => import('@/features/sakinah/pages/Sak
 const SakinahSettingsPage = lazy(() => import('@/features/sakinah/pages/SakinahSettingsPage').then(m => ({ default: m.SakinahSettingsPage })));
 const SakinahSupportPage = lazy(() => import('@/features/sakinah/pages/SakinahSupportPage').then(m => ({ default: m.SakinahSupportPage })));
 const SakinahWaliSetupPage = lazy(() => import('@/features/sakinah/pages/SakinahWaliSetupPage').then(m => ({ default: m.SakinahWaliSetupPage })));
+const SakinahSafetyPage = lazy(() => import('@/features/sakinah/pages/SakinahSafetyPage').then(m => ({ default: m.SakinahSafetyPage })));
 const SakinahLoginPage = lazy(() => import('@/features/sakinah/pages/SakinahLoginPage').then(m => ({ default: m.SakinahLoginPage })));
 
-
-// TiswaPage — Coming Soon
 const BarkaLabsPage = lazy(() =>
   import('@/features/barakah-labs/pages/BarakahLabsRoot').then((m) => ({ default: m.BarakahLabsRoot }))
 );
@@ -744,6 +743,7 @@ export const router = createBrowserRouter([
           { path: 'notifications', element: <LazyPage Component={SakinahNotificationsPage} /> },
           { path: 'settings', element: <LazyPage Component={SakinahSettingsPage} /> },
           { path: 'support', element: <LazyPage Component={SakinahSupportPage} /> },
+          { path: 'safety', element: <LazyPage Component={SakinahSafetyPage} /> },
         ],
       },
       // Gated/Protected Wali Routes

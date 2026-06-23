@@ -49,6 +49,47 @@ def map_candidate_to_summary(candidate_id: str, data: dict) -> dict:
         "photoUrl": data.get("photo_url") or data.get("photoUrl") or ""
     }
 
+def build_nis_profile_input(user_id: str, profile_data: dict) -> TwentyQuestionInput:
+    """Helper to convert a Firestore profile document into a clean TwentyQuestionInput for the NIS engine."""
+    clean_data = {
+        "age": profile_data.get("age") or 25,
+        "gender": (profile_data.get("verified_gender") or profile_data.get("gender") or "UNKNOWN").upper(),
+        "location": profile_data.get("city") or profile_data.get("location") or "Unknown",
+        "religious_practice_and_islamic_home": profile_data.get("religious_practice_level") or "MODERATE",
+        "marriage_readiness": "READY",
+        "pref_age_range": {"min": 18, "max": 100},
+        "pref_location": [],
+        "pref_marital_status": "NO_STRICT_PREFERENCE",
+        "pref_height_or_physical_preference": "NO_STRICT_HEIGHT_PREFERENCE",
+        "pref_religious_alignment": "FLEXIBLE",
+        "pref_education_work": [],
+        "family_wali_involvement": "STANDARD",
+        "marriage_timeline": "FLEXIBLE",
+        "strict_dealbreakers": [],
+        "communication_style": "UNKNOWN",
+        "conflict_repair": "UNKNOWN",
+        "boundary_emotional_safety": "UNKNOWN",
+        "lifestyle_finances": "UNKNOWN"
+    }
+    # Overlay any existing data
+    for k, v in profile_data.items():
+        if v is not None:
+            clean_data[k] = v
+            
+    if isinstance(clean_data["gender"], str):
+        clean_data["gender"] = clean_data["gender"].upper()
+            
+    kyc_data = SystemKycData(
+        user_id=user_id,
+        is_verified=profile_data.get("kyc_verified") == True,
+        verified_gender=clean_data["gender"],
+        verified_age=int(clean_data["age"]),
+        is_banned=profile_data.get("sakinah_banned", False),
+        safety_status="CLEAR"
+    )
+    
+    return TwentyQuestionInput(raw_answers=clean_data, system_kyc=kyc_data)
+
 @router.get("/considered-few")
 async def get_considered_few(current_user: dict = Depends(get_current_user)):
     uid = current_user.get("uid")
@@ -139,46 +180,8 @@ async def get_considered_few(current_user: dict = Depends(get_current_user)):
         if cid == uid or cand_data.get("is_banned") == True or cand_data.get("sakinah_banned") == True:
             continue
             
-        cand_data_clean = {
-            "age": cand_data.get("age") or 25,
-            "gender": (cand_data.get("gender") or "female").upper(),
-            "location": cand_data.get("city") or cand_data.get("location") or "Chennai",
-            "religious_practice_and_islamic_home": cand_data.get("religious_practice_level") or "MODERATE",
-            "marriage_readiness": "READY",
-            "pref_age_range": {"min": 18, "max": 100},
-            "pref_location": [],
-            "pref_marital_status": "NO_STRICT_PREFERENCE",
-            "pref_height_or_physical_preference": "NO_STRICT_HEIGHT_PREFERENCE",
-            "pref_religious_alignment": "FLEXIBLE",
-            "pref_education_work": [],
-            "family_wali_involvement": "STANDARD",
-            "marriage_timeline": "FLEXIBLE",
-            "strict_dealbreakers": [],
-            "communication_style": "UNKNOWN",
-            "conflict_repair": "UNKNOWN",
-            "boundary_emotional_safety": "UNKNOWN",
-            "lifestyle_finances": "UNKNOWN"
-        }
-        for k, v in cand_data.items():
-            if v is not None:
-                cand_data_clean[k] = v
-        # Ensure gender is uppercase
-        if "gender" in cand_data_clean and isinstance(cand_data_clean["gender"], str):
-            cand_data_clean["gender"] = cand_data_clean["gender"].upper()
-                
-        cand_kyc = SystemKycData(
-            user_id=cid,
-            is_verified=cand_data.get("kyc_verified") == True,
-            verified_gender=cand_data_clean["gender"],
-            verified_age=int(cand_data_clean["age"]),
-            is_banned=cand_data.get("sakinah_banned", False),  # NIS engine also checks this
-            safety_status="CLEAR"
-        )
-        cand_twenty_input = TwentyQuestionInput(
-            raw_answers=cand_data_clean,
-            system_kyc=cand_kyc
-        )
-        cand_nis_profile, cand_nis_pref = TwentyInputProfileBuilder.build_profiles(cand_twenty_input)
+        cand_input = build_nis_profile_input(cid, cand_data)
+        cand_nis_profile, cand_nis_pref = TwentyInputProfileBuilder.build_profiles(cand_input)
         
         candidates_nis.append(CandidateProfile(
             candidate_id=cid,
@@ -197,24 +200,8 @@ async def get_considered_few(current_user: dict = Depends(get_current_user)):
         else:
             shown_ids.append(idata.get("candidate_id"))
 
-    # 5. Build User NIS objects
-    # Use verified_gender and verified_age locked at KYC time — not self-declared frontend values
-    verified_gender = user_profile.get("verified_gender") or user_data["gender"]
-    verified_age = int(user_profile.get("verified_age") or user_data["age"])
-
-    user_kyc = SystemKycData(
-        user_id=uid,
-        is_verified=user_profile.get("kyc_verified") == True,
-        verified_gender=verified_gender,
-        verified_age=verified_age,
-        is_banned=False,
-        safety_status="CLEAR"
-    )
-    user_twenty_input = TwentyQuestionInput(
-        raw_answers=user_data,
-        system_kyc=user_kyc
-    )
-    user_nis_profile, user_nis_pref = TwentyInputProfileBuilder.build_profiles(user_twenty_input)
+    user_input = build_nis_profile_input(uid, user_profile)
+    user_nis_profile, user_nis_pref = TwentyInputProfileBuilder.build_profiles(user_input)
 
     # Fetch active conversation candidate IDs dynamically so NIS excludes them
     active_convo_ids = []
@@ -606,33 +593,7 @@ async def get_next_batch(current_user: dict = Depends(get_current_user)):
         cid = doc.id
         if cid == uid or cand_data.get("is_banned") == True or cand_data.get("sakinah_banned") == True:
             continue
-        cand_clean = {
-            "age": cand_data.get("age") or 25,
-            "gender": (cand_data.get("gender") or "female").upper(),
-            "location": cand_data.get("city") or cand_data.get("location") or "Chennai",
-            "religious_practice_and_islamic_home": cand_data.get("religious_practice_level") or "MODERATE",
-            "marriage_readiness": "READY",
-            "pref_age_range": {"min": 18, "max": 100},
-            "pref_location": [], "pref_marital_status": "NO_STRICT_PREFERENCE",
-            "pref_height_or_physical_preference": "NO_STRICT_HEIGHT_PREFERENCE",
-            "pref_religious_alignment": "FLEXIBLE", "pref_education_work": [],
-            "family_wali_involvement": "STANDARD", "marriage_timeline": "FLEXIBLE",
-            "strict_dealbreakers": [], "communication_style": "UNKNOWN",
-            "conflict_repair": "UNKNOWN", "boundary_emotional_safety": "UNKNOWN",
-            "lifestyle_finances": "UNKNOWN"
-        }
-        for k, v in cand_data.items():
-            if v is not None:
-                cand_clean[k] = v
-        cand_kyc = SystemKycData(
-            user_id=cid,
-            is_verified=cand_data.get("kyc_verified") == True,
-            verified_gender=cand_clean["gender"],
-            verified_age=int(cand_clean["age"]),
-            is_banned=cand_data.get("sakinah_banned", False),  # NIS engine also checks this
-            safety_status="CLEAR"
-        )
-        cand_input = TwentyQuestionInput(raw_answers=cand_clean, system_kyc=cand_kyc)
+        cand_input = build_nis_profile_input(cid, cand_data)
         cand_profile, cand_pref = TwentyInputProfileBuilder.build_profiles(cand_input)
         candidates_nis.append(CandidateProfile(
             candidate_id=cid,
@@ -640,16 +601,7 @@ async def get_next_batch(current_user: dict = Depends(get_current_user)):
             known_dealbreaker_traits=cand_pref.dealbreakers if hasattr(cand_pref, "dealbreakers") else []
         ))
 
-    # 5. Build user NIS profile
-    user_kyc = SystemKycData(
-        user_id=uid,
-        is_verified=True,
-        verified_gender=user_data["gender"],
-        verified_age=int(user_profile.get("verified_age") or user_data["age"]),
-        is_banned=False,
-        safety_status="CLEAR"
-    )
-    user_input = TwentyQuestionInput(raw_answers=user_data, system_kyc=user_kyc)
+    user_input = build_nis_profile_input(uid, user_profile)
     user_nis_profile, user_nis_pref = TwentyInputProfileBuilder.build_profiles(user_input)
 
     # 6. CandidatePoolContext — batch 2 with all shown/passed/active excluded
