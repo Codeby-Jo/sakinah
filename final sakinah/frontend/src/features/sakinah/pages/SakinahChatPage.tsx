@@ -891,7 +891,7 @@ export const SakinahChatPage: React.FC = () => {
                                 )}
 
                                 {/* Hover Remove Option for Close Decision */}
-                                {msg.msg_type === 'decision_close' && msg.sender === 'me' && isConvoClosed && (
+                                {msg.msg_type === 'decision_close' && isConvoClosed && (
                                   <button 
                                     onClick={handleReopenConvo} 
                                     className="absolute -top-3 -right-3 bg-[#0A0E16] border border-red-500/50 text-red-400 rounded-full w-8 h-8 flex items-center justify-center shadow-lg hover:scale-110 hover:bg-red-500 hover:text-white transition-all z-30 opacity-70 hover:opacity-100 cursor-pointer"
@@ -1013,19 +1013,13 @@ export const SakinahChatPage: React.FC = () => {
               {isConvoClosed ? (
                 <div className="p-6 bg-[#0A0E16] border-t border-[rgba(255,255,255,0.05)] z-20 flex flex-col items-center justify-center text-center">
                   <p className="text-[14px] text-[var(--sk-ink-dim)] mb-4">This conversation has been closed.</p>
-                  {closedByMe ? (
-                    <button 
-                      onClick={handleReopenConvo} 
-                      disabled={sending}
-                      className="px-6 py-2.5 rounded-xl border border-[var(--sk-gold)] text-[var(--sk-gold)] text-[13px] font-bold tracking-wider uppercase hover:bg-[var(--sk-gold)] hover:text-[#0A0E16] transition-colors disabled:opacity-50"
-                    >
-                      {sending ? 'Reopening...' : 'Reopen Conversation'}
-                    </button>
-                  ) : (
-                    <span className="px-6 py-2.5 rounded-xl border border-red-500/20 text-red-400 text-[13px] font-bold tracking-wider uppercase bg-[#111826]">
-                      Waiting for them to reopen
-                    </span>
-                  )}
+                  <button 
+                    onClick={handleReopenConvo} 
+                    disabled={sending}
+                    className="px-6 py-2.5 rounded-xl border border-[var(--sk-gold)] text-[var(--sk-gold)] text-[13px] font-bold tracking-wider uppercase hover:bg-[var(--sk-gold)] hover:text-[#0A0E16] transition-colors disabled:opacity-50"
+                  >
+                    {sending ? 'Reopening...' : 'Reopen Conversation'}
+                  </button>
                 </div>
               ) : isWaliViewOnly ? (
                 <div className="p-4 md:p-6 bg-[#0A0E16] border-t border-[rgba(255,255,255,0.05)] z-20 text-center">

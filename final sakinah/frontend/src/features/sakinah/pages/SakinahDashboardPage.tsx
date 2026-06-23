@@ -22,12 +22,15 @@ import {
   MagnifyingGlass,
   Copy,
   CheckCircle,
-  CaretRight
+  CaretRight,
+  Camera
 } from '@phosphor-icons/react';
-import { getTrustScore, getProfileAnalytics, getAnalyticsSummary, getConsideredFew, getSakinahProfile } from '../services/sakinahApi';
+import { getTrustScore, getProfileAnalytics, getAnalyticsSummary, getConsideredFew, getSakinahProfile, updateSakinahProfile } from '../services/sakinahApi';
 import type { TrustScoreData, ProfileAnalytics } from '../types/sakinah.types';
 import { getProgress } from '../services/sakinahProgress';
 import { useOnboarding } from '../context/OnboardingContext';
+import { storage, auth } from '@/config/firebase.config';
+import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 
 const DashboardSkeleton = () => (
   <div className="space-y-8 animate-pulse relative z-10">
@@ -64,11 +67,10 @@ export const SakinahDashboardPage: React.FC = () => {
   const p = getProgress();
   const isLookingForSomeoneElse = p.role === 'LOOKING_FOR_SOMEONE_ELSE';
   const isWaliViewOnly = p.role === 'WALI_VIEW';
-  const { profile } = useOnboarding();
+  const { profile, updateProfile } = useOnboarding();
   const [reportingProfile, setReportingProfile] = useState<{id: string, name: string} | null>(null);
   const [copied, setCopied] = useState(false);
-  
-
+  const [uploadingImage, setUploadingImage] = useState(false);
   
   const [trustScore, setTrustScore] = useState<TrustScoreData | null>(null);
   const [analytics, setAnalytics] = useState<ProfileAnalytics | null>(null);
@@ -77,7 +79,27 @@ export const SakinahDashboardPage: React.FC = () => {
   const [serverProfile, setServerProfile] = useState<any>(null);
   const [loading, setLoading] = useState(true);
 
-
+  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    
+    setUploadingImage(true);
+    try {
+      const uid = auth.currentUser?.uid || serverProfile?.uid || Date.now().toString();
+      const fileRef = ref(storage, `public_profiles/${uid}/profile.jpg`);
+      await uploadBytes(fileRef, file);
+      const downloadURL = await getDownloadURL(fileRef);
+      // Append a timestamp to the URL to bypass browser cache
+      const cacheBustedURL = `${downloadURL}${downloadURL.includes('?') ? '&' : '?'}t=${Date.now()}`;
+      await updateSakinahProfile({ photo_url: cacheBustedURL });
+      updateProfile('photoUrl', cacheBustedURL);
+      setServerProfile((prev: any) => prev ? { ...prev, photo_url: cacheBustedURL } : prev);
+    } catch (err) {
+      console.error('Error uploading photo', err);
+    } finally {
+      setUploadingImage(false);
+    }
+  };
 
   // Load Data
   useEffect(() => {
@@ -178,7 +200,7 @@ export const SakinahDashboardPage: React.FC = () => {
               )}
             </h1>
             <div className="flex items-center gap-3">
-              <p className="text-[14px] md:text-[16px] text-[var(--sk-ink-dim)] font-light">Your Premium Matrimony Journey</p>
+              <p className="text-[14px] md:text-[16px] text-[var(--sk-ink-dim)] font-light">Your Matrimony Journey</p>
               {(isLookingForSomeoneElse || isWaliViewOnly) && (
                 <span className="px-3 py-1 bg-gradient-to-r from-[rgba(212,175,55,0.1)] to-[rgba(212,175,55,0.05)] border border-[var(--sk-gold)] text-[var(--sk-gold)] text-[12px] font-bold tracking-widest uppercase rounded-full flex items-center gap-1.5 shadow-[0_0_15px_rgba(212,175,55,0.15)]">
                   <span className="text-[14px]">🛡️</span> WALI VERIFIED
@@ -202,14 +224,31 @@ export const SakinahDashboardPage: React.FC = () => {
                 <motion.div variants={itemVariants} className="sk-card gold-edge flex flex-col md:flex-row items-center gap-8 group relative overflow-hidden">
                   
                   <div className="relative shrink-0 z-10">
-                    <div className="w-32 h-32 rounded-full overflow-hidden border-2 border-[#D4AF37] shadow-[0_0_20px_rgba(212,175,55,0.2)]">
-                      {profile?.profilePhoto ? (
-                         <img src={profile.profilePhoto} alt="Profile" className="w-full h-full object-cover" />
+                    <div className="w-32 h-32 rounded-full overflow-hidden border-2 border-[#D4AF37] shadow-[0_0_20px_rgba(212,175,55,0.2)] relative group/photo cursor-pointer" onClick={() => {
+                        if (uploadingImage) return;
+                        const input = document.createElement('input');
+                        input.type = 'file';
+                        input.accept = 'image/*';
+                        input.onchange = handleImageUpload as any;
+                        input.click();
+                      }}>
+                      {(profile?.photoUrl || serverProfile?.photo_url) ? (
+                         <img src={profile?.photoUrl || serverProfile?.photo_url} alt="Profile" className="w-full h-full object-cover transition-opacity duration-300 group-hover/photo:opacity-40" />
                       ) : (
-                         <div className="w-full h-full bg-gradient-to-br from-[#D4AF37] to-[#A37B31] flex items-center justify-center text-[#0A0E16] text-[48px] font-serif font-bold">
+                         <div className="w-full h-full bg-gradient-to-br from-[#D4AF37] to-[#A37B31] flex items-center justify-center text-[#0A0E16] text-[48px] font-serif font-bold transition-opacity duration-300 group-hover/photo:opacity-40">
                             {profile?.firstName ? profile.firstName.charAt(0).toUpperCase() : (serverProfile?.first_name ? serverProfile.first_name.charAt(0).toUpperCase() : (serverProfile?.fullName ? serverProfile.fullName.charAt(0).toUpperCase() : 'S'))}
                          </div>
                       )}
+                      <div className="absolute inset-0 bg-black/50 flex flex-col items-center justify-center opacity-0 group-hover/photo:opacity-100 transition-opacity duration-300">
+                        {uploadingImage ? (
+                           <div className="w-6 h-6 border-2 border-[var(--sk-gold)] border-t-transparent rounded-full animate-spin"></div>
+                        ) : (
+                           <>
+                             <span className="text-[24px] text-[var(--sk-gold)] mb-1"><Camera weight="duotone" /></span>
+                             <span className="text-[10px] font-bold tracking-wider uppercase text-white">Upload</span>
+                           </>
+                        )}
+                      </div>
                     </div>
                   </div>
                   
@@ -225,7 +264,11 @@ export const SakinahDashboardPage: React.FC = () => {
                       )}
                     </div>
                     <p className="text-[13px] text-[var(--sk-ink-dim)] leading-relaxed max-w-[450px] mb-4">
-                      Your premium matrimonial profile is active. Keep your preferences updated to receive the most accurate recommendations.
+                      {profile?.age || serverProfile?.age ? `${profile?.age || serverProfile?.age} yr old ` : ''}
+                      {profile?.gender || serverProfile?.gender ? `${(profile?.gender || serverProfile?.gender).toLowerCase()} ` : ''}
+                      {profile?.location || serverProfile?.location || serverProfile?.city ? `from ${profile?.location || serverProfile?.location || serverProfile?.city}. ` : ''}
+                      {profile?.education_occupation || serverProfile?.education_occupation ? `${profile?.education_occupation || serverProfile?.education_occupation}, ` : ''}
+                      {profile?.marital_status || serverProfile?.marital_status ? `${profile?.marital_status || serverProfile?.marital_status}.` : ''}
                     </p>
                     <div className="flex flex-wrap gap-2 justify-center md:justify-start">
                       {[

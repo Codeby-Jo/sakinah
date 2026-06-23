@@ -90,56 +90,20 @@ def build_nis_profile_input(user_id: str, profile_data: dict) -> TwentyQuestionI
     
     return TwentyQuestionInput(raw_answers=clean_data, system_kyc=kyc_data)
 
-@router.get("/considered-few")
-async def get_considered_few(current_user: dict = Depends(get_current_user)):
-    uid = current_user.get("uid")
-    db = get_db()
-    
-    # 1. Check if considered set already exists in Firestore for today
-    con_set_ref = db.collection("considered_sets").document(uid)
-    con_set_doc = con_set_ref.get()
-    
-    if con_set_doc.exists:
-        c_set_data = con_set_doc.to_dict()
-        candidate_ids = c_set_data.get("candidate_ids", [])
-        
-        candidates_list = []
-        for cid in candidate_ids:
-            c_doc = db.collection("profiles").document(cid).get()
-            if c_doc.exists:
-                candidates_list.append(map_candidate_to_summary(cid, c_doc.to_dict()))
-                
-        if candidates_list:
-            return {
-                "status": "FOUND",
-                "candidates": candidates_list
-            }
 
-    # 2. Get current user's profile — enforce KYC gate and Sakinah ban check
+def _prepare_matchmaking_context(uid: str, db, is_next_batch: bool = False):
     user_profile_doc = db.collection("profiles").document(uid).get()
     if not user_profile_doc.exists:
-        raise HTTPException(
-            status_code=403,
-            detail="Profile not found. Please complete your profile before accessing matches."
-        )
+        raise HTTPException(status_code=403, detail="Profile not found. Please complete your profile before accessing matches.")
 
     user_profile = user_profile_doc.to_dict()
 
-    # KYC gate — block unverified users before calling NIS
     if not user_profile.get("kyc_verified"):
-        raise HTTPException(
-            status_code=403,
-            detail="Identity verification (KYC) is required before accessing matches."
-        )
+        raise HTTPException(status_code=403, detail="Identity verification (KYC) is required before accessing matches.")
 
-    # Sakinah ban gate — banned from Sakinah only, not full account
     if user_profile.get("sakinah_banned"):
-        raise HTTPException(
-            status_code=403,
-            detail="Your account has been removed from Sakinah due to community safety reports."
-        )
+        raise HTTPException(status_code=403, detail="Your account has been removed from Sakinah due to community safety reports.")
         
-    # Ensure required fields for TwentyQuestionInput have safe defaults if not present
     user_data = {
         "age": user_profile.get("age") or 25,
         "gender": (user_profile.get("gender") or "male").upper(),
@@ -160,14 +124,20 @@ async def get_considered_few(current_user: dict = Depends(get_current_user)):
         "boundary_emotional_safety": "UNKNOWN",
         "lifestyle_finances": "UNKNOWN"
     }
-    # Merge existing profile keys
+
     for k, v in user_profile.items():
         if v is not None:
             user_data[k] = v
+            
+    pref_doc = db.collection("preferences").document(uid).get()
+    if pref_doc.exists:
+        for k, v in pref_doc.to_dict().items():
+            if v is not None:
+                user_data[k] = v
+
     if "gender" in user_data and isinstance(user_data["gender"], str):
         user_data["gender"] = user_data["gender"].upper()
 
-    # 3. Fetch Candidate Pool
     opposite_gender = "female" if user_data["gender"].lower() == "male" else "male"
     candidates_docs = db.collection("profiles").where("gender", "==", opposite_gender).get()
     
@@ -176,10 +146,15 @@ async def get_considered_few(current_user: dict = Depends(get_current_user)):
         cand_data = doc.to_dict()
         cid = doc.id
         
-        # Don't match with self, banned users, or Sakinah-banned users
         if cid == uid or cand_data.get("is_banned") == True or cand_data.get("sakinah_banned") == True:
             continue
             
+        cand_pref_doc = db.collection("preferences").document(cid).get()
+        if cand_pref_doc.exists:
+            for k, v in cand_pref_doc.to_dict().items():
+                if v is not None:
+                    cand_data[k] = v
+                    
         cand_input = build_nis_profile_input(cid, cand_data)
         cand_nis_profile, cand_nis_pref = TwentyInputProfileBuilder.build_profiles(cand_input)
         
@@ -189,21 +164,21 @@ async def get_considered_few(current_user: dict = Depends(get_current_user)):
             known_dealbreaker_traits=cand_nis_pref.dealbreakers if hasattr(cand_nis_pref, "dealbreakers") else []
         ))
         
-    # 4. Get User Shown/Passed History
+    interactions = db.collection("candidate_interactions").where("seeker_id", "==", uid).get()
     shown_ids = []
     passed_ids = []
-    interactions = db.collection("candidate_interactions").where("seeker_id", "==", uid).get()
-    for doc in interactions:
-        idata = doc.to_dict()
-        if idata.get("status") == "PASS":
+    mutual_match_ids = []
+    
+    for inter in interactions:
+        idata = inter.to_dict()
+        st = idata.get("status")
+        if st in ["PASS", "REJECTED"]:
             passed_ids.append(idata.get("candidate_id"))
+        elif st in ["MATCHED", "MUTUAL_INTEREST"]:
+            mutual_match_ids.append(idata.get("candidate_id"))
         else:
             shown_ids.append(idata.get("candidate_id"))
 
-    user_input = build_nis_profile_input(uid, user_profile)
-    user_nis_profile, user_nis_pref = TwentyInputProfileBuilder.build_profiles(user_input)
-
-    # Fetch active conversation candidate IDs dynamically so NIS excludes them
     active_convo_ids = []
     try:
         convs_a = db.collection("conversations").where("seeker_a_id", "==", uid).where("status", "==", "ACTIVE").get()
@@ -216,67 +191,92 @@ async def get_considered_few(current_user: dict = Depends(get_current_user)):
     except Exception:
         pass
 
+    user_input = build_nis_profile_input(uid, user_data)
+    user_nis_profile, user_nis_pref = TwentyInputProfileBuilder.build_profiles(user_input)
+
     pool_context = CandidatePoolContext(
         seeker_id=uid,
         active_conversations_count=len(active_convo_ids),
         max_active_conversations=2,
-        shown_candidate_ids=shown_ids,
-        passed_candidate_ids=passed_ids,
-        blocked_candidate_ids=[],
-        active_conversation_candidate_ids=active_convo_ids,
-        max_considered_candidates=3
+        previously_shown_ids=shown_ids,
+        passed_ids=passed_ids,
+        mutual_match_ids=mutual_match_ids,
+        blocked_ids=[],
+        batch_size=10,
+        batch_offset=1 if is_next_batch else 0
     )
+    
+    return user_nis_profile, user_nis_pref, candidates_nis, pool_context
 
-    # 6. Run Engine
-    result = NISMatchmakingService.generate_considered_few(
-        current_user=user_nis_profile,
-        match_preference=user_nis_pref,
-        candidates=candidates_nis,
-        pool_context=pool_context
+@router.get("/considered-few")
+async def get_considered_few(current_user: dict = Depends(get_current_user)):
+    uid = current_user.get("uid")
+    db = get_db()
+    
+    con_set_ref = db.collection("considered_sets").document(uid)
+    con_set_doc = con_set_ref.get()
+    
+    if con_set_doc.exists:
+        c_set_data = con_set_doc.to_dict()
+        candidate_ids = c_set_data.get("candidate_ids", [])
+        
+        candidates_list = []
+        for cid in candidate_ids:
+            c_doc = db.collection("profiles").document(cid).get()
+            if c_doc.exists:
+                candidates_list.append(map_candidate_to_summary(cid, c_doc.to_dict()))
+                
+        if candidates_list:
+            return {"status": "FOUND", "candidates": candidates_list}
+
+    user_nis_profile, user_nis_pref, candidates_nis, pool_context = _prepare_matchmaking_context(uid, db, is_next_batch=False)
+
+    service = NISMatchmakingService()
+    results = service.generate_considered_few(
+        seeker_profile=user_nis_profile,
+        seeker_preferences=user_nis_pref,
+        candidate_pool=candidates_nis,
+        context=pool_context
+    )
+    
+    con_set_ref.set({
+        "seeker_id": uid,
+        "candidate_ids": [r.candidate_id for r in results],
+        "generated_at": datetime.utcnow().isoformat(),
+        "expires_at": (datetime.utcnow() + timedelta(hours=24)).isoformat()
+    })
+    
+    candidates_list = []
+    for r in results:
+        c_doc = db.collection("profiles").document(r.candidate_id).get()
+        if c_doc.exists:
+            candidates_list.append(map_candidate_to_summary(r.candidate_id, c_doc.to_dict()))
+            
+    return {"status": "FOUND" if candidates_list else "NO_SUITABLE_MATCHES_RIGHT_NOW", "candidates": candidates_list}
+
+@router.get("/next-batch")
+async def get_next_batch(current_user: dict = Depends(get_current_user)):
+    uid = current_user.get("uid")
+    db = get_db()
+    
+    user_nis_profile, user_nis_pref, candidates_nis, pool_context = _prepare_matchmaking_context(uid, db, is_next_batch=True)
+    
+    service = NISMatchmakingService()
+    results = service.generate_considered_few(
+        seeker_profile=user_nis_profile,
+        seeker_preferences=user_nis_pref,
+        candidate_pool=candidates_nis,
+        context=pool_context
     )
     
     candidates_list = []
-    candidate_ids = []
-    candidate_names = {}
-    
-    # Get seeker name
-    user_auth_doc = db.collection("users").document(uid).get()
-    seeker_name = user_auth_doc.to_dict().get("name", "Seeker") if user_auth_doc.exists else "Seeker"
-    
-    # Extract candidates
-    for c in result.get("candidates", []):
-        cid = c["candidate_id"]
-        candidate_ids.append(cid)
-        c_doc = db.collection("profiles").document(cid).get()
-        c_auth_doc = db.collection("users").document(cid).get()
-        c_name = c_auth_doc.to_dict().get("name", "Candidate") if c_auth_doc.exists else "Candidate"
-        candidate_names[cid] = c_name
-        
+    for r in results:
+        c_doc = db.collection("profiles").document(r.candidate_id).get()
         if c_doc.exists:
-            summary = map_candidate_to_summary(cid, c_doc.to_dict())
-            summary["mutual_interest"] = False # Not mutual in considered few yet
-            summary["photoUrl"] = "https://images.unsplash.com/photo-1542204165-65bf26472b9b?auto=format&fit=crop&q=80&w=800" # Security: dummy photo
-            candidates_list.append(summary)
+            candidates_list.append(map_candidate_to_summary(r.candidate_id, c_doc.to_dict()))
             
-    # Save considered set — full metadata required by integration guide
-    if candidate_ids:
-        con_set_ref.set({
-            "considered_set_id": uid,
-            "seeker_id": uid,
-            "seeker_name": seeker_name,
-            "candidate_ids": candidate_ids,
-            "candidate_names": candidate_names,
-            "batch_number": 1,
-            "status": "ACTIVE",
-            "source": "NIS",
-            "created_at": datetime.utcnow().isoformat(),
-            "expires_at": (datetime.utcnow() + timedelta(hours=24)).isoformat()
-        })
-        
-    return {
-        "status": "FOUND" if candidates_list else "NO_SUITABLE_MATCHES_RIGHT_NOW",
-        "candidates": candidates_list
-    }
+    return {"status": "FOUND" if candidates_list else "NO_SUITABLE_MATCHES_RIGHT_NOW", "candidates": candidates_list}
+
 
 @router.get("/candidates/{candidate_id}")
 async def get_candidate(candidate_id: str, current_user: dict = Depends(get_current_user)):

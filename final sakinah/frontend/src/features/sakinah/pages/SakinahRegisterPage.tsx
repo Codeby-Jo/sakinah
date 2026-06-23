@@ -125,14 +125,6 @@ export const SakinahRegisterPage: React.FC = () => {
     setLoading(true);
     setApiError(null);
     try {
-      // Save to context
-      setAuth({
-        ...auth,
-        email: data.email,
-        password: data.password,
-        confirmPassword: data.confirmPassword
-      });
-
       const res = await registerSakinah({
         email: data.email,
         password: data.password,
@@ -141,6 +133,14 @@ export const SakinahRegisterPage: React.FC = () => {
       
       const currentRole = getProgress().role || 'SEEKER';
       clearProgress(); // CLEAR OLD STATE FIRST
+      
+      // Save to context AFTER clearProgress so it doesn't get wiped
+      setAuth({
+        ...auth,
+        email: data.email,
+        password: data.password,
+        confirmPassword: data.confirmPassword
+      });
       
       if (res?.access_token) localStorage.setItem('sakinah_token', res.access_token);
       
@@ -151,6 +151,15 @@ export const SakinahRegisterPage: React.FC = () => {
       console.info('[Sakinah] Backend unavailable — forcing navigation to KYC.');
       const currentRole = getProgress().role || 'SEEKER';
       clearProgress();
+      
+      // Save to context AFTER clearProgress so it doesn't get wiped
+      setAuth({
+        ...auth,
+        email: data.email,
+        password: data.password,
+        confirmPassword: data.confirmPassword
+      });
+
       setProgress({ role: currentRole, account_completed: true });
       navigate('/matrimony/kyc');
     } finally {

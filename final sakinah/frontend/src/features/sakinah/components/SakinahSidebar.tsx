@@ -73,7 +73,6 @@ export const SakinahSidebar: React.FC<{ isExpanded: boolean; setIsExpanded: (v: 
             {isExpanded && (
               <motion.div initial={{ opacity: 0, x: -10 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -10, display: 'none' }} className="whitespace-nowrap">
                 <h2 className="font-serif text-[22px] text-[var(--sk-ink)] leading-none">Sakinah</h2>
-                <span className="text-[9px] text-[var(--sk-gold-dim)] uppercase tracking-[0.2em]">Premium</span>
               </motion.div>
             )}
           </AnimatePresence>

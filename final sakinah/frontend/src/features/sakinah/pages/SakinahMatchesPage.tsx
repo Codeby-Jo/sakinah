@@ -2,6 +2,7 @@ import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { SakinahLayout, SakinahHeader, SakinahReportModal, SakinahMutualMatchCelebration } from '../components';
+import { useOnboarding } from '../context/OnboardingContext';
 import { getConsideredFew, expressInterest, silentPass, getMyConversations, saveProfile } from '../services/sakinahApi';
 import { getProgress } from '../services/sakinahProgress';
 import { ShieldCheck, Star, Flag, Sparkle, CheckCircle, Check, Moon } from '@phosphor-icons/react';

@@ -124,7 +124,6 @@ export const SakinahOnboardingShell: React.FC<Props> = ({ step, children, title,
             </div>
             <div>
               <h2 className="font-serif text-[24px] text-white leading-none tracking-wide">Sakinah</h2>
-              <span className="text-[10px] text-[#F5D77A]/60 uppercase tracking-[0.25em]">Premium Matrimony</span>
             </div>
           </motion.div>
 

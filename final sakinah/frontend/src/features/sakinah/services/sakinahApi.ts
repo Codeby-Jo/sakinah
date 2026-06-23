@@ -511,3 +511,7 @@ export const setTypingStatus = async (conversationId: string) => {
   }
 };
 
+
+export async function getViews() {
+  return await fetchNisApi('/views');
+}

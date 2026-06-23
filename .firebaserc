@@ -1,5 +1,8 @@
 {
   "projects": {
-    "default": "sakinah-ca48c"
-  }
+    "default": "sakinah-ca48c",
+    "staging": "sakinah-11eb8"
+  },
+  "targets": {},
+  "etags": {}
 }
