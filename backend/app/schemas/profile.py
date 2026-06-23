@@ -3,7 +3,7 @@ from typing import List, Optional
 
 class ProfileCreate(BaseModel):
     # Core 7 Profile Basics
-    age: str = "25"
+    age: int = 25
     gender: str = "male"
     location: str = ""
     marital_status: str = "never_married"

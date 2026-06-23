@@ -62,11 +62,10 @@ async def create_or_update_profile(
     profile_data["fullName"] = f"{profile_in.firstName or ''} {profile_in.lastName or ''}".strip() or "Seeker"
     profile_data["first_name"] = profile_in.firstName or "Seeker"
     
-    # Keep age as string to match ProfileResponse schema (age: str)
     try:
-        profile_data["age"] = str(int(profile_in.age))
+        profile_data["age"] = int(profile_in.age)
     except Exception:
-        profile_data["age"] = "25"
+        profile_data["age"] = 25
             
     profile_data["location"] = profile_in.location
     profile_data["city"] = profile_in.location
