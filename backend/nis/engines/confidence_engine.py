@@ -43,7 +43,7 @@ def decide_visibility(
         return {"status": "BLOCKED", "reasons": reasons}
 
     soft_mismatches = preference_result.get("soft_mismatches", [])
-    if len(soft_mismatches) >= 50: # arbitrary high number for "too many"
+    if len(soft_mismatches) >= 5:
         reasons.append("Blocked due to too many soft mismatches.")
         return {"status": "BLOCKED", "reasons": reasons}
 
