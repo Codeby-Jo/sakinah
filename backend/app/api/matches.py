@@ -436,6 +436,10 @@ async def express_interest(candidate_id: str, current_user: dict = Depends(get_c
             "created_at": datetime.utcnow().isoformat()
         })
         
+        # Update interactions to MATCHED so they don't appear in pending counts
+        db.collection("candidate_interactions").document(interaction_id).update({"status": "MATCHED"})
+        db.collection("candidate_interactions").document(opp_interaction_id).update({"status": "MATCHED"})
+        
     if is_mutual:
         return {
             "status": "mutual_interest",
