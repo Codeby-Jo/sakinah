@@ -179,8 +179,11 @@ async def get_analytics_summary(current_user: dict = Depends(get_current_user)):
     # Count saved profiles
     saved_docs = db.collection("saved_profiles").where("seeker_id", "==", uid).get()
 
+    # Count profile views
+    views_docs = db.collection("profile_views").where("profile_id", "==", uid).get()
+
     return {
-        "totalViews": 0,        # Profile views — requires view tracking (future)
+        "totalViews": len(views_docs),
         "interests": len(interests_recv) + len(interests_sent),
         "messages": len(list(convs_a) + list(convs_b)),
         "saved": len(saved_docs)

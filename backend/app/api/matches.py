@@ -286,6 +286,16 @@ async def get_candidate(candidate_id: str, current_user: dict = Depends(get_curr
     if not c_doc.exists:
         raise HTTPException(status_code=404, detail="Candidate not found")
         
+    # Record the profile view
+    if uid != candidate_id:
+        view_id = f"{uid}_{candidate_id}"
+        from datetime import datetime
+        db.collection("profile_views").document(view_id).set({
+            "viewer_id": uid,
+            "profile_id": candidate_id,
+            "viewed_at": datetime.utcnow().isoformat()
+        }, merge=True)
+        
     cand_int = db.collection("candidate_interactions").document(f"{candidate_id}_{uid}").get()
     seek_int = db.collection("candidate_interactions").document(f"{uid}_{candidate_id}").get()
     
@@ -734,3 +744,38 @@ async def get_interests(current_user: dict = Depends(get_current_user)):
         "pending": sent,
         "rejected": rejected
     }
+
+@router.get("/views")
+async def get_views(current_user: dict = Depends(get_current_user)):
+    uid = current_user.get("uid")
+    db = get_db()
+    
+    views_docs = db.collection("profile_views").where("profile_id", "==", uid).order_by("viewed_at", direction=firestore.Query.DESCENDING).get()
+    
+    viewers = []
+    for doc in views_docs:
+        viewer_id = doc.to_dict().get("viewer_id")
+        viewed_at = doc.to_dict().get("viewed_at")
+        
+        user_doc = db.collection("profiles").document(viewer_id).get()
+        if user_doc.exists:
+            ud = user_doc.to_dict()
+            first_name = ud.get("firstName") or ud.get("first_name") or "User"
+            
+            # Format date friendly
+            try:
+                dt = datetime.fromisoformat(viewed_at)
+                date_str = dt.strftime("%b %d, %Y")
+            except:
+                date_str = "Recently"
+                
+            viewers.append({
+                "id": viewer_id,
+                "name": first_name,
+                "age": ud.get("age", 25),
+                "city": ud.get("city", ud.get("location", "Unknown")),
+                "date": date_str,
+                "initial": first_name[0].upper()
+            })
+            
+    return {"views": viewers}
