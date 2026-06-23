@@ -1,41 +1,52 @@
 import firebase_admin
 from firebase_admin import credentials, firestore, auth
 import os
+import sys
 from dotenv import load_dotenv
 
 load_dotenv()
 
-# Initialize Firebase Admin SDK
-# In development, it uses the GOOGLE_APPLICATION_CREDENTIALS env var or a service account JSON
-# Since we shouldn't commit secrets, ensure you have a throwaway Firebase project set up.
-
 def init_firebase():
-    if not firebase_admin._apps:
-        # Initialize with default credentials or a specific cert if provided
-        try:
-            # If FIREBASE_CERT_PATH is in .env, use it
-            cert_path = os.getenv("FIREBASE_CERT_PATH")
-            if cert_path and os.path.exists(cert_path):
-                cred = credentials.Certificate(cert_path)
-                firebase_admin.initialize_app(cred)
-            elif os.path.exists("firebase-credentials.json"):
-                cred = credentials.Certificate("firebase-credentials.json")
-                firebase_admin.initialize_app(cred)
-            else:
-                # Default init (relies on GOOGLE_APPLICATION_CREDENTIALS)
-                firebase_admin.initialize_app()
-            print("Firebase Admin initialized successfully.")
-        except Exception as e:
-            print(f"Warning: Firebase Admin initialization failed: {e}")
+    """
+    Initialize Firebase Admin SDK.
+    FAILS FAST — the server will NOT start if Firebase cannot be initialized.
+    A silent Firebase failure would make every request fail with an opaque error;
+    it is far safer to refuse to start and surface the real problem immediately.
+    """
+    if firebase_admin._apps:
+        return  # Already initialized
 
-# Get Firestore DB instance
+    try:
+        cert_path = os.getenv("FIREBASE_CERT_PATH")
+        if cert_path and os.path.exists(cert_path):
+            cred = credentials.Certificate(cert_path)
+            firebase_admin.initialize_app(cred)
+        elif os.path.exists("firebase-credentials.json"):
+            cred = credentials.Certificate("firebase-credentials.json")
+            firebase_admin.initialize_app(cred)
+        else:
+            # Relies on GOOGLE_APPLICATION_CREDENTIALS env var
+            firebase_admin.initialize_app()
+
+        # Smoke-test: confirm Firestore is reachable
+        firestore.client()
+        print("✅ Firebase Admin initialized and Firestore connection verified.")
+
+    except Exception as e:
+        print(f"\n❌ FATAL: Firebase Admin initialization failed: {e}", file=sys.stderr)
+        print("   The server cannot start without a valid Firebase connection.", file=sys.stderr)
+        print("   Fix the credentials and restart.\n", file=sys.stderr)
+        sys.exit(1)  # Hard stop — do NOT boot a broken server
+
+
 def get_db():
+    """Return the Firestore client. Assumes init_firebase() already succeeded."""
     return firestore.client()
 
-# Verify Firebase Auth Token
+
 def verify_token(token: str):
+    """Verify a Firebase Auth ID token. Returns decoded claims or None."""
     try:
-        decoded_token = auth.verify_id_token(token)
-        return decoded_token
-    except Exception as e:
+        return auth.verify_id_token(token)
+    except Exception:
         return None

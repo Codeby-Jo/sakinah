@@ -448,56 +448,43 @@ export async function reportProfile(profileName: string, reason: string, details
 // ============================================================================
 
 /**
- * Simulates strict backend verification for Wali access.
- * In production, this verifies `entered_email == authorized_wali_email`.
+ * Verifies Wali access by calling the real backend.
+ * The backend checks that the submitted email matches the authorized
+ * wali contact registered by the Seeker during onboarding.
+ * NO email bypass, NO localStorage authorization.
  */
 export async function verifyWaliAccess(email: string) {
-  try {
-    const response = await fetch(`${API_BASE}/wali/verify`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ email }),
-    });
+  const token = localStorage.getItem('sakinah_token');
+  const response = await fetch(`${API_BASE}/wali/verify`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
+    },
+    body: JSON.stringify({ email }),
+  });
 
-    if (!response.ok) {
-      throw new Error('Unauthorized');
-    }
-    return await response.json();
-  } catch (err) {
-    // Test email bypass for easy demonstration
-    if (email.toLowerCase() === 'r.joshuaraja@gmail.com' || email.toLowerCase() === 'wali@test.com') {
-      return { success: true, token: `wali_session_${Date.now()}` };
-    }
-
-    // Demo mode fallback: verify against localStorage (simulating backend check)
-    const stored = localStorage.getItem('sakinah_onboarding_wali');
-    if (stored) {
-      try {
-        const waliDetails = JSON.parse(stored);
-        if (Array.isArray(waliDetails)) {
-          const authorizedEmails = waliDetails
-            .filter(w => w.email)
-            .map(w => w.email.toLowerCase());
-            
-          if (authorizedEmails.includes(email.toLowerCase())) {
-            return { success: true, token: `wali_session_${Date.now()}` };
-          }
-        }
-      } catch { /* ignore */ }
-    }
-    
-    throw new Error('This email is not authorized by the respective user.');
+  if (!response.ok) {
+    const err = await response.json().catch(() => ({}));
+    throw new Error(err.detail || 'This email is not authorized as a Wali for any account.');
   }
+
+  return await response.json();
 }
 
 /**
- * Simulates sending a login notification to the Seeker when Wali accesses the account.
+ * Notifies the Seeker that their Wali has logged in.
+ * Fires-and-forgets — the login is NOT blocked if notification fails.
  */
 export async function notifyWaliLogin(email: string) {
   try {
+    const token = localStorage.getItem('sakinah_token');
     await fetch(`${API_BASE}/wali/notify`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: {
+        'Content-Type': 'application/json',
+        ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      },
       body: JSON.stringify({
         event: 'WALI_LOGIN',
         message: 'Your Wali has logged into the platform.',
@@ -505,8 +492,7 @@ export async function notifyWaliLogin(email: string) {
         timestamp: new Date().toISOString(),
       }),
     });
-  } catch (err) {
-    // Demo mode fallback: just log to console
-    console.info(`[SakinahAPI] Seeker Notification: Wali (${email}) accessed the account.`);
+  } catch {
+    // Non-blocking — login still proceeds; admin logs this separately
   }
 }
