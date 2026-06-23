@@ -37,8 +37,8 @@ async def get_my_conversations(current_user: dict = Depends(get_current_user)):
     db = get_db()
     _update_last_active(uid, db)
     
-    convs_a = db.collection("conversations").where("seeker_a_id", "==", uid).where("status", "==", "ACTIVE").get()
-    convs_b = db.collection("conversations").where("seeker_b_id", "==", uid).where("status", "==", "ACTIVE").get()
+    convs_a = db.collection("conversations").where("seeker_a_id", "==", uid).where("status", "in", ["ACTIVE", "CLOSED"]).get()
+    convs_b = db.collection("conversations").where("seeker_b_id", "==", uid).where("status", "in", ["ACTIVE", "CLOSED"]).get()
     
     convs_all = list(convs_a) + list(convs_b)
     
@@ -190,7 +190,7 @@ async def send_message(
     if c.get("seeker_a_id") != uid and c.get("seeker_b_id") != uid:
         raise HTTPException(status_code=403, detail="Not a participant in this conversation")
         
-    if c.get("status") != "ACTIVE":
+    if c.get("status") != "ACTIVE" and req.msg_type != "decision_reopen":
         raise HTTPException(status_code=400, detail="This conversation is no longer active")
         
     new_msg_ref = db.collection("conversations").document(conversation_id).collection("messages").document()

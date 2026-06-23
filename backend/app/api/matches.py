@@ -512,6 +512,7 @@ async def submit_decision_endpoint(
         })
     elif decision == "PROCEED":
         convo_ref.update({
+            "status": "ACTIVE",
             "matchflow_step": "CONVERSATION_OPEN"
         })
         
