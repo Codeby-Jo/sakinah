@@ -1,4 +1,5 @@
 from dataclasses import dataclass
+from nis.models.enums import ReligiousPractice, PreferenceStrictness, CommunicationStyle, ConflictRepair
 
 @dataclass
 class MatchPreference:
@@ -20,9 +21,9 @@ class MatchPreference:
 
     # Faith/tradition preferences
     preferred_tradition: str | None
-    tradition_importance: str
-    religious_practice_importance: str | None
-    preferred_islamic_environment: str | None
+    tradition_importance: PreferenceStrictness | str
+    religious_practice_importance: ReligiousPractice | str | None
+    preferred_islamic_environment: ReligiousPractice | str | None
 
     # Education/career preferences
     preferred_education_levels: list[str]
@@ -51,11 +52,11 @@ class MatchPreference:
     financial_lifestyle_preference: str | None
 
     # Communication/character preferences
-    communication_preference: str | None
-    conflict_style_preference: str | None
+    communication_preference: CommunicationStyle | str | None
+    conflict_style_preference: ConflictRepair | str | None
     difficult_conflict_styles: list[str]
     important_character_traits: list[str]
-    preferred_repair_style: str | None
+    preferred_repair_style: ConflictRepair | str | None
 
     # Dealbreakers
     dealbreakers: list[str]

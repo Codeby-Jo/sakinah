@@ -20,16 +20,16 @@ def evaluate_psychology(current_user: UserProfile, candidate: CandidateProfile) 
     # ---------------------------------------------------------
     risk_status = evaluate_risk_matrix(u, c)
     if risk_status == "DANGEROUS_PAIRING_BLOCKED":
-        status = "BLOCKED"
+        status = "REVIEW_REQUIRED"
         # We do NOT expose dangerous labels, we use a generic internal reason
-        reasons.append("Psychological traits indicate a potentially harmful dynamic.")
-        dangerous_dynamics.append("High risk pairing blocked internally.")
+        reasons.append("Psychological traits indicate a potentially harmful dynamic. Wali review recommended.")
+        dangerous_dynamics.append("High risk pairing flagged for review.")
     
     vuln_status = evaluate_vulnerability_protection(u, c)
     if vuln_status == "DANGEROUS_PAIRING_BLOCKED":
-        status = "BLOCKED"
-        reasons.append("Mismatch in boundary strength and control tendency.")
-        dangerous_dynamics.append("Vulnerability mismatch blocked internally.")
+        status = "REVIEW_REQUIRED"
+        reasons.append("Mismatch in boundary strength and control tendency. Wali review recommended.")
+        dangerous_dynamics.append("Vulnerability mismatch flagged for review.")
 
     # If WEAK_COMPATIBILITY but not blocked, lower ranking status
     if status != "BLOCKED" and (risk_status == "WEAK_COMPATIBILITY" or vuln_status == "WEAK_COMPATIBILITY"):
@@ -50,31 +50,31 @@ def evaluate_psychology(current_user: UserProfile, candidate: CandidateProfile) 
 
     # 1. High anger + high anger
     if u.anger_level == "HIGH" and c.anger_level == "HIGH":
-        status = "BLOCKED"
+        status = "REVIEW_REQUIRED"
         dangerous_dynamics.append("High mutual frustration levels.")
         reasons.append("Both individuals have high anger levels, causing volatile dynamics.")
 
     # 2. High anger + weak repair
     if (u.anger_level == "HIGH" or c.anger_level == "HIGH") and (u.repair_style in weak_repair_styles or c.repair_style in weak_repair_styles):
-        status = "BLOCKED"
+        status = "REVIEW_REQUIRED"
         dangerous_dynamics.append("High frustration with weak repair.")
         reasons.append("Combination of high anger and weak repair style observed.")
 
     # 3. Volatile + volatile
     if u.emotional_steadiness == "VOLATILE" and c.emotional_steadiness == "VOLATILE":
-        status = "BLOCKED"
+        status = "REVIEW_REQUIRED"
         dangerous_dynamics.append("High mutual emotional volatility.")
         reasons.append("Both individuals exhibit volatile emotional steadiness.")
 
     # 5. Financial irresponsibility + financial irresponsibility
     if u.financial_responsibility == "IRRESPONSIBLE" and c.financial_responsibility == "IRRESPONSIBLE":
-        status = "BLOCKED"
+        status = "REVIEW_REQUIRED"
         dangerous_dynamics.append("Mutual financial irresponsibility.")
         reasons.append("Both individuals display financial irresponsibility.")
 
     # 9. Aggressive communication + defensive repair
     if (u.communication_style == "AGGRESSIVE" or c.communication_style == "AGGRESSIVE") and (u.repair_style in defensive_styles or c.repair_style in defensive_styles):
-        status = "BLOCKED"
+        status = "REVIEW_REQUIRED"
         dangerous_dynamics.append("Aggressive communication with defensive repair.")
         reasons.append("Aggressive communication paired with defensive repair styles is present.")
 
