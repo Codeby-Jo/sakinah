@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react'
 import { motion, AnimatePresence } from 'framer-motion';
 import { useOnboarding } from '../context/OnboardingContext';
 import { getProgress } from '../services/sakinahProgress';
-import { SakinahLayout, SakinahReportModal, SakinahSecurePhotoViewer } from '../components';
+import { SakinahLayout, SakinahReportModal, SakinahSecurePhotoViewer, SakinahMutualMatchCelebration } from '../components';
 import { getMyConversations, getConversationMessages, sendMessage, pinMessage, unpinMessage, markCelebrationSeen, submitDecision } from '../services/sakinahApi';
 import type { PinnedMessage, FamilyMember } from '../types/sakinah.types';
 import { storage } from '@/config/firebase.config';
@@ -15,6 +15,7 @@ interface OtherUser {
   initial: string;
   isOnline?: boolean;
   managedByWali?: boolean; // New
+  last_active?: string;
 }
 
 interface LastMessage {
@@ -135,6 +136,23 @@ export const SakinahChatPage: React.FC = () => {
   const { auth, profile } = useOnboarding();
   const myInitial = profile?.firstName?.charAt(0).toUpperCase() || auth?.email?.charAt(0).toUpperCase() || 'M';
   const isWaliViewOnly = getProgress().role === 'WALI_VIEW';
+
+  const isOnline = (user: OtherUser | undefined | null) => {
+    if (!user?.last_active) return false;
+    return Math.floor((Date.now() - new Date(user.last_active).getTime()) / 60000) < 2;
+  };
+
+  const getLastSeenText = (lastActive?: string) => {
+    if (!lastActive) return "Last seen recently";
+    const last = new Date(lastActive).getTime();
+    const now = Date.now();
+    const diffMins = Math.floor((now - last) / 60000);
+    if (diffMins < 2) return "Online";
+    if (diffMins < 60) return `Last seen ${diffMins}m ago`;
+    const diffHours = Math.floor(diffMins / 60);
+    if (diffHours < 24) return `Last seen ${diffHours}h ago`;
+    return `Last seen ${new Date(lastActive).toLocaleDateString()}`;
+  };
 
   const [conversations, setConversations] = useState<ConvoItem[]>([]);
   const [activeConvo, setActiveConvo]     = useState<ConvoItem | null>(null);
@@ -666,7 +684,7 @@ export const SakinahChatPage: React.FC = () => {
                   className={`p-4 border-b border-[rgba(255,255,255,0.02)] cursor-pointer transition-all flex items-center gap-3 ${activeConvo?.conversation_id === c.conversation_id ? 'bg-[rgba(212,168,83,0.05)] border-l-2 border-l-[var(--sk-gold)]' : 'hover:bg-[#111826] border-l-2 border-l-transparent'}`}>
                   <div className="relative shrink-0">
                     <div className={`w-12 h-12 rounded-full flex items-center justify-center text-[18px] font-serif font-bold ${activeConvo?.conversation_id === c.conversation_id ? 'bg-gradient-to-br from-[#D4A853] to-[#A37B31] text-[#0A0E16]' : 'bg-[#161D2C] text-[var(--sk-gold)] border border-[rgba(255,255,255,0.05)]'}`}>{c.other_user?.initial ?? '?'}</div>
-                    {c.other_user?.isOnline && <div className="absolute bottom-0 right-0 w-3 h-3 bg-green-500 border-2 border-[#0C111A] rounded-full" />}
+                    {isOnline(c.other_user) && <div className="absolute bottom-0 right-0 w-3 h-3 bg-green-500 border-2 border-[#0C111A] rounded-full" />}
                   </div>
                   <div className="flex-1 min-w-0">
                     <div className="flex justify-between items-baseline mb-1">
@@ -733,8 +751,14 @@ export const SakinahChatPage: React.FC = () => {
                         )}
                       </h3>
                       <div className="text-[11px] text-[var(--sk-gold)] flex items-center gap-1.5 opacity-80 font-medium">
-                        <span className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse shadow-[0_0_8px_#10B981]"></span>
-                        Online • Last seen today at {new Date(Date.now() - 1000 * 60 * 15).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                        {isOnline(activeConvo?.other_user) ? (
+                          <>
+                            <span className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse shadow-[0_0_8px_#10B981]"></span>
+                            Online
+                          </>
+                        ) : (
+                          getLastSeenText(activeConvo?.other_user?.last_active)
+                        )}
                       </div>
                       <div className="flex items-center gap-2 mt-1">
                         {activeConvo?.participants?.map((p, i) => (

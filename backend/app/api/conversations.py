@@ -15,10 +15,27 @@ class SendMessageRequest(BaseModel):
     reply_to_text: Optional[str] = None
     reply_to_sender: Optional[str] = None
 
+import time
+
+# Memory cache to rate limit Firestore writes for last_active
+_last_active_cache = {}
+
+def _update_last_active(uid: str, db):
+    now = time.time()
+    last = _last_active_cache.get(uid, 0)
+    # Update firestore at most once every 60 seconds
+    if now - last > 60:
+        _last_active_cache[uid] = now
+        try:
+            db.collection("profiles").document(uid).update({"last_active": datetime.utcnow().isoformat()})
+        except Exception:
+            pass
+
 @router.get("/")
 async def get_my_conversations(current_user: dict = Depends(get_current_user)):
     uid = current_user.get("uid")
     db = get_db()
+    _update_last_active(uid, db)
     
     convs_a = db.collection("conversations").where("seeker_a_id", "==", uid).where("status", "==", "ACTIVE").get()
     convs_b = db.collection("conversations").where("seeker_b_id", "==", uid).where("status", "==", "ACTIVE").get()
@@ -42,7 +59,8 @@ async def get_my_conversations(current_user: dict = Depends(get_current_user)):
                 "initial": (odata.get("fullName") or odata.get("first_name") or "S")[0].upper(),
                 "age": odata.get("age", 25),
                 "city": odata.get("city") or odata.get("location") or "Unknown",
-                "occupation": odata.get("occupation") or "Private"
+                "occupation": odata.get("occupation") or "Private",
+                "last_active": odata.get("last_active")
             }
             
         msgs_query = db.collection("conversations").document(convo_id).collection("messages").order_by("created_at", direction="DESCENDING").limit(1).get()
@@ -84,6 +102,7 @@ async def get_messages(
 ):
     uid = current_user.get("uid")
     db = get_db()
+    _update_last_active(uid, db)
     
     convo_doc = db.collection("conversations").document(conversation_id).get()
     if not convo_doc.exists:
