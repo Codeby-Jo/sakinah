@@ -198,12 +198,12 @@ def _prepare_matchmaking_context(uid: str, db, is_next_batch: bool = False):
         seeker_id=uid,
         active_conversations_count=len(active_convo_ids),
         max_active_conversations=2,
-        previously_shown_ids=shown_ids,
-        passed_ids=passed_ids,
-        mutual_match_ids=mutual_match_ids,
-        blocked_ids=[],
+        shown_candidate_ids=shown_ids,
+        passed_candidate_ids=passed_ids,
+        blocked_candidate_ids=[],
+        active_conversation_candidate_ids=active_convo_ids,
         batch_size=10,
-        batch_offset=1 if is_next_batch else 0
+        batch_number=2 if is_next_batch else 1
     )
     
     return user_nis_profile, user_nis_pref, candidates_nis, pool_context
@@ -232,27 +232,29 @@ async def get_considered_few(current_user: dict = Depends(get_current_user)):
     user_nis_profile, user_nis_pref, candidates_nis, pool_context = _prepare_matchmaking_context(uid, db, is_next_batch=False)
 
     service = NISMatchmakingService()
-    results = service.generate_considered_few(
-        seeker_profile=user_nis_profile,
-        seeker_preferences=user_nis_pref,
-        candidate_pool=candidates_nis,
-        context=pool_context
+    results_dict = service.generate_considered_few(
+        current_user=user_nis_profile,
+        match_preference=user_nis_pref,
+        candidates=candidates_nis,
+        pool_context=pool_context
     )
+    
+    candidates_data = results_dict.get("candidates", [])
     
     con_set_ref.set({
         "seeker_id": uid,
-        "candidate_ids": [r.candidate_id for r in results],
+        "candidate_ids": [r.get("candidate_id") for r in candidates_data],
         "generated_at": datetime.utcnow().isoformat(),
         "expires_at": (datetime.utcnow() + timedelta(hours=24)).isoformat()
     })
     
     candidates_list = []
-    for r in results:
-        c_doc = db.collection("profiles").document(r.candidate_id).get()
+    for r in candidates_data:
+        c_doc = db.collection("profiles").document(r.get("candidate_id")).get()
         if c_doc.exists:
-            candidates_list.append(map_candidate_to_summary(r.candidate_id, c_doc.to_dict()))
+            candidates_list.append(map_candidate_to_summary(r.get("candidate_id"), c_doc.to_dict()))
             
-    return {"status": "FOUND" if candidates_list else "NO_SUITABLE_MATCHES_RIGHT_NOW", "candidates": candidates_list}
+    return {"status": results_dict.get("status", "NO_SUITABLE_MATCHES_RIGHT_NOW"), "candidates": candidates_list}
 
 @router.get("/next-batch")
 async def get_next_batch(current_user: dict = Depends(get_current_user)):
@@ -262,20 +264,22 @@ async def get_next_batch(current_user: dict = Depends(get_current_user)):
     user_nis_profile, user_nis_pref, candidates_nis, pool_context = _prepare_matchmaking_context(uid, db, is_next_batch=True)
     
     service = NISMatchmakingService()
-    results = service.generate_considered_few(
-        seeker_profile=user_nis_profile,
-        seeker_preferences=user_nis_pref,
-        candidate_pool=candidates_nis,
-        context=pool_context
+    results_dict = service.generate_considered_few(
+        current_user=user_nis_profile,
+        match_preference=user_nis_pref,
+        candidates=candidates_nis,
+        pool_context=pool_context
     )
     
+    candidates_data = results_dict.get("candidates", [])
+    
     candidates_list = []
-    for r in results:
-        c_doc = db.collection("profiles").document(r.candidate_id).get()
+    for r in candidates_data:
+        c_doc = db.collection("profiles").document(r.get("candidate_id")).get()
         if c_doc.exists:
-            candidates_list.append(map_candidate_to_summary(r.candidate_id, c_doc.to_dict()))
+            candidates_list.append(map_candidate_to_summary(r.get("candidate_id"), c_doc.to_dict()))
             
-    return {"status": "FOUND" if candidates_list else "NO_SUITABLE_MATCHES_RIGHT_NOW", "candidates": candidates_list}
+    return {"status": results_dict.get("status", "NO_SUITABLE_MATCHES_RIGHT_NOW"), "candidates": candidates_list}
 
 
 @router.get("/candidates/{candidate_id}")
